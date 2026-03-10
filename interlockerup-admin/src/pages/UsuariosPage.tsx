@@ -51,7 +51,6 @@ import {
 } from "lucide-react"
 import { StatsCard } from "@/components/admin/stats-card"
 
-// Actualizamos los colores para que coincidan con los nombres de tu BD (alumno/admin)
 const roleColors = {
   estudiante: "bg-secondary/10 text-secondary border-secondary/20",
   administrador: "bg-primary/10 text-primary border-primary/20",
@@ -75,7 +74,6 @@ export default function UsuariosPage() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [selectedUser, setSelectedUser] = useState<any | null>(null)
 
-  // Form state adaptado para coincidir con tu BD ('alumno' por defecto)
   const [formData, setFormData] = useState({
     name: "",
     email: "",
