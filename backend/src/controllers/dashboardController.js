@@ -14,7 +14,7 @@ const getDashboardStats = async (req, res) => {
         const actividadReq = db.query(`
             SELECT a.accion, a.fecha_hora, u.nombre_completo, l.identificador as locker
             FROM access_logs a
-            LEFT JOIN users u ON a.user_id = u.id
+            LEFT JOIN usuarios u ON a.user_id = u.id
             LEFT JOIN assignments asg ON a.assignment_id = asg.id
             LEFT JOIN lockers l ON asg.locker_id = l.id
             ORDER BY a.fecha_hora DESC
@@ -30,20 +30,21 @@ const getDashboardStats = async (req, res) => {
             LIMIT 3
         `);
 
+        // Esperamos a que todas las consultas terminen
         const [kpisRes, actividadRes, alertasRes] = await Promise.all([kpisReq, actividadReq, alertasReq]);
         const kpis = kpisRes.rows[0];
 
         // 2. Matemáticas para los KPIs
-        const total = parseInt(kpis.total_lockers) || 1;
+        const total = parseInt(kpis.total_lockers) || 1; // Evitar división por cero
         const tasaOcupacion = Math.round((parseInt(kpis.lockers_ocupados) / total) * 100);
         const disponibilidad = Math.round((parseInt(kpis.lockers_disponibles) / total) * 100);
 
-        // 3. Empaqueta y envia a React
+        // 3. Empaquetamos y enviamos a React
         res.json({
             kpis: {
                 tasaOcupacion: tasaOcupacion,
                 accesosHoy: parseInt(kpis.accesos_hoy),
-                tiempoPromedio: 4.2,
+                tiempoPromedio: 4.2, // Dato simulado por ahora
                 disponibilidad: disponibilidad
             },
             actividadReciente: actividadRes.rows,
