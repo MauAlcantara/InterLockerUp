@@ -1,0 +1,31 @@
+@import "tailwindcss";
+
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Roboto:wght@300;400;500;700&display=swap');
+
+:root {
+  --background: #f8fafc;
+  --foreground: #1e293b;
+  --primary: #0b4dbb;
+  --secondary: #1f78ff;
+  --muted: #f1f5f9;
+  --muted-foreground: #64748b;
+  --accent: #e0f2fe;
+  --accent-foreground: #0b4dbb;
+  --destructive: #c94a4a;
+  --border: #e2e8f0;
+  --success: #2fa4a9;
+  --warning: #f2b705;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Roboto', system-ui, sans-serif;
+  background-color: var(--background);
+  color: var(--foreground);
+  -webkit-font-smoothing: antialiased;
+}

@@ -76,7 +76,7 @@ const login = async (req, res) => {
         const user = result.rows[0];
 
         // Uso de bcrypt para almacenar contraseñas.
-        // Aquí se compara el texto plano (decryptedPassword) contra el Hash de la DB
+        // Aquí se compara el texto plano contra el Hash de la DB
         const validPassword = await bcrypt.compare(decryptedPassword, user.password_hash);
         if (!validPassword) {
             return res.status(401).json({ mensaje: 'Contraseña incorrecta.' });
@@ -97,30 +97,6 @@ const login = async (req, res) => {
         console.error("Error en desencriptación o login:", error);
         res.status(500).json({ mensaje: 'Error de seguridad en el inicio de sesión.' });
     }
-
-    
 };
-const getMyProfile = async (req, res) => {
-    try {
-        const result = await db.query(
-            `SELECT id, matricula, nombre_completo, email, carrera, rol
-             FROM users
-             WHERE id = $1`,
-            [req.user.id]
-        );
 
-        if (result.rows.length === 0) {
-            return res.status(404).json({ mensaje: "Usuario no encontrado" });
-        }
-
-        res.json(result.rows[0]);
-
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ mensaje: "Error al obtener el perfil" });
-    }
-    };
-
-    
-
-module.exports = { register, login, getPublicKey, getMyProfile };
+module.exports = { register, login, getPublicKey };
