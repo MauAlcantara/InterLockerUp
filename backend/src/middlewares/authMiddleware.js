@@ -9,8 +9,8 @@ const verificarToken = (req, res, next) => {
 
     try {
         const verified = jwt.verify(token.split(" ")[1], process.env.JWT_SECRET);
-        req.user = verified; // Guardamos los datos del usuario (id y rol) en la petición
-        next(); // Continuamos a la siguiente función
+        req.user = verified;
+        next();
     } catch (error) {
         res.status(400).json({ mensaje: 'Token no válido o expirado.' });
     }

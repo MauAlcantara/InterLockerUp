@@ -21,11 +21,10 @@ app.get('/api/status', (req, res) => {
 
 // Levantar el servidor
 const PORT = process.env.PORT || 3000;
-app.listen(3000, "0.0.0.0", () => {
-  console.log(`Servidor corriendo en http://localhost:${PORT}` )
+app.listen(PORT, () => {
+    console.log(`Servidor corriendo en http://localhost:${PORT}`);
 });
 
-//administradores
 const authRoutes = require('./routes/authRoutes');
 const userRoutes = require('./routes/userRoutes');
 const lockerRoutes = require('./routes/lockerRoutes');
@@ -35,14 +34,6 @@ const dashboardRoutes = require('./routes/dashboardRoutes');
 const auditoriasRoutes = require('./routes/auditsRoutes');
 const homeRoutes = require('./routes/homeRoutes');
 const adminRoutes = require('./routes/adminRoutes');
-
-//alumnos
-const registerUserRoutes = require('./routes/registerUserRoutes')
-const historyRoutes = require('./routes/historyRoutes');
-const qrRoutes = require('./routes/qrRoutes');
-const lockerRequestRoutes = require('./routes/lockerRequestRoutes');
-const perfilRoutes = require('./routes/perfilRoutes');
-const notificationRoutes = require('./routes/notifications');
 
 // Middlewares
 app.use(express.json());
@@ -59,10 +50,3 @@ app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/audits', auditoriasRoutes);
 app.use('/api/home', homeRoutes);
 app.use('/api/admin', adminRoutes);
-//alumnos
-app.use('/api/users', registerUserRoutes);
-app.use('/api/history', historyRoutes);
-app.use('/api/qr', qrRoutes);
-app.use('/api/locker-requests', lockerRequestRoutes);
-app.use('/api/perfil', perfilRoutes);
-app.use('/api/notifications', notificationRoutes);

@@ -65,32 +65,4 @@ const cambiarEstado = async (req, res) => {
     }
 };
 
-// Buscar compañeros por nombre o matrícula (Filtrado por carrera)
-const buscarCompañeros = async (req, res) => {
-    const { q } = req.query; // Lo que el usuario escribe
-    const userId = req.user.id; // El ID del usuario que busca
-
-    try {
-        // 1. Primero obtenemos la carrera del usuario que está buscando
-        const userQuery = await db.query('SELECT carrera FROM users WHERE id = $1', [userId]);
-        const miCarrera = userQuery.rows[0].carrera;
-
-        // 2. Buscamos otros usuarios de la misma carrera que coincidan con la búsqueda
-        const result = await db.query(`
-            SELECT id, nombre_completo as name, matricula 
-            FROM users 
-            WHERE carrera = $1 
-            AND id != $2 
-            AND (nombre_completo ILIKE $3 OR matricula ILIKE $3)
-            LIMIT 5
-        `, [miCarrera, userId, `%${q}%`]);
-
-        res.json(result.rows);
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ mensaje: "Error al buscar compañeros" });
-    }
-};
-
-
-module.exports = { getUsuarios, crearUsuario, editarUsuario, cambiarEstado, buscarCompañeros };
+module.exports = { getUsuarios, crearUsuario, editarUsuario, cambiarEstado };
