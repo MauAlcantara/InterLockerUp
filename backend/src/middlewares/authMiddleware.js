@@ -1,0 +1,20 @@
+const jwt = require('jsonwebtoken');
+
+const verificarToken = (req, res, next) => {
+    const token = req.header('Authorization');
+
+    if (!token) {
+        return res.status(401).json({ mensaje: 'Acceso denegado. No hay un token activo.' });
+    }
+
+    try {
+        // El token viene como "Bearer <TOKEN>", así que quitamos el "Bearer "
+        const verified = jwt.verify(token.split(" ")[1], process.env.JWT_SECRET);
+        req.user = verified; // Guardamos los datos del usuario (id y rol) en la petición
+        next(); // Continuamos a la siguiente función
+    } catch (error) {
+        res.status(400).json({ mensaje: 'Token no válido o expirado.' });
+    }
+};
+
+module.exports = verificarToken;
