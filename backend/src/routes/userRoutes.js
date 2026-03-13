@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const db = require('../config/db');
 const verificarToken = require('../middlewares/authMiddleware');
-const { getUsuarios, crearUsuario, editarUsuario, cambiarEstado } = require('../controllers/usersController');
+const { getUsuarios, crearUsuario, editarUsuario, cambiarEstado, buscarCompañeros } = require('../controllers/usersController');
 
 // Ruta protegida para obtener datos del alumno logueado
 router.get('/profile', verificarToken, async (req, res) => {
@@ -21,5 +21,5 @@ router.get('/', getUsuarios);
 router.post('/', crearUsuario);
 router.put('/:id', editarUsuario);
 router.patch('/:id/status', cambiarEstado);
-
+router.get('/search', verificarToken, buscarCompañeros);
 module.exports = router;
