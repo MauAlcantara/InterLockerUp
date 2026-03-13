@@ -64,6 +64,7 @@ const cambiarEstado = async (req, res) => {
         res.status(500).json({ mensaje: "Error al cambiar estado" });
     }
 };
+
 // Buscar compañeros por nombre o matrícula (Filtrado por carrera)
 const buscarCompañeros = async (req, res) => {
     const { q } = req.query; // Lo que el usuario escribe

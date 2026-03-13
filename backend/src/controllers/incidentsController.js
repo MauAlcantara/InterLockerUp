@@ -43,7 +43,6 @@ const reportarIncidencia = async (req, res) => {
         res.status(500).json({ mensaje: 'Error interno al procesar el reporte.' });
     }
 };
-
 // Obtener todas las incidencias para el panel de Admin
 const getIncidenciasAdmin = async (req, res) => {
     try {

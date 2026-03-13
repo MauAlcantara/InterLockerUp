@@ -8,7 +8,6 @@ const verificarToken = (req, res, next) => {
     }
 
     try {
-        // El token viene como "Bearer <TOKEN>", así que quitamos el "Bearer "
         const verified = jwt.verify(token.split(" ")[1], process.env.JWT_SECRET);
         req.user = verified; // Guardamos los datos del usuario (id y rol) en la petición
         next(); // Continuamos a la siguiente función

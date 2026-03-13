@@ -22,24 +22,32 @@ app.get('/api/status', (req, res) => {
 // Levantar el servidor
 const PORT = process.env.PORT || 3000;
 app.listen(3000, "0.0.0.0", () => {
-  console.log("Servidor corriendo en http://192.168.0.14:3000")
+  console.log(`Servidor corriendo en http://localhost:${PORT}` )
 });
 
+//administradores
 const authRoutes = require('./routes/authRoutes');
 const userRoutes = require('./routes/userRoutes');
 const lockerRoutes = require('./routes/lockerRoutes');
 const accessRoutes = require('./routes/accessRoutes');
 const incidentsRoutes = require('./routes/incidentsRoutes');
 const dashboardRoutes = require('./routes/dashboardRoutes');
+const auditoriasRoutes = require('./routes/auditsRoutes');
+const homeRoutes = require('./routes/homeRoutes');
+const adminRoutes = require('./routes/adminRoutes');
+
+//alumnos
 const registerUserRoutes = require('./routes/registerUserRoutes')
 const historyRoutes = require('./routes/historyRoutes');
 const qrRoutes = require('./routes/qrRoutes');
 const lockerRequestRoutes = require('./routes/lockerRequestRoutes');
 const perfilRoutes = require('./routes/perfilRoutes');
 const notificationRoutes = require('./routes/notifications');
+
 // Middlewares
 app.use(express.json());
 app.use(cors());
+app.use('/uploads', express.static('uploads'));
 
 // Rutas
 app.use('/api/auth', authRoutes); 
@@ -48,6 +56,10 @@ app.use('/api/lockers', lockerRoutes);
 app.use('/api/access', accessRoutes);
 app.use('/api/incidents', incidentsRoutes);
 app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/audits', auditoriasRoutes);
+app.use('/api/home', homeRoutes);
+app.use('/api/admin', adminRoutes);
+//alumnos
 app.use('/api/users', registerUserRoutes);
 app.use('/api/history', historyRoutes);
 app.use('/api/qr', qrRoutes);
