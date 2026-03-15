@@ -12,11 +12,14 @@ import SupportScreen from "./components/screens/support-screen"
 import { ProfileScreen } from "./components/screens/ProfileScreen"
 
 export default function App() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false)
+const [isLoggedIn, setIsLoggedIn] = useState(() => {
+    return !!localStorage.getItem("token");
+  })
   const [authScreen, setAuthScreen] = useState("login")
   const [activeTab, setActiveTab] = useState("home")
 
   const handleLogout = () => {
+    localStorage.removeItem("token");
     setIsLoggedIn(false)
     setActiveTab("home")
     setAuthScreen("login")

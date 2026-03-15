@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { User, Mail, Shield, Edit3, Box, X, Phone, Building2, Scale, Info, Loader2, AlertTriangle } from "lucide-react";
 import { Card, CardContent } from "../ui/card";
 import Button from "../ui/button";
-import toast from "react-hot-toast";
+import toast, { Toaster } from "react-hot-toast";
 import { logout } from "../../services/authService";
 const api = import.meta.env.VITE_API_URL;
 
@@ -31,7 +31,7 @@ export function ProfileScreen({ onLogout }) {
   const fetchUserData = async () => {
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch(`${api}/api/auth/me`, {
+      const res = await fetch(`${api}/api/perfil/me`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       const data = await res.json();
@@ -55,6 +55,11 @@ export function ProfileScreen({ onLogout }) {
       if (res.ok) {
         toast.success("Casillero liberado correctamente");
         setShowConfirmDesalojo(false);
+
+        setTimeout(() => {
+            window.location.reload(); 
+        }, 1500);
+
       } else {
         toast.error(data.error || "No se pudo desalojar");
       }
@@ -78,6 +83,7 @@ export function ProfileScreen({ onLogout }) {
 
   return (
     <div style={{ minHeight: "100vh", paddingBottom: "110px", background: "#f8f9fb", fontFamily: "'Roboto', sans-serif" }}>
+      <Toaster position="top-center" />
       
       {/* Header Estilo UTEQ (Recto por decisión de diseño previa) */}
       <header style={{ background: colors.primary, color: "white", padding: "60px 16px 40px", textAlign: "center" }}>

@@ -1,19 +1,12 @@
-import React, { useState } from "react"
+import React, { useState, useEffect} from "react"
 import { Lock, User, Eye, EyeOff, Loader2, Mail, ArrowLeft, GraduationCap } from "lucide-react"
 import toast, { Toaster } from "react-hot-toast"
 
 export default function RegisterScreen({ onRegister, onBackToLogin }) {
     const api = import.meta.env.VITE_API_URL
-    const API_URL = `${api}/api/users/register`
+    const API_URL = `${api}/api/register`
 
-    const carreras = [
-        "División Económica-Administrativa",
-        "División Industrial",
-        "División de Tecnología Ambiental",
-        "División de Tecnologías de Automatización e Información",
-        "Desarrollo de negocios",
-        "División de Idiomas"
-    ]
+    const [carreras, setCarreras] = useState([])
 
     const [showPassword, setShowPassword] = useState(false)
     const [showConfirmPassword, setShowConfirmPassword] = useState(false)
@@ -28,6 +21,22 @@ export default function RegisterScreen({ onRegister, onBackToLogin }) {
         password: "",
         confirmPassword: ""
     })
+
+    useEffect(() => {
+        const fetchCarreras = async () => {
+            try {
+                const response = await fetch(`${api}/api/auth/carreras`)
+                if (response.ok) {
+                    const data = await response.json()
+                    setCarreras(data)
+                }
+            } catch (error) {
+                console.error("Error al cargar carreras:", error)
+                toast.error("No se pudieron cargar las divisiones académicas")
+            }
+        }
+        fetchCarreras()
+    }, [api])
 
     const updateField = (field, value) => {
         setFormData(prev => ({
