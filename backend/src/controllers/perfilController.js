@@ -30,195 +30,97 @@ const editarDatos = async (req, res) => {
     }
 };
 
-/**
- * Proceso complejo para finalizar la ocupación de un casillero.
- * Maneja transacciones SQL para asegurar la integridad entre asignaciones, usuarios y solicitudes.
- */
 const desalojarCasillero = async (req, res) => {
-
     try {
-        // Inicia una transacción para asegurar que todos los cambios se apliquen o ninguno.
-        await db.query('begin');
+        // Idea de tu compañera: Normalización segura del ID
+        const usuarioId = req.user?.id || req.user?.user?.id;
 
-        /**
-         * Busca una asignación que esté actualmente activa y no haya vencido para el usuario.
-         * Verifica la relación en la tabla intermedia assignment_users.
-         */
-        const findQuery = `
-            select au.assignment_id, a.es_compartido, a.locker_id
-            from assignment_users au
-            join assignments a on au.assignment_id = a.id
-            where au.user_id = $1
-            and a.status = 'activo'
-            and a.fecha_vencimiento > now()
-            limit 1
-        `;
-
-        const { rows } = await db.query(findQuery, [req.user.id]);
-
-        // Si no se encuentra una asignación válida, se revierte el inicio de la transacción.
-        if (rows.length === 0) {
-            await db.query('rollback');
-            return res.status(404).json({
-                error: "no tienes asignaciones activas"
-            });
+        if (!usuarioId) {
+            return res.status(401).json({ error: "No se pudo identificar al usuario del token" });
         }
 
-        const { assignment_id, es_compartido, locker_id } = rows[0];
+        // ¡SÚPER IMPORTANTE! Pedimos una conexión exclusiva para que no choquen los alumnos
+        const client = await db.connect();
 
-        /**
-         * Busca si existe una solicitud de casillero (locker_request) aprobada 
-         * vinculada físicamente a este casillero.
-         */
-        const requestResult = await db.query(
-            `
-            select id, user_id, companions, shared
-            from locker_requests
-            where locker_id = $1
-            and status = 'approved'
-            limit 1
-            `,
-            [locker_id]
-        );
+        try {
+            await client.query('BEGIN'); // Ahora el BEGIN es seguro
 
-        const request = requestResult.rows[0];
+            // FIX 1: Cambiamos 'active' por la lista con 'activa'
+            const findQuery = `
+                SELECT au.assignment_id, a.es_compartido, a.locker_id
+                FROM assignment_users au
+                JOIN assignments a ON au.assignment_id = a.id
+                WHERE au.user_id = $1
+                AND a.status IN ('activa', 'activo', 'active') 
+                AND a.fecha_vencimiento > now()
+                LIMIT 1
+            `;
 
-        /* ===============================
-           CASO COMPARTIDO: El usuario es uno de varios ocupantes.
-        =============================== */
-        if (es_compartido) {
-            // Elimina únicamente el vínculo de este usuario con la asignación actual.
-            await db.query(
-                `
-                delete from assignment_users
-                where user_id = $1
-                and assignment_id = $2
-                `,
-                [req.user.id, assignment_id]
-            );
+            const { rows } = await client.query(findQuery, [usuarioId]);
 
-            // Verifica si aún quedan otros usuarios vinculados a esa misma asignación.
-            const checkOthers = await db.query(
-                `
-                select 1
-                from assignment_users
-                where assignment_id = $1
-                `,
-                [assignment_id]
-            );
-
-            // Si ya no quedan ocupantes, se libera el casillero y se finaliza la asignación.
-            if (checkOthers.rows.length === 0) {
-                await db.query(
-                    `
-                    update assignments
-                    set status = 'finalizado'
-                    where id = $1
-                    `,
-                    [assignment_id]
-                );
-
-                await db.query(
-                    `
-                    update lockers
-                    set estado = 'disponible',
-                        updated_at = now()
-                    where id = $1
-                    `,
-                    [locker_id]
-                );
+            if (rows.length === 0) {
+                await client.query('ROLLBACK');
+                client.release(); // Liberamos la conexión
+                return res.status(404).json({ error: "No tienes asignaciones activas para desalojar" });
             }
-        } 
-        /* ===============================
-           CASO INDIVIDUAL: El usuario es el único ocupante.
-        =============================== */
-        else {
-            // Finaliza la asignación y marca el casillero como disponible directamente.
-            await db.query(
-                `
-                update assignments
-                set status = 'finalizado'
-                where id = $1
-                `,
-                [assignment_id]
-            );
 
-            await db.query(
-                `
-                update lockers
-                set estado = 'disponible',
-                    updated_at = now()
-                where id = $1
-                `,
+            const { assignment_id, es_compartido, locker_id } = rows[0];
+
+            const requestResult = await client.query(
+                `SELECT id, user_id, companions, shared
+                 FROM locker_requests
+                 WHERE locker_id = $1 AND status = 'approved' LIMIT 1`,
                 [locker_id]
             );
-        }
 
-        /* ===============================
-           LIMPIEZA DE SOLICITUDES (LOCKER REQUESTS)
-           Ajusta o elimina la solicitud original según quién abandona.
-        =============================== */
-        if (request) {
-            if (!request.shared) {
-                // Si la solicitud era individual, se elimina por completo.
-                await db.query(
-                    `delete from locker_requests where id = $1`,
-                    [request.id]
-                );
+            const request = requestResult.rows[0];
+
+            if (es_compartido) {
+                await client.query(`DELETE FROM assignment_users WHERE user_id = $1 AND assignment_id = $2`, [usuarioId, assignment_id]);
+
+                const checkOthers = await client.query(`SELECT 1 FROM assignment_users WHERE assignment_id = $1`, [assignment_id]);
+
+                if (checkOthers.rows.length === 0) {
+                    await client.query(`UPDATE assignments SET status = 'finalizado' WHERE id = $1`, [assignment_id]);
+                    await client.query(`UPDATE lockers SET estado = 'disponible', updated_at = now() WHERE id = $1`, [locker_id]);
+                }
             } else {
-                if (request.user_id === req.user.id) {
-                    /**
-                     * Si el titular de la solicitud compartida es quien abandona:
-                     * Se intenta transferir la titularidad al primer compañero en la lista.
-                     */
-                    const nuevoUsuario = request.companions[0];
-                    if (nuevoUsuario) {
-                        await db.query(
-                            `
-                            update locker_requests
-                            set user_id = $1,
-                                shared = false,
-                                companions = '{}'
-                            where id = $2
-                            `,
-                            [nuevoUsuario, request.id]
-                        );
-                    } else {
-                        // Sin compañeros restantes, se borra la solicitud.
-                        await db.query(
-                            `delete from locker_requests where id = $1`,
-                            [request.id]
-                        );
-                    }
+                await client.query(`UPDATE assignments SET status = 'finalizado' WHERE id = $1`, [assignment_id]);
+                await client.query(`UPDATE lockers SET estado = 'disponible', updated_at = now() WHERE id = $1`, [locker_id]);
+            }
+
+            if (request) {
+                if (!request.shared) {
+                    await client.query(`DELETE FROM locker_requests WHERE id = $1`, [request.id]);
                 } else {
-                    /**
-                     * Si quien abandona es un compañero (no el titular):
-                     * Se remueve su ID del arreglo de compañeros en la solicitud.
-                     */
-                    await db.query(
-                        `
-                        update locker_requests
-                        set companions = array_remove(companions, $1)
-                        where id = $2
-                        `,
-                        [req.user.id, request.id]
-                    );
+                    if (request.user_id === usuarioId) {
+                        const nuevoUsuario = request.companions[0];
+                        if (nuevoUsuario) {
+                            await client.query(`UPDATE locker_requests SET user_id = $1, shared = false, companions = '{}' WHERE id = $2`, [nuevoUsuario, request.id]);
+                        } else {
+                            await client.query(`DELETE FROM locker_requests WHERE id = $1`, [request.id]);
+                        }
+                    } else {
+                        await client.query(`UPDATE locker_requests SET companions = array_remove(companions, $1) WHERE id = $2`, [usuarioId, request.id]);
+                    }
                 }
             }
+
+            await client.query('COMMIT');
+            client.release(); // Éxito: Guardamos y liberamos conexión
+            res.json({ message: "Casillero desalojado correctamente" });
+
+        } catch (innerError) {
+            await client.query('ROLLBACK');
+            client.release(); // Error: Deshacemos todo y liberamos conexión
+            throw innerError; // Mandamos el error al catch principal
         }
-        
-        // Confirma todos los cambios en la base de datos.
-        await db.query('commit');
-        res.json({ message: "casillero desalojado correctamente" });
 
     } catch (error) {
-        // En caso de fallo, revierte cualquier cambio realizado durante la transacción.
-        await db.query('rollback');
-        console.error(error);
-        res.status(500).json({ error: "error al desalojar casillero" });
+        console.error("Error en desalojarCasillero:", error);
+        res.status(500).json({ error: "Error al desalojar casillero", detalle: error.message });
     }
 };
-
 /**
  * Obtiene los detalles del casillero que el usuario tiene actualmente en uso.
  * Calcula también el tiempo restante antes del vencimiento.
@@ -237,7 +139,8 @@ const getLockerActivo = async (req, res) => {
             join lockers l on a.locker_id = l.id
             join buildings b on l.building_id = b.id
             where au.user_id = $1
-            and (a.status = 'active' or a.status = 'activo')
+            -- CORRECCIÓN: Agregamos 'activa' a la lista de estados válidos
+            and a.status IN ('activa', 'activo', 'active') 
             and a.fecha_vencimiento > now()
             limit 1
         `;

@@ -64,7 +64,7 @@ const registerUserController = async (req, res) => {
                 nombre_completo,
                 email,
                 passwordHash,
-                'estudiante', // Rol asignado por defecto para nuevos registros.
+                'alumno', // Rol asignado por defecto para nuevos registros.
                 carrera
             ]
         )

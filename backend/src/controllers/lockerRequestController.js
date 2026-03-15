@@ -112,6 +112,7 @@ const getAvailableLockers = async (req, res) => {
     const carreraUsuario = userResult.rows[0].carrera;
 
     // 2. Traemos TODOS los lockers de los edificios que tengan esa carrera
+    // CORRECCIÓN: Cambiamos LOWER(TRIM(l.estado)) por l.estado::text para no romper el ENUM
     const result = await db.query(
       `SELECT 
         l.id, 
@@ -119,7 +120,7 @@ const getAvailableLockers = async (req, res) => {
         l.floor, 
         l.ubicacion_detallada,
         b.name AS edificio, 
-        LOWER(TRIM(l.estado)) AS estado 
+        l.estado::text AS estado 
        FROM lockers l
        INNER JOIN buildings b ON l.building_id = b.id
        WHERE b.career = $1
@@ -134,7 +135,6 @@ const getAvailableLockers = async (req, res) => {
     res.status(500).json({ mensaje: "Error al cargar los casilleros." });
   }
 };
-
 
 const cancelLockerRequest = async (req, res) => {
     const userId = req.user.id;

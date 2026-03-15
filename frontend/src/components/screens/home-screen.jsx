@@ -88,21 +88,36 @@ export default function HomeScreen({ onNavigate, onLogout }) {
     const token = localStorage.getItem("token");
     if (!token) return;
 
-    fetch(`${api}/api/auth/me`, { headers: { Authorization: `Bearer ${token}` } })
+    fetch(`${api}/api/perfil/me`, { headers: { Authorization: `Bearer ${token}` } })
       .then(res => res.json()).then(data => setUser(data));
 
     fetch(`${api}/api/perfil/my-locker`, { headers: { Authorization: `Bearer ${token}` } })
-      .then(res => res.json()).then(data => {
-        if (data && data.numero) {
+      .then(res => res.json())
+      .then(data => {
+
+        // 1. Si el backend responde con un null o vacío, no hacemos nada y evitamos el error
+        if (!data) return;
+
+        // 2. El backend puede enviar los datos directos o envueltos en un objeto llamado "locker"
+        const lockerData = data.locker !== undefined ? data.locker : data;
+
+        // 3. Si definitivamente no hay casillero asignado, nos detenemos
+        if (!lockerData) return;
+
+        // 4. Extraemos el número de forma segura (con el nombre que sea que use el backend)
+        const numeroLocker = lockerData.numero || lockerData.identificador || lockerData.number;
+        
+        if (numeroLocker) {
           setLocker({
-            number: data.numero,
-            timeLeft: data.timeLeft,
-            totalTime: data.totalTime || 14400,
-            building: data.edificio || "Edificio",
-            floor: data.piso || "Planta"
+            number: numeroLocker,
+            timeLeft: lockerData.timeLeft || 14400,
+            totalTime: lockerData.totalTime || 14400,
+            building: lockerData.edificio || lockerData.building || "Edificio asignado",
+            floor: lockerData.piso || lockerData.floor || "Planta Baja"
           });
         }
-      });
+      })
+      .catch(err => console.error("No se encontró locker activo", err));
 
     cargarHistorialReciente();
     cargarNotificaciones();
