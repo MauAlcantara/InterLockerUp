@@ -31,9 +31,9 @@ import {
 
 // Tipos
 type Locker = {
-  id: string; // En BD es numérico, lo pasamos a string
+  id: string;
   identificador: string;
-  numero: string; // Para mostrar (ej: "01" del "E1-01")
+  numero: string;
   status: string;
   usuario: { nombre: string; matricula: string } | null;
 }
@@ -46,7 +46,7 @@ type Edificio = {
 
 export default function LockersPage() {
   const [edificios, setEdificios] = useState<Edificio[]>([])
-  const [availableUsers, setAvailableUsers] = useState<any[]>([]) // Usuarios para asignar
+  const [availableUsers, setAvailableUsers] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
 
   const [selectedEdificio, setSelectedEdificio] = useState<Edificio | null>(null)
@@ -57,24 +57,37 @@ export default function LockersPage() {
 
   // --- 1. CARGAR DATOS DE LA BD ---
   const fetchLockers = async () => {
+    console.log("1. Iniciando carga de lockers...");
     try {
-      const res = await fetch('http://localhost:3000/api/lockers/admin');
+      const token = localStorage.getItem('admin_token');
+
+      const res = await fetch('http://localhost:3000/api/lockers/admin', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      console.log("2. Status del servidor:", res.status);
+
       const data = await res.json();
-      
-      // LOGICA DE AGRUPACIÓN: Convertimos la lista plana en Edificios
+
+      if (!res.ok) {
+        console.error("3. Error del backend:", data.mensaje);
+        return;
+      }
+
+      console.log("4. Datos recibidos:", data);
+// LOGICA DE AGRUPACIÓN
       const edificiosMap = new Map<string, Edificio>();
       
       data.forEach((row: any) => {
-        // Asumimos que la ubicación o la primera letra del ID nos da el edificio. Ej: "E1-01" -> "E1"
-        const edifCode = row.ubicacion_detallada || (row.identificador ? row.identificador.split('-')[0] : 'General');
-        const edifName = row.ubicacion_detallada || `Edificio ${edifCode.replace('E', '')}`;
+        // CORRECCIÓN: Ahora usamos directamente la columna 'edificio' que nos da el backend
+        const edifName = row.edificio || 'Edificio No Asignado';
+        const edifCode = edifName; // Usamos el nombre como identificador único
         
         if (!edificiosMap.has(edifCode)) {
           edificiosMap.set(edifCode, { id: edifCode, nombre: edifName, lockers: [] });
         }
 
         const lockerObj: Locker = {
-          id: row.locker_id.toString(),
+          id: row.id ? row.id.toString() : Math.random().toString(),
           identificador: row.identificador,
           numero: row.identificador.includes('-') ? row.identificador.split('-')[1] : row.identificador,
           status: row.estado,
@@ -86,27 +99,31 @@ export default function LockersPage() {
 
       setEdificios(Array.from(edificiosMap.values()));
 
-      // Si teníamos un edificio seleccionado, lo actualizamos para que no desaparezcan los cambios
       if (selectedEdificio) {
         const updatedSelected = Array.from(edificiosMap.values()).find(e => e.id === selectedEdificio.id);
         if (updatedSelected) setSelectedEdificio(updatedSelected);
       }
 
     } catch (error) {
-      console.error("Error cargando lockers:", error);
+      console.error("Error crítico en fetchLockers:", error);
     } finally {
       setIsLoading(false);
+      console.log("5. Carga finalizada (isLoading = false)");
     }
   }
 
-  // Cargar lista de alumnos para el ComboBox de asignar
   const fetchUsers = async () => {
     try {
-      const res = await fetch('http://localhost:3000/api/users');
+      const token = localStorage.getItem('admin_token');
+      const res = await fetch('http://localhost:3000/api/users', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
       const data = await res.json();
-      // Filtramos solo los que son alumnos y están activos
-      const alumnos = data.filter((u: any) => (u.role === 'alumno' || u.role === 'estudiante') && u.status === 'activo');
-      setAvailableUsers(alumnos);
+      
+      if (res.ok) {
+        const alumnos = data.filter((u: any) => (u.role === 'alumno' || u.role === 'estudiante') && u.status === 'activo');
+        setAvailableUsers(alumnos);
+      }
     } catch (error) {
       console.error("Error cargando usuarios:", error);
     }
@@ -118,17 +135,20 @@ export default function LockersPage() {
   }, [])
 
   // --- 2. ACCIONES DEL ADMINISTRADOR ---
-
   const handleAssignLocker = async () => {
     if (!selectedLocker || !selectedUser) return;
     try {
+      const token = localStorage.getItem('admin_token');
       const res = await fetch('http://localhost:3000/api/lockers/admin/assign', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify({ locker_id: selectedLocker.id, matricula_usuario: selectedUser })
       });
       if (res.ok) {
-        await fetchLockers(); // Recargamos para ver los cambios
+        await fetchLockers(); 
         setIsAssignDialogOpen(false);
         setIsDetailDialogOpen(false);
         setSelectedLocker(null);
@@ -142,8 +162,10 @@ export default function LockersPage() {
   const handleReleaseLocker = async () => {
     if (!selectedLocker) return;
     try {
+      const token = localStorage.getItem('admin_token');
       const res = await fetch(`http://localhost:3000/api/lockers/admin/${selectedLocker.id}/release`, {
-        method: 'POST'
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` }
       });
       if (res.ok) {
         await fetchLockers();
@@ -156,9 +178,13 @@ export default function LockersPage() {
   const handleChangeStatus = async (newStatus: string) => {
     if (!selectedLocker) return;
     try {
+      const token = localStorage.getItem('admin_token');
       const res = await fetch(`http://localhost:3000/api/lockers/admin/${selectedLocker.id}/status`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify({ nuevo_estado: newStatus })
       });
       if (res.ok) {
@@ -168,7 +194,6 @@ export default function LockersPage() {
       }
     } catch (e) { console.error(e) }
   }
-
 
   // --- HELPERS VISUALES ---
   const getStatusColor = (status: string) => {
@@ -201,7 +226,6 @@ export default function LockersPage() {
     )
   }
 
-  // Vista de edificios (tarjetas principales)
   if (!selectedEdificio) {
     return (
       <div className="flex flex-col h-full">
@@ -233,7 +257,6 @@ export default function LockersPage() {
                       <h3 className="font-semibold text-lg mb-1">{edificio.nombre}</h3>
                       <p className="text-sm text-muted-foreground mb-6">{total} lockers</p>
 
-                      {/* Mini barra de estado */}
                       <div className="flex h-2 rounded-full overflow-hidden bg-muted">
                         <div className="bg-[#2fa4a9] transition-all" style={{ width: `${total > 0 ? (counts.disponibles / total) * 100 : 0}%` }} />
                         <div className="bg-[#c94a4a] transition-all" style={{ width: `${total > 0 ? (counts.ocupados / total) * 100 : 0}%` }} />
@@ -255,7 +278,6 @@ export default function LockersPage() {
     )
   }
 
-  // Vista de lockers de un edificio específico
   const counts = countByStatus(selectedEdificio.lockers)
 
   return (
@@ -266,7 +288,6 @@ export default function LockersPage() {
       />
 
       <div className="flex-1 p-6 lg:p-8 space-y-6 overflow-auto">
-        {/* Navegacion y leyenda */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <Button variant="ghost" className="w-fit" onClick={() => setSelectedEdificio(null)}>
             <ArrowLeft className="w-4 h-4 mr-2" /> Volver a edificios
@@ -288,7 +309,6 @@ export default function LockersPage() {
           </div>
         </div>
 
-        {/* Grid de Lockers */}
         <Card className="border-0 shadow-sm">
           <CardContent className="p-6">
             <div className="grid grid-cols-8 sm:grid-cols-10 md:grid-cols-12 lg:grid-cols-16 gap-3">
@@ -306,7 +326,6 @@ export default function LockersPage() {
         </Card>
       </div>
 
-      {/* Dialog de Detalle */}
       <Dialog open={isDetailDialogOpen} onOpenChange={setIsDetailDialogOpen}>
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
@@ -362,7 +381,6 @@ export default function LockersPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Dialog de Asignar */}
       <Dialog open={isAssignDialogOpen} onOpenChange={setIsAssignDialogOpen}>
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>

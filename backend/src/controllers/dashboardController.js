@@ -14,7 +14,7 @@ const getDashboardStats = async (req, res) => {
         const actividadReq = db.query(`
             SELECT a.accion, a.fecha_hora, u.nombre_completo, l.identificador as locker
             FROM access_logs a
-            LEFT JOIN usuarios u ON a.user_id = u.id
+            LEFT JOIN users u ON a.user_id = u.id
             LEFT JOIN assignments asg ON a.assignment_id = asg.id
             LEFT JOIN lockers l ON asg.locker_id = l.id
             ORDER BY a.fecha_hora DESC
