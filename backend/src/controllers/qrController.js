@@ -1,13 +1,16 @@
 const db = require("../config/db")
 const crypto = require("crypto")
+const fetch = require("node-fetch") // necesitan instalar: npm install node-fetch
 
+//Config ESP32
+const ESP32_URL = ""
+
+// GENERAR QR 
 const generateQRToken = async (req, res) => {
     const userId = req.user.id
-    let transactionStarted = false; // Flag para control de rollback
+    let transactionStarted = false;
 
     try {
-        // Buscar asignación activa
-
         const assignmentResult = await db.query(
             `SELECT 
                 a.id as assignment_id, 
@@ -31,29 +34,23 @@ const generateQRToken = async (req, res) => {
 
         const { assignment_id, locker_id, locker_numero } = assignmentResult.rows[0]
 
-        // generar token aleatorio (Criptográficamente seguro)
         const rawToken = crypto.randomBytes(32).toString("hex")
 
-        // hash del token para almacenamiento seguro
         const tokenHash = crypto
             .createHash("sha256")
             .update(rawToken)
             .digest("hex")
 
-        // expiración (60 segundos)
         const expiresAt = new Date(Date.now() + 60 * 1000)
 
-        // INICIO DE TRANSACCIÓN
         await db.query("BEGIN")
         transactionStarted = true;
 
-        // limpiar tokens viejos de ESTA asignación (Evita basura en la DB)
         await db.query(
             "DELETE FROM qr_tokens WHERE assignment_id = $1",
             [assignment_id]
         )
 
-        // insertar token nuevo con su hash
         await db.query(
             `INSERT INTO qr_tokens (assignment_id, token_hash, expires_at)
              VALUES ($1, $2, $3)`,
@@ -62,10 +59,9 @@ const generateQRToken = async (req, res) => {
 
         await db.query("COMMIT")
 
-        // respuesta exitosa
         res.json({
-            token: rawToken, // Solo el usuario recibe el token real
-            expiresAt: expiresAt.toISOString(), // Enviamos en formato ISO para el frontend
+            token: rawToken,
+            expiresAt: expiresAt.toISOString(),
             lockerInfo: {
                 id: locker_id,
                 numero: locker_numero
@@ -83,5 +79,78 @@ const generateQRToken = async (req, res) => {
         })
     }
 }
+// VALIDAR QR (NUEVO)
+const validarQRToken = async (req, res) => {
+    const { codigo } = req.body
 
-module.exports = { generateQRToken }
+    try {
+        // convertir a hash (igual que cuando se guardó)
+        const tokenHash = crypto
+            .createHash("sha256")
+            .update(codigo)
+            .digest("hex")
+
+        const result = await db.query(`
+            SELECT 
+                qt.assignment_id,
+                qt.expires_at,
+                l.identificador AS locker_numero
+            FROM qr_tokens qt
+            JOIN assignments a ON qt.assignment_id = a.id
+            JOIN lockers l ON a.locker_id = l.id
+            WHERE qt.token_hash = $1
+            LIMIT 1
+        `, [tokenHash])
+
+        //Token invalido
+        if (result.rows.length === 0) {
+
+            await db.query(`
+                INSERT INTO access_logs
+                (codigo_usado,resultado,motivo)
+                Values ($1, 'denegado', 'token_invalido')
+                `,[codigo])
+    
+            return res.json({ acceso: false })
+        }
+
+        const token = result.rows[0]
+
+        // Token expirado
+        if (new Date(token.expires_at) < new Date()) {
+
+            await db.query(`
+               INSERT INTO access_logs 
+               (assignment_id, locker_numero, codigo_usado, resultado, motivo)
+               VALUES ($1, $2, $3, 'denegado', 'expirado')
+            `, [token.assignment_id, token.locker_numero, codigo])
+
+            return res.json({ acceso: false, motivo: "espirado"})
+        }
+
+        // registrar acceso lo cambiamos para que coincida con el cambio que hice en la bd
+        await db.query(`
+            INSERT INTO access_logs 
+            (assignment_id, locker_numero, codigo_usado, resultado)
+            VALUES ($1, $2, $3, 'permitido')
+        `, [token.assignment_id, token.locker_numero, codigo])
+
+        // eliminar token (uso único)
+        await db.query(
+            "DELETE FROM qr_tokens WHERE assignment_id = $1",
+            [token.assignment_id]
+        )
+
+        return res.json({
+            acceso: true,
+            locker: token.locker_numero
+        })
+
+    } catch (error) {
+        console.error("Error al validar QR:", error)
+        res.status(500).json({ acceso: false })
+    }
+}
+
+// EXPORTS
+module.exports = { generateQRToken, validarQRToken }

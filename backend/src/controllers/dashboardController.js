@@ -2,7 +2,7 @@ const db = require('../config/db');
 
 const getDashboardStats = async (req, res) => {
     try {
-        // 1. Consultas simultáneas para máxima velocidad
+        // 1. Consultas simultáneas (Añadimos solicitudesReq)
         const kpisReq = db.query(`
             SELECT
                 (SELECT COUNT(*) FROM lockers WHERE estado = 'ocupado') as lockers_ocupados,
@@ -12,17 +12,15 @@ const getDashboardStats = async (req, res) => {
         `);
 
         const actividadReq = db.query(`
-            SELECT a.accion, a.fecha_hora, u.nombre_completo, l.identificador as locker
+            SELECT a.accion, a.fecha_hora, u.nombre_completo, a.locker_numero as locker
             FROM access_logs a
             LEFT JOIN users u ON a.user_id = u.id
-            LEFT JOIN assignments asg ON a.assignment_id = asg.id
-            LEFT JOIN lockers l ON asg.locker_id = l.id
             ORDER BY a.fecha_hora DESC
             LIMIT 4
         `);
 
         const alertasReq = db.query(`
-            SELECT i.folio, i.categoria, i.created_at, l.identificador as locker
+            SELECT i.folio, i.categoria, i.created_at, l.identificador as locker_identificador
             FROM incidents i
             LEFT JOIN lockers l ON i.locker_id = l.id
             WHERE i.estado = 'pendiente'
@@ -30,12 +28,32 @@ const getDashboardStats = async (req, res) => {
             LIMIT 3
         `);
 
-        // Esperamos a que todas las consultas terminen
-        const [kpisRes, actividadRes, alertasRes] = await Promise.all([kpisReq, actividadReq, alertasReq]);
+        // --- NUEVA CONSULTA: Solicitudes de Alumnos ---
+        const solicitudesReq = db.query(`
+            SELECT 
+                lr.id, 
+                u.nombre_completo, 
+                l.identificador as locker_identificador 
+            FROM locker_requests lr
+            JOIN users u ON lr.user_id = u.id
+            JOIN lockers l ON lr.locker_id = l.id
+            WHERE lr.status = 'pending'
+            ORDER BY lr.created_at DESC
+            LIMIT 5
+        `);
+
+        // Esperamos a que TODAS las consultas terminen
+        const [kpisRes, actividadRes, alertasRes, solicitudesRes] = await Promise.all([
+            kpisReq, 
+            actividadReq, 
+            alertasRes, 
+            solicitudesReq
+        ]);
+        
         const kpis = kpisRes.rows[0];
 
         // 2. Matemáticas para los KPIs
-        const total = parseInt(kpis.total_lockers) || 1; // Evitar división por cero
+        const total = parseInt(kpis.total_lockers) || 1;
         const tasaOcupacion = Math.round((parseInt(kpis.lockers_ocupados) / total) * 100);
         const disponibilidad = Math.round((parseInt(kpis.lockers_disponibles) / total) * 100);
 
@@ -44,11 +62,13 @@ const getDashboardStats = async (req, res) => {
             kpis: {
                 tasaOcupacion: tasaOcupacion,
                 accesosHoy: parseInt(kpis.accesos_hoy),
-                tiempoPromedio: 4.2, // Dato simulado por ahora
+                tiempoPromedio: 4.2, 
                 disponibilidad: disponibilidad
             },
             actividadReciente: actividadRes.rows,
-            alertas: alertasRes.rows
+            alertas: alertasRes.rows,
+            // --- NUEVO CAMPO EN EL JSON ---
+            solicitudesPendientes: solicitudesRes.rows 
         });
 
     } catch (error) {
