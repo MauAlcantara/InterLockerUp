@@ -84,7 +84,7 @@ export default function UsuariosPage() {
   // --- 1. CARGAR USUARIOS DESDE LA BD ---
   const fetchUsers = async () => {
     try {
-      const res = await fetch('http://localhost:3000/api/users');
+      const res = await fetch('https://admin.vigilia.world/api/users');
       if (res.ok) {
         const data = await res.json();
         setUsers(data);
@@ -103,7 +103,7 @@ export default function UsuariosPage() {
   // --- 2. CREAR USUARIO ---
   const handleCreateUser = async () => {
     try {
-      const res = await fetch('http://localhost:3000/api/users', {
+      const res = await fetch('https://admin.vigilia.world/api/users', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData)
@@ -127,7 +127,7 @@ export default function UsuariosPage() {
   const handleEditUser = async () => {
     if (!selectedUser) return;
     try {
-      const res = await fetch(`http://localhost:3000/api/users/${selectedUser.id}`, {
+      const res = await fetch(`https://admin.vigilia.world/api/users/${selectedUser.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData)
@@ -149,7 +149,7 @@ export default function UsuariosPage() {
   // --- 4. CAMBIAR ESTADO (ACTIVAR/DESACTIVAR) ---
   const handleToggleStatus = async (userId: number) => {
     try {
-      const res = await fetch(`http://localhost:3000/api/users/${userId}/status`, {
+      const res = await fetch(`https://admin.vigilia.world/api/users/${userId}/status`, {
         method: 'PATCH'
       });
       if (res.ok) {

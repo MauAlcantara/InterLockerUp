@@ -33,7 +33,7 @@ export function Header({ title, description }: HeaderProps) {
   const [notificaciones, setNotificaciones] = useState<AppNotification[]>([])
   
   // Asumimos API_URL para el ejemplo, cámbialo por tu variable real si la tienes
-  const API_URL = "http://localhost:3000/api" 
+  const API_URL = "https://admin.vigilia.world/api" 
 
   useEffect(() => {
     // 1. Cargar el nombre real del admin desde el almacenamiento
