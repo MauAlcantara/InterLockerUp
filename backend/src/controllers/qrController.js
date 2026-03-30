@@ -1,115 +1,145 @@
-const db = require("../config/db");
-const crypto = require("crypto");
+const db = require("../config/db")
+const crypto = require("crypto")
 
-/**
- * Genera un token QR único y temporal para el alumno
- */
+// GENERAR QR
 const generateQRToken = async (req, res) => {
-    const userId = req.user.id; // Extraído del middleware de auth
-    let transactionStarted = false;
+    const userId = req.user.id
+    let transactionStarted = false
 
     try {
-        // 1. Buscar asignación activa en interlockerup_db
         const assignmentResult = await db.query(
-            `SELECT a.id as assignment_id, l.id as locker_id, l.identificador as locker_numero
-             FROM assignment_users au
-             JOIN assignments a ON au.assignment_id = a.id
-             JOIN lockers l ON a.locker_id = l.id
-             WHERE au.user_id = $1 
-               AND a.status IN ('activo', 'activa', 'active') 
-               AND a.fecha_vencimiento > NOW()
-             LIMIT 1`,
+            `SELECT 
+                a.id as assignment_id, 
+                l.id as locker_id, 
+                l.identificador as locker_numero
+            FROM assignment_users au
+            JOIN assignments a ON au.assignment_id = a.id
+            JOIN lockers l ON a.locker_id = l.id
+            WHERE au.user_id = $1 
+              AND a.status IN ('activo', 'activa', 'active') 
+              AND a.fecha_vencimiento > NOW()
+            LIMIT 1`,
             [userId]
-        );
+        )
 
         if (assignmentResult.rows.length === 0) {
             return res.status(404).json({
                 mensaje: "No tienes un casillero asignado o tu acceso ha expirado."
-            });
+            })
         }
 
-        const { assignment_id, locker_id, locker_numero } = assignmentResult.rows[0];
+        const { assignment_id, locker_id, locker_numero } = assignmentResult.rows[0]
 
-        // 2. Generar token criptográfico (32 bytes -> 64 chars hex)
-        const rawToken = crypto.randomBytes(32).toString("hex");
-        const tokenHash = crypto.createHash("sha256").update(rawToken).digest("hex");
-        const expiresAt = new Date(Date.now() + 60 * 1000); // 60 segundos de vida
+        const rawToken = crypto.randomBytes(32).toString("hex")
 
-        // 3. Transacción SQL para asegurar integridad
-        await db.query("BEGIN");
-        transactionStarted = true;
+        const tokenHash = crypto
+            .createHash("sha256")
+            .update(rawToken)
+            .digest("hex")
 
-        // Limpiar tokens previos de esta asignación
-        await db.query("DELETE FROM qr_tokens WHERE assignment_id = $1", [assignment_id]);
+        const expiresAt = new Date(Date.now() + 60 * 1000)
 
-        // Insertar nuevo token
+        await db.query("BEGIN")
+        transactionStarted = true
+
+        await db.query(
+            "DELETE FROM qr_tokens WHERE assignment_id = $1",
+            [assignment_id]
+        )
+
         await db.query(
             `INSERT INTO qr_tokens (assignment_id, token_hash, expires_at)
              VALUES ($1, $2, $3)`,
             [assignment_id, tokenHash, expiresAt]
-        );
+        )
 
-        await db.query("COMMIT");
+        await db.query("COMMIT")
 
         res.json({
-            token: rawToken, // Se envía al frontend para el QR
+            token: rawToken,
             expiresAt: expiresAt.toISOString(),
-            lockerInfo: { id: locker_id, numero: locker_numero }
-        });
+            lockerInfo: {
+                id: locker_id,
+                numero: locker_numero
+            }
+        })
 
     } catch (error) {
-        if (transactionStarted) await db.query("ROLLBACK");
-        console.error("Error al generar QR:", error);
-        res.status(500).json({ mensaje: "Error interno al generar código de acceso" });
-    }
-};
-
-/**
- * Valida el token escaneado por el hardware (ESP32)
- */
-const validarQRToken = async (req, res) => {
-    const { token } = req.body;
-
-    if (!token) return res.status(400).json({ valido: false, mensaje: "Token ausente" });
-
-    try {
-        const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
-
-        // Buscar token válido y no expirado
-        const result = await db.query(
-            `SELECT qr.assignment_id, l.id as locker_id, l.identificador as locker_numero
-             FROM qr_tokens qr
-             JOIN assignments a ON qr.assignment_id = a.id
-             JOIN lockers l ON a.locker_id = l.id
-             WHERE qr.token_hash = $1 AND qr.expires_at > NOW()`,
-            [tokenHash]
-        );
-
-        if (result.rows.length === 0) {
-            return res.status(401).json({ valido: false, mensaje: "Token inválido o expirado" });
+        if (transactionStarted) {
+            await db.query("ROLLBACK")
         }
 
-        const data = result.rows[0];
+        console.error("Error al generar QR:", error)
+        res.status(500).json({
+            mensaje: "Error interno al generar el código de acceso"
+        })
+    }
+}
 
-        // Auditoría: Registrar la apertura en el Dashboard
+// VALIDAR QR
+const validarQRToken = async (req, res) => {
+    const { codigo } = req.body
+
+    console.log("BODY RECIBIDO:", req.body)
+
+    try {
+        if (!codigo) {
+            return res.json({
+                acceso: false,
+                mensaje: "Código no recibido"
+            })
+        }
+
+        const tokenHash = crypto
+            .createHash("sha256")
+            .update(codigo)
+            .digest("hex")
+
+        const result = await db.query(`
+            SELECT 
+                qt.assignment_id,
+                qt.expires_at,
+                l.identificador AS locker_numero
+            FROM qr_tokens qt
+            JOIN assignments a ON qt.assignment_id = a.id
+            JOIN lockers l ON a.locker_id = l.id
+            WHERE qt.token_hash = $1
+            LIMIT 1
+        `, [tokenHash])
+
+        if (result.rows.length === 0) {
+            return res.json({
+                acceso: false,
+                mensaje: "Token inválido"
+            })
+        }
+
+        const token = result.rows[0]
+
+        if (new Date(token.expires_at) < new Date()) {
+            return res.json({
+                acceso: false,
+                mensaje: "Token expirado"
+            })
+        }
+
+        // eliminar token (uso único)
         await db.query(
-            `INSERT INTO accesos (locker_id, accion, fecha) VALUES ($1, $2, NOW())`,
-            [data.locker_id, 'Apertura vía QR']
-        );
+            "DELETE FROM qr_tokens WHERE assignment_id = $1",
+            [token.assignment_id]
+        )
 
-        // Seguridad: El token solo sirve una vez (One-Time Use)
-        await db.query("DELETE FROM qr_tokens WHERE token_hash = $1", [tokenHash]);
-
-        res.json({
-            valido: true,
-            mensaje: "Acceso autorizado",
-            locker: data.locker_numero
-        });
+        return res.json({
+            acceso: true,
+            locker: token.locker_numero
+        })
 
     } catch (error) {
-        console.error("Error al validar QR:", error);
-        res.status(500).json({ valido: false, mensaje: "Error de servidor" });
+        console.error("Error al validar QR:", error)
+        res.status(500).json({
+            acceso: false
+        })
     }
-};
+}
 
-module.exports = { generateQRToken, validarQRToken };
+module.exports = { generateQRToken, validarQRToken }
