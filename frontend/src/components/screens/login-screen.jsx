@@ -10,7 +10,7 @@ import forge from "node-forge"
 import toast, { Toaster } from "react-hot-toast"
 
 // --- CAMBIO CLAVE: Usar la URL que ya sabes que funciona ---
-const API_URL = "https://admin.vigilia.world"; 
+const API_URL = "https://vigilia.world"; 
 
 async function getPublicKey() {
     try {
