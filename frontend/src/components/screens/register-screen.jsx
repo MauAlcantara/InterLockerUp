@@ -1,13 +1,12 @@
-import React, { useState, useEffect} from "react"
+import React, { useState, useEffect } from "react"
 import { Lock, User, Eye, EyeOff, Loader2, Mail, ArrowLeft, GraduationCap } from "lucide-react"
 import toast, { Toaster } from "react-hot-toast"
 
+// --- CONSTANTE DE API UNIFICADA ---
+const API_BASE = "https://admin.vigilia.world";
+
 export default function RegisterScreen({ onRegister, onBackToLogin }) {
-    const api = import.meta.env.VITE_API_URL
-    const API_URL = `${api}/api/register`
-
     const [carreras, setCarreras] = useState([])
-
     const [showPassword, setShowPassword] = useState(false)
     const [showConfirmPassword, setShowConfirmPassword] = useState(false)
     const [isLoading, setIsLoading] = useState(false)
@@ -22,13 +21,17 @@ export default function RegisterScreen({ onRegister, onBackToLogin }) {
         confirmPassword: ""
     })
 
+    // Cargar divisiones académicas desde el servidor de producción
     useEffect(() => {
         const fetchCarreras = async () => {
             try {
-                const response = await fetch(`${api}/api/auth/carreras`)
+                const response = await fetch(`${API_BASE}/api/auth/carreras`)
                 if (response.ok) {
                     const data = await response.json()
-                    setCarreras(data)
+                    // Aseguramos que data sea un array antes de setearlo
+                    setCarreras(Array.isArray(data) ? data : [])
+                } else {
+                    throw new Error("Respuesta del servidor no válida")
                 }
             } catch (error) {
                 console.error("Error al cargar carreras:", error)
@@ -36,7 +39,7 @@ export default function RegisterScreen({ onRegister, onBackToLogin }) {
             }
         }
         fetchCarreras()
-    }, [api])
+    }, [])
 
     const updateField = (field, value) => {
         setFormData(prev => ({
@@ -55,7 +58,10 @@ export default function RegisterScreen({ onRegister, onBackToLogin }) {
                 return toast.error("Usa un correo institucional válido (@uteq.edu.mx)")
             }
             if (formData.matricula.length < 7) {
-                return toast.error("La matrícula no parece válida")
+                return toast.error("La matrícula debe tener al menos 7 dígitos")
+            }
+            if (!formData.carrera) {
+                return toast.error("Selecciona tu división académica")
             }
             setStep(2)
             return
@@ -73,7 +79,8 @@ export default function RegisterScreen({ onRegister, onBackToLogin }) {
         setIsLoading(true)
 
         try {
-            const response = await fetch(API_URL, {
+            // El endpoint de registro también debe apuntar a producción
+            const response = await fetch(`${API_BASE}/api/register`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
@@ -98,7 +105,7 @@ export default function RegisterScreen({ onRegister, onBackToLogin }) {
             }, 2000)
 
         } catch (error) {
-            toast.error(error.message || "Error de conexión")
+            toast.error(error.message || "Error de conexión con el servidor")
         } finally {
             setIsLoading(false)
         }
@@ -115,11 +122,11 @@ export default function RegisterScreen({ onRegister, onBackToLogin }) {
         formData.confirmPassword &&
         formData.password === formData.confirmPassword
 
-
     return (
         <div className="min-h-screen bg-gradient-to-b from-[#0b4dbb] to-[#1f78ff] flex flex-col">
             <Toaster position="top-center" />
 
+            {/* Botón Volver */}
             <div className="px-4 pt-12 pb-4">
                 <button
                     type="button"
@@ -133,9 +140,10 @@ export default function RegisterScreen({ onRegister, onBackToLogin }) {
                 </button>
             </div>
 
+            {/* Header con Logo */}
             <div className="flex flex-col items-center px-6 pb-6">
-                <div className="w-20 h-20 bg-white rounded-2xl flex items-center justify-center shadow-xl mb-4">
-                    <img src="/logo.png" alt="logo" className="w-40 h-40 object-contain" />
+                <div className="w-20 h-20 bg-white rounded-2xl flex items-center justify-center shadow-xl mb-4 overflow-hidden p-2">
+                    <img src="/logo.png" alt="logo" className="w-full h-full object-contain" />
                 </div>
 
                 <h1 className="text-2xl font-bold text-white text-center">Crear Cuenta</h1>
@@ -147,46 +155,47 @@ export default function RegisterScreen({ onRegister, onBackToLogin }) {
                 </div>
             </div>
 
-            <div className="flex-1 bg-white rounded-t-3xl p-6 shadow-2xl">
-                <h2 className="text-lg font-semibold text-center mb-6">
-                    {step === 1 ? "Información Personal" : "Seguridad"}
+            {/* Formulario */}
+            <div className="flex-1 bg-white rounded-t-[2.5rem] p-8 shadow-2xl">
+                <h2 className="text-lg font-semibold text-center text-slate-800 mb-6">
+                    {step === 1 ? "Información Académica" : "Seguridad de la Cuenta"}
                 </h2>
 
                 <form onSubmit={handleSubmit} className="space-y-4">
                     {step === 1 && (
                         <>
                             <div className="space-y-1">
-                                <label className="text-sm font-medium text-gray-700">Nombre Completo</label>
+                                <label className="text-sm font-semibold text-slate-700 ml-1">Nombre Completo</label>
                                 <div className="relative">
                                     <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                                     <input
                                         type="text"
-                                        placeholder="Tu nombre completo"
+                                        placeholder="Ej: Elian Ramírez"
                                         value={formData.nombre_completo}
                                         onChange={(e) => updateField("nombre_completo", e.target.value)}
-                                        className="pl-10 h-12 w-full rounded-lg border border-gray-200 bg-gray-50 focus:bg-white transition-colors outline-none focus:ring-2 focus:ring-[#0b4dbb]/20"
+                                        className="pl-10 h-12 w-full rounded-xl border border-gray-200 bg-gray-50 focus:bg-white transition-all outline-none focus:ring-2 focus:ring-[#0b4dbb]/20"
                                         required
                                     />
                                 </div>
                             </div>
 
                             <div className="space-y-1">
-                                <label className="text-sm font-medium text-gray-700">Matrícula</label>
+                                <label className="text-sm font-semibold text-slate-700 ml-1">Matrícula</label>
                                 <div className="relative">
                                     <GraduationCap className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                                     <input
                                         type="text"
-                                        placeholder="Ej: 202312345"
+                                        placeholder="202XXXXXX"
                                         value={formData.matricula}
                                         onChange={(e) => updateField("matricula", e.target.value.replace(/\D/g, ""))}
-                                        className="pl-10 h-12 w-full rounded-lg border border-gray-200 bg-gray-50 focus:bg-white outline-none focus:ring-2 focus:ring-[#0b4dbb]/20"
+                                        className="pl-10 h-12 w-full rounded-xl border border-gray-200 bg-gray-50 focus:bg-white transition-all outline-none"
                                         required
                                     />
                                 </div>
                             </div>
 
                             <div className="space-y-1">
-                                <label className="text-sm font-medium text-gray-700">Correo Institucional</label>
+                                <label className="text-sm font-semibold text-slate-700 ml-1">Correo Institucional</label>
                                 <div className="relative">
                                     <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                                     <input
@@ -194,18 +203,18 @@ export default function RegisterScreen({ onRegister, onBackToLogin }) {
                                         placeholder="usuario@uteq.edu.mx"
                                         value={formData.email}
                                         onChange={(e) => updateField("email", e.target.value.toLowerCase())}
-                                        className="pl-10 h-12 w-full rounded-lg border border-gray-200 bg-gray-50 focus:bg-white outline-none focus:ring-2 focus:ring-[#0b4dbb]/20"
+                                        className="pl-10 h-12 w-full rounded-xl border border-gray-200 bg-gray-50 focus:bg-white transition-all outline-none"
                                         required
                                     />
                                 </div>
                             </div>
 
                             <div className="space-y-1">
-                                <label className="text-sm font-medium text-gray-700">División Académica</label>
+                                <label className="text-sm font-semibold text-slate-700 ml-1">División Académica</label>
                                 <select
                                     value={formData.carrera}
                                     onChange={(e) => updateField("carrera", e.target.value)}
-                                    className="h-12 w-full rounded-lg border border-gray-200 bg-gray-50 px-3 outline-none focus:ring-2 focus:ring-[#0b4dbb]/20"
+                                    className="h-12 w-full rounded-xl border border-gray-200 bg-gray-50 px-3 transition-all outline-none focus:ring-2 focus:ring-[#0b4dbb]/20"
                                     required
                                 >
                                     <option value="">Selecciona tu División</option>
@@ -220,7 +229,7 @@ export default function RegisterScreen({ onRegister, onBackToLogin }) {
                     {step === 2 && (
                         <>
                             <div className="space-y-1">
-                                <label className="text-sm font-medium text-gray-700">Contraseña</label>
+                                <label className="text-sm font-semibold text-slate-700 ml-1">Contraseña</label>
                                 <div className="relative">
                                     <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                                     <input
@@ -228,21 +237,21 @@ export default function RegisterScreen({ onRegister, onBackToLogin }) {
                                         placeholder="Mínimo 8 caracteres"
                                         value={formData.password}
                                         onChange={(e) => updateField("password", e.target.value)}
-                                        className="pl-10 pr-10 h-12 w-full rounded-lg border border-gray-200 bg-gray-50 focus:bg-white outline-none"
+                                        className="pl-10 pr-10 h-12 w-full rounded-xl border border-gray-200 bg-gray-50 focus:bg-white outline-none"
                                         required
                                     />
                                     <button
                                         type="button"
                                         onClick={() => setShowPassword(!showPassword)}
-                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
                                     >
-                                        {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                                        {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                                     </button>
                                 </div>
                             </div>
 
                             <div className="space-y-1">
-                                <label className="text-sm font-medium text-gray-700">Confirmar Contraseña</label>
+                                <label className="text-sm font-semibold text-slate-700 ml-1">Confirmar Contraseña</label>
                                 <div className="relative">
                                     <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                                     <input
@@ -250,15 +259,15 @@ export default function RegisterScreen({ onRegister, onBackToLogin }) {
                                         placeholder="Repite tu contraseña"
                                         value={formData.confirmPassword}
                                         onChange={(e) => updateField("confirmPassword", e.target.value)}
-                                        className="pl-10 pr-10 h-12 w-full rounded-lg border border-gray-200 bg-gray-50 focus:bg-white outline-none"
+                                        className="pl-10 pr-10 h-12 w-full rounded-xl border border-gray-200 bg-gray-50 focus:bg-white outline-none"
                                         required
                                     />
                                     <button
                                         type="button"
                                         onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
                                     >
-                                        {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                                        {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                                     </button>
                                 </div>
                             </div>
@@ -268,13 +277,13 @@ export default function RegisterScreen({ onRegister, onBackToLogin }) {
                     <button
                         type="submit"
                         disabled={isLoading || (step === 1 ? !isStep1Valid : !isStep2Valid)}
-                        className="w-full h-12 rounded-lg bg-[#0b4dbb] hover:bg-[#083a8d] disabled:bg-gray-300 text-white font-semibold mt-6 transition-all shadow-md active:scale-[0.98]"
+                        className="w-full h-14 rounded-xl bg-[#0b4dbb] hover:bg-[#083a8d] disabled:bg-gray-300 text-white font-bold text-lg mt-6 transition-all shadow-lg active:scale-[0.98]"
                     >
                         <div className="flex items-center justify-center w-full h-full">
                             {isLoading ? (
                                 <Loader2 className="animate-spin w-6 h-6" />
                             ) : (
-                                <span>{step === 1 ? "Continuar" : "Crear Cuenta"}</span>
+                                <span>{step === 1 ? "Siguiente Paso" : "Finalizar Registro"}</span>
                             )}
                         </div>
                     </button>
