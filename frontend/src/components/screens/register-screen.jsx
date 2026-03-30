@@ -170,7 +170,7 @@ export default function RegisterScreen({ onRegister, onBackToLogin }) {
                                     <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                                     <input
                                         type="text"
-                                        placeholder="Ej: Elian Ramírez"
+                                        placeholder="Ej: Juan Pérez"
                                         value={formData.nombre_completo}
                                         onChange={(e) => updateField("nombre_completo", e.target.value)}
                                         className="pl-10 h-12 w-full rounded-xl border border-gray-200 bg-gray-50 focus:bg-white transition-all outline-none focus:ring-2 focus:ring-[#0b4dbb]/20"
