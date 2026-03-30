@@ -3,7 +3,7 @@ import { Lock, User, Eye, EyeOff, Loader2, Mail, ArrowLeft, GraduationCap } from
 import toast, { Toaster } from "react-hot-toast"
 
 // --- CONSTANTE DE API UNIFICADA ---
-const API_BASE = "https://admin.vigilia.world";
+const API_BASE = "https://vigilia.world";
 
 export default function RegisterScreen({ onRegister, onBackToLogin }) {
     const [carreras, setCarreras] = useState([])
