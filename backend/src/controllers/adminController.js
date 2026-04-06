@@ -1,27 +1,25 @@
 const db = require('../config/db');
 
+// 1. Obtener las incidencias disfrazadas de notificaciones para la campanita
 const getNotificaciones = async (req, res) => {
     try {
-        // 1. Busca las últimas 5 incidencias reportadas
         const result = await db.query(`
             SELECT 
                 i.id,
-                'Nueva incidencia reportada' as titulo,
+                'Alerta de Incidencia' as titulo,
                 'Locker ' || l.identificador || ' - ' || i.categoria as mensaje,
                 i.created_at as fecha,
                 i.estado
             FROM incidents i
             JOIN lockers l ON i.locker_id = l.id
             ORDER BY i.created_at DESC
-            LIMIT 5
+            LIMIT 10
         `);
 
-        // 2. Formatea los datos para que React los entienda a la perfección
         const notificaciones = result.rows.map(row => {
-            // Calcula el tiempo transcurrido
             const fechaReporte = new Date(row.fecha);
             const ahora = new Date();
-            const diffMs = ahora - fechaReporte;
+            const diffMs = Math.max(0, ahora - fechaReporte);
             const diffMins = Math.floor(diffMs / 60000);
             const diffHrs = Math.floor(diffMins / 60);
             const diffDays = Math.floor(diffHrs / 24);
@@ -32,19 +30,36 @@ const getNotificaciones = async (req, res) => {
             else if (diffDays >= 1) tiempoStr = `Hace ${diffDays} días`;
 
             return {
-                id: row.id, // Usamos el ID de la incidencia
+                id: row.id, 
                 titulo: row.titulo,
                 mensaje: row.mensaje,
                 tiempo: tiempoStr,
+                // Si el estado es 'pendiente', React pondrá el punto rojo (leida: false)
                 leida: row.estado !== 'pendiente' 
             };
         });
 
         res.json(notificaciones);
     } catch (error) {
-        console.error("Error al obtener notificaciones:", error);
+        console.error("Error al obtener incidencias para el admin:", error);
         res.status(500).json({ mensaje: "Error interno del servidor" });
     }
 };
 
-module.exports = { getNotificaciones };
+// 2. Marcar incidencia como leída (Cambiar estado a 'en revisión')
+const marcarIncidenciaLeida = async (req, res) => {
+    const { id } = req.params;
+    try {
+        // Al darle clic, pasamos el estado de 'pendiente' a 'en revisión'
+        await db.query(
+            "UPDATE incidents SET estado = 'en revisión' WHERE id = $1 AND estado = 'pendiente'", 
+            [id]
+        );
+        res.json({ mensaje: "Incidencia en revisión" });
+    } catch (error) {
+        console.error("Error al actualizar estado de la incidencia:", error);
+        res.status(500).json({ mensaje: "Error al actualizar la incidencia" });
+    }
+};
+
+module.exports = { getNotificaciones, marcarIncidenciaLeida };

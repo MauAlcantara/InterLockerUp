@@ -223,18 +223,28 @@ const approveLockerRequestAdmin = async (req, res) => {
             [assignmentId, solicitud.user_id]
         );
 
-        // 4. Vinculamos a los compañeros (Si es compartido)
-        const partnersQuery = await client.query('SELECT user_id FROM request_partners WHERE request_id = $1', [requestId]);
-        for(const partner of partnersQuery.rows) {
-            await client.query('INSERT INTO assignment_users (assignment_id, user_id) VALUES ($1, $2)', [assignmentId, partner.user_id]);
+        // 4. CORRECCIÓN: Vinculamos a los compañeros usando el arreglo correcto 'companions' de la BD
+        if (solicitud.shared && solicitud.companions && solicitud.companions.length > 0) {
+            for(const partnerId of solicitud.companions) {
+                await client.query(
+                    'INSERT INTO assignment_users (assignment_id, user_id) VALUES ($1, $2)', 
+                    [assignmentId, partnerId]
+                );
+            }
         }
 
         // 5. Actualizamos los estados
         await client.query("UPDATE locker_requests SET status = 'approved' WHERE id = $1", [requestId]);
         await client.query("UPDATE lockers SET estado = 'ocupado' WHERE id = $1", [solicitud.locker_id]);
 
-        // 6. Magia automática: Rechazamos cualquier otra solicitud de otros alumnos que querían este mismo casillero
+        // 6. Rechazamos otras solicitudes pendientes para este casillero
         await client.query("UPDATE locker_requests SET status = 'rejected' WHERE locker_id = $1 AND status = 'pending'", [solicitud.locker_id]);
+
+        // 7. NOTIFICACIÓN AUTOMÁTICA AL ALUMNO
+        await client.query(
+            "INSERT INTO notifications (user_id, mensaje, tipo) VALUES ($1, $2, $3)",
+            [solicitud.user_id, `¡Felicidades! Tu solicitud ha sido aprobada. Puedes empezar a usar tu casillero.`, "success"]
+        );
 
         await client.query('COMMIT');
         res.json({ mensaje: '¡Solicitud aprobada y casillero asignado oficialmente!' });
@@ -247,4 +257,59 @@ const approveLockerRequestAdmin = async (req, res) => {
     }
 };
 
-module.exports = { getAvailableLockers, assignLocker, getAllLockersAdmin, changeLockerStatusAdmin, releaseLockerAdmin, assignLockerAdmin, approveLockerRequestAdmin};
+// --- Traer todas las solicitudes pendientes ---
+const getPendingRequestsAdmin = async (req, res) => {
+    try {
+        const result = await db.query(`
+            SELECT 
+                lr.id,
+                lr.locker_id,
+                lr.shared,
+                lr.status,
+                lr.created_at,
+                l.identificador AS locker_identificador,
+                u.nombre_completo AS usuario_nombre,
+                u.matricula AS usuario_matricula
+            FROM locker_requests lr
+            JOIN lockers l ON lr.locker_id = l.id
+            JOIN users u ON lr.user_id = u.id
+            WHERE lr.status = 'pending'
+            ORDER BY lr.created_at ASC
+        `);
+        res.json(result.rows);
+    } catch (error) {
+        console.error("Error al obtener solicitudes pendientes:", error);
+        res.status(500).json({ mensaje: "Error al cargar solicitudes" });
+    }
+};
+
+// --- Rechazar solicitud y notificar al alumno ---
+const rejectLockerRequestAdmin = async (req, res) => {
+    const { requestId } = req.params;
+    try {
+        // 1. Buscamos de quién es la solicitud
+        const reqData = await db.query("SELECT locker_id, user_id FROM locker_requests WHERE id = $1", [requestId]);
+        if (reqData.rows.length === 0) return res.status(404).json({ mensaje: "Solicitud no encontrada" });
+
+        const { locker_id, user_id } = reqData.rows[0];
+
+        // 2. Rechazar
+        await db.query("UPDATE locker_requests SET status = 'rejected' WHERE id = $1", [requestId]);
+
+        // 3. Liberar el locker para que otro lo pueda pedir
+        await db.query("UPDATE lockers SET estado = 'disponible' WHERE id = $1", [locker_id]);
+
+        // 4. NOTIFICACIÓN AL ALUMNO
+        await db.query(
+            "INSERT INTO notifications (user_id, mensaje, tipo) VALUES ($1, $2, $3)",
+            [user_id, "Tu solicitud de casillero ha sido rechazada. Pasa a administración para más detalles.", "error"]
+        );
+
+        res.json({ mensaje: "Solicitud rechazada" });
+    } catch (error) {
+        console.error("Error al rechazar solicitud:", error);
+        res.status(500).json({ mensaje: "Error interno" });
+    }
+};
+
+module.exports = { getAvailableLockers, assignLocker, getAllLockersAdmin, changeLockerStatusAdmin, releaseLockerAdmin, assignLockerAdmin, approveLockerRequestAdmin, getPendingRequestsAdmin, rejectLockerRequestAdmin};
