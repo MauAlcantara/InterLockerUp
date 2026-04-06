@@ -89,7 +89,16 @@ export default function HomeScreen({ onNavigate, onLogout }) {
     if (!token) return;
 
     fetch(`${api}/api/perfil/me`, { headers: { Authorization: `Bearer ${token}` } })
-      .then(res => res.json()).then(data => setUser(data));
+      .then(res => {
+        if (!res.ok) throw new Error("Sesión expirada");
+        return res.json();
+      })
+      .then(data => setUser(data))
+      .catch(err => {
+        console.error("Error de sesión:", err);
+        localStorage.removeItem("token");
+        window.location.href = "/login";
+      });
 
     fetch(`${api}/api/perfil/my-locker`, { headers: { Authorization: `Bearer ${token}` } })
       .then(res => res.json())

@@ -150,8 +150,12 @@ export function Header({ title, description }: HeaderProps) {
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Mi cuenta</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>Perfil</DropdownMenuItem>
-            <DropdownMenuItem>Configuración</DropdownMenuItem>
+            <DropdownMenuItem 
+              className="cursor-pointer" 
+              onClick={() => window.location.href = "/dashboard/perfil"}
+            >
+              Perfil
+            </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:bg-destructive/10 cursor-pointer flex items-center gap-2">
               <LogOut className="w-4 h-4" />

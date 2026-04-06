@@ -11,6 +11,7 @@ import {
   AreaChart, Area, XAxis, YAxis, ResponsiveContainer, Tooltip, BarChart, Bar,
 } from "recharts"
 
+
 // Datos estáticos para gráficas y fallbacks
 const usageData = [
   { day: "Lun", accesos: 145 }, { day: "Mar", accesos: 132 }, { day: "Mie", accesos: 168 },

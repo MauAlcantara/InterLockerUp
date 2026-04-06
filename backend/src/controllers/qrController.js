@@ -3,11 +3,10 @@ const crypto = require("crypto")
 
 const generateQRToken = async (req, res) => {
     const userId = req.user.id
-    let transactionStarted = false; // Flag para control de rollback
+    let transactionStarted = false;
 
     try {
-        // Buscar asignación activa
-
+        // 1. Buscar asignación activa
         const assignmentResult = await db.query(
             `SELECT 
                 a.id as assignment_id, 
@@ -31,41 +30,46 @@ const generateQRToken = async (req, res) => {
 
         const { assignment_id, locker_id, locker_numero } = assignmentResult.rows[0]
 
-        // generar token aleatorio (Criptográficamente seguro)
+        // --- LÓGICA DE QR (1 minuto) ---
         const rawToken = crypto.randomBytes(32).toString("hex")
+        const tokenHash = crypto.createHash("sha256").update(rawToken).digest("hex")
+        const qrExpiresAt = new Date(Date.now() + 60 * 1000)
 
-        // hash del token para almacenamiento seguro
-        const tokenHash = crypto
-            .createHash("sha256")
-            .update(rawToken)
-            .digest("hex")
-
-        // expiración (60 segundos)
-        const expiresAt = new Date(Date.now() + 60 * 1000)
+        // --- LÓGICA DE PIN (5 minutos) ---
+        const rawPin = Math.floor(100000 + Math.random() * 900000).toString();
+        const pinHash = crypto.createHash("sha256").update(rawPin).digest("hex")
+        const pinExpiresAt = new Date(Date.now() + 5 * 60 * 1000)
 
         // INICIO DE TRANSACCIÓN
         await db.query("BEGIN")
         transactionStarted = true;
 
-        // limpiar tokens viejos de ESTA asignación (Evita basura en la DB)
+        // Limpiar registros previos de esta asignación específica
+        await db.query("DELETE FROM qr_tokens WHERE assignment_id = $1", [assignment_id])
+        await db.query("DELETE FROM pin_tokens WHERE assignment_id = $1", [assignment_id])
+
+        // Insertar QR
         await db.query(
-            "DELETE FROM qr_tokens WHERE assignment_id = $1",
-            [assignment_id]
+            `INSERT INTO qr_tokens (assignment_id, token_hash, expires_at) VALUES ($1, $2, $3)`,
+            [assignment_id, tokenHash, qrExpiresAt]
         )
 
-        // insertar token nuevo con su hash
+        // Insertar PIN
         await db.query(
-            `INSERT INTO qr_tokens (assignment_id, token_hash, expires_at)
-             VALUES ($1, $2, $3)`,
-            [assignment_id, tokenHash, expiresAt]
+            `INSERT INTO pin_tokens (assignment_id, pin_hash, expires_at) VALUES ($1, $2, $3)`,
+            [assignment_id, pinHash, pinExpiresAt]
         )
 
         await db.query("COMMIT")
 
-        // respuesta exitosa
+        // Respuesta compatible con el frontend existente + nuevos datos del PIN
         res.json({
-            token: rawToken, // Solo el usuario recibe el token real
-            expiresAt: expiresAt.toISOString(), // Enviamos en formato ISO para el frontend
+            token: rawToken, // Mantenemos 'token' para no romper el QR actual
+            expiresAt: qrExpiresAt.toISOString(),
+            pin: {
+                code: rawPin,
+                expiresAt: pinExpiresAt.toISOString()
+            },
             lockerInfo: {
                 id: locker_id,
                 numero: locker_numero
@@ -73,14 +77,9 @@ const generateQRToken = async (req, res) => {
         })
 
     } catch (error) {
-        if (transactionStarted) {
-            await db.query("ROLLBACK")
-        }
-
-        console.error("Error al generar QR:", error)
-        res.status(500).json({
-            mensaje: "Error interno al generar el código de acceso"
-        })
+        if (transactionStarted) await db.query("ROLLBACK")
+        console.error("Error al generar tokens de acceso:", error)
+        res.status(500).json({ mensaje: "Error interno al generar el código de acceso" })
     }
 }
 
