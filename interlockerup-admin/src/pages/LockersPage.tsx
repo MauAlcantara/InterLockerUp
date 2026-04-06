@@ -84,7 +84,8 @@ export default function LockersPage() {
   const fetchLockers = async () => {
     try {
       const token = localStorage.getItem('admin_token');
-      const res = await fetch('http://localhost:3000/api/lockers/admin', {
+
+      const res = await fetch('https://admin.vigilia.world/api/lockers/admin', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await res.json();
@@ -128,7 +129,7 @@ export default function LockersPage() {
   const fetchUsers = async () => {
     try {
       const token = localStorage.getItem('admin_token');
-      const res = await fetch('http://localhost:3000/api/users', {
+      const res = await fetch('https://admin.vigilia.world/api/users', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (res.ok) {
@@ -169,7 +170,7 @@ export default function LockersPage() {
     if (!selectedLocker || !selectedUser) return;
     try {
       const token = localStorage.getItem('admin_token');
-      const res = await fetch('http://localhost:3000/api/lockers/admin/assign', {
+      const res = await fetch('https://admin.vigilia.world/api/lockers/admin/assign', {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
@@ -193,7 +194,7 @@ export default function LockersPage() {
     if (!selectedLocker) return;
     try {
       const token = localStorage.getItem('admin_token');
-      const res = await fetch(`http://localhost:3000/api/lockers/admin/${selectedLocker.id}/release`, {
+      const res = await fetch(`https://admin.vigilia.world/api/lockers/admin/${selectedLocker.id}/release`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -209,7 +210,7 @@ export default function LockersPage() {
     if (!selectedLocker) return;
     try {
       const token = localStorage.getItem('admin_token');
-      const res = await fetch(`http://localhost:3000/api/lockers/admin/${selectedLocker.id}/status`, {
+      const res = await fetch(`https://admin.vigilia.world/api/lockers/admin/${selectedLocker.id}/status`, {
         method: 'PATCH',
         headers: { 
           'Content-Type': 'application/json',

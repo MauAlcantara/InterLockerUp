@@ -27,7 +27,9 @@ export default function LoginPage() {
 
     try {
       // --- INICIO DE CIFRADO HÍBRIDO ---
-      const keyResponse = await fetch('http://localhost:3000/api/auth/public-key');
+      
+      // 1. Pedir la llave pública RSA al servidor
+      const keyResponse = await fetch('https://admin.vigilia.world/api/auth/public-key');
       if (!keyResponse.ok) throw new Error("No se pudo obtener la llave pública del servidor");
       const keyData = await keyResponse.json();
       const rsaPublicKey = forge.pki.publicKeyFromPem(keyData.publicKey);
@@ -51,7 +53,8 @@ export default function LoginPage() {
         iv: forge.util.encode64(iv)
       };
 
-      const response = await fetch('http://localhost:3000/api/auth/login', {
+      // 6. Enviar al backend
+      const response = await fetch('https://admin.vigilia.world/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)

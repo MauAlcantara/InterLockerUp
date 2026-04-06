@@ -84,7 +84,7 @@ export default function AuditoriasPage() {
   useEffect(() => {
     const fetchAudits = async () => {
       try {
-        const res = await fetch('http://localhost:3000/api/audits');
+        const res = await fetch('https://admin.vigilia.world/api/audits');
         if (res.ok) {
           const data = await res.json();
           setAccessLogs(data.accessLogs);
