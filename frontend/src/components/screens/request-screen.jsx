@@ -30,34 +30,49 @@ export function RequestScreen() {
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     // Función unificada para sincronizar datos con el servidor
+    // Función unificada para sincronizar datos con el servidor
     const initData = async () => {
         try {
+            // 1. Verificamos en secreto si el alumno AÚN TIENE un casillero activo
+            const token = localStorage.getItem("token");
+            const activeLockerRes = await fetch(`${import.meta.env.VITE_API_URL}/api/perfil/my-locker`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            const activeLocker = await activeLockerRes.json();
+
+            // 2. Traemos el historial de solicitudes
             const response = await getUserRequests();
             
-            // Si el usuario ya tiene una solicitud activa o pendiente
+            // Si el usuario tiene solicitudes en su historial
             if (response.solicitudes && response.solicitudes.length > 0) {
                 const ultima = response.solicitudes[0];
-                setRequestId(ultima.id);
-                setSelectedLocker({
-                    id: ultima.locker_id,
-                    identificador: ultima.locker_identificador,
-                    edificio: ultima.building_name,
-                    floor: ultima.locker_floor
-                });
-                setIsShared(ultima.shared);
-                setPartners(ultima.partners_details || []); 
-                setRequestStatus(ultima.status);
-                setShowConfirmation(true);
-            } else {
-                // Si no hay solicitudes, cargamos el mapa de lockers disponibles
-                const data = await getAvailableLockers(); 
-                setLockers(data.lockers || []);
-                setShowConfirmation(false);
-                setSelectedLocker(null);
+                
+                if (ultima.status === 'pending' || (ultima.status === 'approved' && activeLocker !== null)) {
+                    setRequestId(ultima.id);
+                    setSelectedLocker({
+                        id: ultima.locker_id,
+                        identificador: ultima.locker_identificador,
+                        edificio: ultima.building_name,
+                        floor: ultima.locker_floor
+                    });
+                    setIsShared(ultima.shared);
+                    setPartners(ultima.partners_details || []); 
+                    setRequestStatus(ultima.status);
+                    setShowConfirmation(true);
+                    return; // Si entra aquí, detenemos la función para que no cargue el mapa
+                }
             }
+            
+            // 3. Si no tiene solicitudes pendientes, o si su casillero aprobado ya fue liberado,
+            // cargamos el mapa para que pueda pedir uno nuevo libremente.
+            const data = await getAvailableLockers(); 
+            setLockers(data.lockers || []);
+            setShowConfirmation(false);
+            setSelectedLocker(null);
+            
         } catch (error) {
             console.error("Error en initData:", error);
-            // Fallback: intentar cargar lockers si falla la carga de solicitudes
+            // Fallback: intentar cargar lockers si falla la carga
             const data = await getAvailableLockers(); 
             setLockers(data.lockers || []);
         } finally {

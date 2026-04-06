@@ -3,6 +3,15 @@ import { Header } from "@/components/admin/header"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
+import { Badge } from "@/components/ui/badge"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
 import {
   Dialog,
   DialogContent,
@@ -26,7 +35,10 @@ import {
   Building2,
   ChevronRight,
   ArrowLeft,
-  Loader2
+  Loader2,
+  ClipboardList,
+  CheckCircle,
+  XCircle
 } from "lucide-react"
 
 // Tipos
@@ -44,43 +56,46 @@ type Edificio = {
   lockers: Locker[];
 }
 
+type Request = {
+  id: number;
+  locker_id: number;
+  locker_identificador: string;
+  usuario_nombre: string;
+  usuario_matricula: string;
+  shared: boolean;
+  status: string;
+  created_at: string;
+}
+
 export default function LockersPage() {
   const [edificios, setEdificios] = useState<Edificio[]>([])
   const [availableUsers, setAvailableUsers] = useState<any[]>([])
+  const [pendingRequests, setPendingRequests] = useState<Request[]>([])
   const [isLoading, setIsLoading] = useState(true)
 
   const [selectedEdificio, setSelectedEdificio] = useState<Edificio | null>(null)
   const [selectedLocker, setSelectedLocker] = useState<Locker | null>(null)
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false)
   const [isAssignDialogOpen, setIsAssignDialogOpen] = useState(false)
+  const [isRequestsDialogOpen, setIsRequestsDialogOpen] = useState(false)
   const [selectedUser, setSelectedUser] = useState("")
 
   // --- 1. CARGAR DATOS DE LA BD ---
   const fetchLockers = async () => {
-    console.log("1. Iniciando carga de lockers...");
     try {
       const token = localStorage.getItem('admin_token');
-
       const res = await fetch('http://localhost:3000/api/lockers/admin', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
-      console.log("2. Status del servidor:", res.status);
-
       const data = await res.json();
 
-      if (!res.ok) {
-        console.error("3. Error del backend:", data.mensaje);
-        return;
-      }
+      if (!res.ok) return;
 
-      console.log("4. Datos recibidos:", data);
-// LOGICA DE AGRUPACIÓN
       const edificiosMap = new Map<string, Edificio>();
       
       data.forEach((row: any) => {
-        // CORRECCIÓN: Ahora usamos directamente la columna 'edificio' que nos da el backend
         const edifName = row.edificio || 'Edificio No Asignado';
-        const edifCode = edifName; // Usamos el nombre como identificador único
+        const edifCode = edifName; 
         
         if (!edificiosMap.has(edifCode)) {
           edificiosMap.set(edifCode, { id: edifCode, nombre: edifName, lockers: [] });
@@ -103,12 +118,10 @@ export default function LockersPage() {
         const updatedSelected = Array.from(edificiosMap.values()).find(e => e.id === selectedEdificio.id);
         if (updatedSelected) setSelectedEdificio(updatedSelected);
       }
-
     } catch (error) {
       console.error("Error crítico en fetchLockers:", error);
     } finally {
       setIsLoading(false);
-      console.log("5. Carga finalizada (isLoading = false)");
     }
   }
 
@@ -118,9 +131,8 @@ export default function LockersPage() {
       const res = await fetch('http://localhost:3000/api/users', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
-      const data = await res.json();
-      
       if (res.ok) {
+        const data = await res.json();
         const alumnos = data.filter((u: any) => (u.role === 'alumno' || u.role === 'estudiante') && u.status === 'activo');
         setAvailableUsers(alumnos);
       }
@@ -129,9 +141,27 @@ export default function LockersPage() {
     }
   }
 
+  // Cargar las solicitudes pendientes
+  const fetchRequests = async () => {
+    try {
+      const token = localStorage.getItem('admin_token');
+      // Ajusta esta ruta a como la tengas en tu backend
+      const res = await fetch('http://localhost:3000/api/lockers/requests/pending', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setPendingRequests(data);
+      }
+    } catch (error) {
+      console.error("Error cargando solicitudes:", error);
+    }
+  }
+
   useEffect(() => {
     fetchLockers();
     fetchUsers();
+    fetchRequests();
   }, [])
 
   // --- 2. ACCIONES DEL ADMINISTRADOR ---
@@ -195,6 +225,27 @@ export default function LockersPage() {
     } catch (e) { console.error(e) }
   }
 
+  // Procesar solicitud (Aprobar o Rechazar)
+  const handleProcessRequest = async (id: number, action: 'approve' | 'reject') => {
+    try {
+      const token = localStorage.getItem('admin_token');
+      // Ajusta la ruta según tu backend
+      const res = await fetch(`http://localhost:3000/api/lockers/requests/${id}/${action}`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        await fetchRequests(); // Refresca la tabla de solicitudes
+        await fetchLockers();  // Refresca los estados de los lockers
+        if (pendingRequests.length === 1) setIsRequestsDialogOpen(false); // Cierra si era la última
+      } else {
+        alert(`Error al ${action === 'approve' ? 'aprobar' : 'rechazar'} la solicitud.`);
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
   // --- HELPERS VISUALES ---
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -216,7 +267,6 @@ export default function LockersPage() {
     setIsDetailDialogOpen(true)
   }
 
-  // --- RENDERIZADO ---
   if (isLoading) {
     return (
       <div className="flex flex-col h-full items-center justify-center">
@@ -229,9 +279,28 @@ export default function LockersPage() {
   if (!selectedEdificio) {
     return (
       <div className="flex flex-col h-full">
-        <Header title="Lockers" description="Selecciona un edificio para ver sus lockers" />
+        <Header title="Lockers" description="Gestiona los casilleros y solicitudes de alumnos" />
 
         <div className="flex-1 p-6 lg:p-8 overflow-auto">
+          
+          {/* BOTÓN DE SOLICITUDES PENDIENTES */}
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-xl font-bold text-foreground">Edificios</h2>
+            <Button 
+              onClick={() => setIsRequestsDialogOpen(true)} 
+              variant="outline" 
+              className="relative gap-2 font-medium bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100"
+            >
+              <ClipboardList className="w-4 h-4" />
+              Solicitudes Pendientes
+              {pendingRequests.length > 0 && (
+                <Badge className="absolute -top-2 -right-2 bg-[#c94a4a] text-white border-white border-2 px-1.5 min-w-[20px] h-5 flex items-center justify-center">
+                  {pendingRequests.length}
+                </Badge>
+              )}
+            </Button>
+          </div>
+
           {edificios.length === 0 ? (
             <div className="text-center py-10 text-muted-foreground">No hay lockers registrados en la base de datos.</div>
           ) : (
@@ -274,6 +343,85 @@ export default function LockersPage() {
             </div>
           )}
         </div>
+
+        {/* --- MODAL DE SOLICITUDES PENDIENTES --- */}
+        <Dialog open={isRequestsDialogOpen} onOpenChange={setIsRequestsDialogOpen}>
+            <DialogContent className="sm:max-w-[900px] w-[95vw] max-h-[85vh] overflow-y-auto">            <DialogHeader>
+              <DialogTitle className="text-xl flex items-center gap-2">
+                <ClipboardList className="text-primary w-5 h-5" /> 
+                Solicitudes de Casilleros Pendientes
+              </DialogTitle>
+              <DialogDescription>
+                Aprueba o rechaza las peticiones de los estudiantes. Al aprobar, el casillero se asignará automáticamente.
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="mt-4">
+              {pendingRequests.length === 0 ? (
+                <div className="text-center py-12 text-muted-foreground bg-slate-50 rounded-lg border border-dashed border-slate-200">
+                  <CheckCircle className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+                  <p className="font-medium text-slate-500">Todo al día</p>
+                  <p className="text-sm">No hay solicitudes pendientes por revisar.</p>
+                </div>
+              ) : (
+                <div className="rounded-md border">
+                  <Table>
+                    <TableHeader className="bg-slate-50">
+                      <TableRow>
+                        <TableHead>Locker Solicitado</TableHead>
+                        <TableHead>Estudiante</TableHead>
+                        <TableHead>Matrícula</TableHead>
+                        <TableHead>Tipo</TableHead>
+                        <TableHead>Fecha</TableHead>
+                        <TableHead className="text-right">Acciones</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {pendingRequests.map((req) => (
+                        <TableRow key={req.id}>
+                          <TableCell className="font-bold text-primary">
+                            {req.locker_identificador}
+                          </TableCell>
+                          <TableCell className="font-medium">{req.usuario_nombre}</TableCell>
+                          <TableCell className="font-mono text-muted-foreground">{req.usuario_matricula}</TableCell>
+                          <TableCell>
+                            <Badge variant="outline" className={req.shared ? "bg-purple-50 text-purple-700 border-purple-200" : "bg-blue-50 text-blue-700 border-blue-200"}>
+                              {req.shared ? "Compartido" : "Individual"}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-sm text-muted-foreground">
+                            {new Date(req.created_at).toLocaleDateString()}
+                          </TableCell>
+                          <TableCell className="text-right space-x-2">
+                            <Button 
+                              size="sm" 
+                              variant="outline" 
+                              className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
+                              onClick={() => handleProcessRequest(req.id, 'reject')}
+                            >
+                              <XCircle className="w-4 h-4 mr-1" /> Rechazar
+                            </Button>
+                            <Button 
+                              size="sm" 
+                              className="bg-[#2fa4a9] hover:bg-[#2fa4a9]/90 text-white"
+                              onClick={() => handleProcessRequest(req.id, 'approve')}
+                            >
+                              <CheckCircle className="w-4 h-4 mr-1" /> Aprobar
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+            </div>
+            
+            <DialogFooter className="mt-6">
+              <Button variant="ghost" onClick={() => setIsRequestsDialogOpen(false)}>Cerrar</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     )
   }
@@ -326,6 +474,7 @@ export default function LockersPage() {
         </Card>
       </div>
 
+      {/* --- MODALES DE DETALLE Y ASIGNACIÓN MANUAL (Se mantienen igual) --- */}
       <Dialog open={isDetailDialogOpen} onOpenChange={setIsDetailDialogOpen}>
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>

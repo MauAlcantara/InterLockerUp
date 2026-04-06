@@ -19,33 +19,51 @@ const getPerfil = async (req, res) => {
  * Permite al usuario actualizar su nombre completo y carrera.
  */
 const editarDatos = async (req, res) => {
-    const { nombre_completo, carrera } = req.body;
+    // 1. Extraemos TODOS los campos posibles (tanto de alumno como de admin)
+    const { nombre_completo, carrera, email, matricula } = req.body;
+    
     try {
-        // Actualiza los registros en la tabla users basándose en el ID del usuario autenticado.
-        await db.query('UPDATE users SET nombre_completo = $1, carrera = $2 WHERE id = $3', 
-            [nombre_completo, carrera, req.user.id]);
-        res.json({ message: "Datos actualizados" });
+        // 2. Usamos COALESCE: Si el valor llega nulo, conserva el que ya está en la base de datos
+        const query = `
+            UPDATE users 
+            SET 
+                nombre_completo = COALESCE($1, nombre_completo), 
+                carrera = COALESCE($2, carrera),
+                email = COALESCE($3, email),
+                matricula = COALESCE($4, matricula)
+            WHERE id = $5
+        `;
+
+        // 3. Pasamos los valores. Usamos '|| null' para evitar errores con 'undefined'
+        await db.query(query, [
+            nombre_completo || null, 
+            carrera || null, 
+            email || null, 
+            matricula || null, 
+            req.user.id
+        ]);
+        
+        res.json({ message: "Datos actualizados correctamente" });
     } catch (error) {
-        res.status(500).json({ error: "Error al actualizar" });
+        console.error("Error en editarDatos:", error);
+        res.status(500).json({ error: "Error al actualizar el perfil" });
     }
 };
 
 const desalojarCasillero = async (req, res) => {
     try {
-        // Idea de tu compañera: Normalización segura del ID
+
         const usuarioId = req.user?.id || req.user?.user?.id;
 
         if (!usuarioId) {
             return res.status(401).json({ error: "No se pudo identificar al usuario del token" });
         }
 
-        // ¡SÚPER IMPORTANTE! Pedimos una conexión exclusiva para que no choquen los alumnos
         const client = await db.connect();
 
         try {
-            await client.query('BEGIN'); // Ahora el BEGIN es seguro
+            await client.query('BEGIN'); 
 
-            // FIX 1: Cambiamos 'active' por la lista con 'activa'
             const findQuery = `
                 SELECT au.assignment_id, a.es_compartido, a.locker_id
                 FROM assignment_users au

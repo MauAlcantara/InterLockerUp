@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
+import { Textarea } from "@/components/ui/textarea"
+import toast from "react-hot-toast"
 import {
   Table,
   TableBody,
@@ -47,7 +49,8 @@ import {
   Users,
   UserPlus,
   ShieldCheck,
-  Loader2
+  Loader2,
+  Megaphone // <-- NUEVO ÍCONO
 } from "lucide-react"
 import { StatsCard } from "@/components/admin/stats-card"
 
@@ -74,6 +77,14 @@ export default function UsuariosPage() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [selectedUser, setSelectedUser] = useState<any | null>(null)
 
+  // --- ESTADOS PARA EL AVISO GLOBAL ---
+  const [isAnnouncementDialogOpen, setIsAnnouncementDialogOpen] = useState(false)
+  const [isSendingAnnouncement, setIsSendingAnnouncement] = useState(false)
+  const [announcementData, setAnnouncementData] = useState({
+    mensaje: "",
+    tipo: "info"
+  })
+
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -81,7 +92,6 @@ export default function UsuariosPage() {
     role: "alumno",
   })
 
-  // --- 1. CARGAR USUARIOS DESDE LA BD ---
   const fetchUsers = async () => {
     try {
       const res = await fetch('http://localhost:3000/api/users');
@@ -100,7 +110,6 @@ export default function UsuariosPage() {
     fetchUsers();
   }, [])
 
-  // --- 2. CREAR USUARIO ---
   const handleCreateUser = async () => {
     try {
       const res = await fetch('http://localhost:3000/api/users', {
@@ -110,7 +119,7 @@ export default function UsuariosPage() {
       });
       if (res.ok) {
         const newUser = await res.json();
-        setUsers([newUser, ...users]); // Agrega el nuevo usuario al inicio de la tabla
+        setUsers([newUser, ...users]); 
         setFormData({ name: "", email: "", matricula: "", role: "alumno" });
         setIsCreateDialogOpen(false);
       } else {
@@ -123,7 +132,6 @@ export default function UsuariosPage() {
     }
   }
 
-  // --- 3. EDITAR USUARIO ---
   const handleEditUser = async () => {
     if (!selectedUser) return;
     try {
@@ -146,7 +154,6 @@ export default function UsuariosPage() {
     }
   }
 
-  // --- 4. CAMBIAR ESTADO (ACTIVAR/DESACTIVAR) ---
   const handleToggleStatus = async (userId: number) => {
     try {
       const res = await fetch(`http://localhost:3000/api/users/${userId}/status`, {
@@ -162,6 +169,45 @@ export default function UsuariosPage() {
     }
   }
 
+  // --- FUNCIÓN PARA ENVIAR EL AVISO GLOBAL ---
+  const handleCreateAnnouncement = async () => {
+    if (!announcementData.mensaje.trim()) {
+      alert("El mensaje del aviso no puede estar vacío");
+      return;
+    }
+    setIsSendingAnnouncement(true);
+    try {
+      // Tomamos el token del admin para pasar el middleware
+      const token = localStorage.getItem("admin_token") || localStorage.getItem("token");
+      
+      const res = await fetch('http://localhost:3000/api/notifications', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          mensaje: announcementData.mensaje,
+          tipo: announcementData.tipo,
+          es_global: true
+        })
+      });
+
+      if (res.ok) {
+        toast.success("¡Aviso global enviado a todos los estudiantes!"); 
+        setIsAnnouncementDialogOpen(false);
+        setAnnouncementData({ mensaje: "", tipo: "info" });
+      } else {
+        toast.error("Error al enviar el aviso"); 
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error("Error de conexión al servidor."); 
+    } finally {
+      setIsSendingAnnouncement(false);
+    }
+  }
+
   const openEditDialog = (user: any) => {
     setSelectedUser(user)
     setFormData({
@@ -173,15 +219,12 @@ export default function UsuariosPage() {
     setIsEditDialogOpen(true)
   }
 
-  // Filtrado de usuarios en la tabla
   const filteredUsers = users.filter((user) => {
     const matchesSearch =
       (user.name?.toLowerCase() || "").includes(searchTerm.toLowerCase()) ||
       (user.email?.toLowerCase() || "").includes(searchTerm.toLowerCase()) ||
       (user.matricula?.toLowerCase() || "").includes(searchTerm.toLowerCase())
     
-    // Normalizar los roles para que el filtro de la UI ('estudiante'/'administrador') 
-    // coincida con los de la BD ('alumno'/'admin')
     const normalizedRole = user.role === 'admin' ? 'administrador' : 'estudiante';
     const filterRoleNormalized = filterRole === 'admin' ? 'administrador' : filterRole === 'alumno' ? 'estudiante' : filterRole;
     
@@ -191,7 +234,6 @@ export default function UsuariosPage() {
     return matchesSearch && matchesRole && matchesStatus
   })
 
-  // Estadísticas para las tarjetas superiores
   const totalActive = users.filter((u) => u.status === "activo").length
   const totalStudents = users.filter((u) => u.role === "estudiante" || u.role === "alumno").length
   const totalAdmins = users.filter((u) => u.role === "administrador" || u.role === "admin").length
@@ -246,81 +288,139 @@ export default function UsuariosPage() {
                   Gestiona los usuarios registrados en el sistema
                 </CardDescription>
               </div>
-              <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button>
-                    <Plus className="w-4 h-4 mr-2" />
-                    Nuevo Usuario
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Registrar Nuevo Usuario</DialogTitle>
-                    <DialogDescription className="font-serif">
-                      Ingresa los datos del nuevo usuario. Su contraseña inicial será <b>Uteq2026!</b>
-                    </DialogDescription>
-                  </DialogHeader>
-                  <div className="space-y-4 py-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="name">Nombre completo</Label>
-                      <Input
-                        id="name"
-                        placeholder="Juan Perez Garcia"
-                        value={formData.name}
-                        onChange={(e) =>
-                          setFormData({ ...formData, name: e.target.value })
-                        }
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="email">Correo electronico</Label>
-                      <Input
-                        id="email"
-                        type="email"
-                        placeholder="usuario@uteq.edu.mx"
-                        value={formData.email}
-                        onChange={(e) =>
-                          setFormData({ ...formData, email: e.target.value })
-                        }
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="matricula">Matricula / ID</Label>
-                      <Input
-                        id="matricula"
-                        placeholder="20210001"
-                        value={formData.matricula}
-                        onChange={(e) =>
-                          setFormData({ ...formData, matricula: e.target.value })
-                        }
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="role">Rol</Label>
-                      <Select
-                        value={formData.role}
-                        onValueChange={(value) =>
-                          setFormData({ ...formData, role: value })
-                        }
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecciona un rol" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="alumno">Estudiante</SelectItem>
-                          <SelectItem value="admin">Administrador</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                  <DialogFooter>
-                    <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
-                      Cancelar
+              
+              <div className="flex gap-2">
+                {/* --- NUEVO BOTÓN: AVISO GLOBAL --- */}
+                <Dialog open={isAnnouncementDialogOpen} onOpenChange={setIsAnnouncementDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button variant="secondary" className="bg-blue-100 text-blue-700 hover:bg-blue-200 border-none">
+                      <Megaphone className="w-4 h-4 mr-2" />
+                      Aviso Global
                     </Button>
-                    <Button onClick={handleCreateUser}>Registrar Usuario</Button>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Enviar Aviso Global</DialogTitle>
+                      <DialogDescription className="font-serif">
+                        Este mensaje aparecerá en la bandeja de entrada de <b>todos los estudiantes</b>.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4 py-4">
+                      <div className="space-y-2">
+                        <Label>Nivel de Importancia</Label>
+                        <Select
+                          value={announcementData.tipo}
+                          onValueChange={(value) => setAnnouncementData({ ...announcementData, tipo: value })}
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="info">Informativo (Azul)</SelectItem>
+                            <SelectItem value="success">Éxito / Positivo (Verde)</SelectItem>
+                            <SelectItem value="warning">Advertencia / Importante (Amarillo)</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Mensaje del Aviso</Label>
+                        <Textarea
+                          placeholder="Ej: El edificio K permanecerá cerrado mañana por mantenimiento..."
+                          value={announcementData.mensaje}
+                          onChange={(e) => setAnnouncementData({ ...announcementData, mensaje: e.target.value })}
+                          className="min-h-[100px] resize-none"
+                        />
+                      </div>
+                    </div>
+                    <DialogFooter>
+                      <Button variant="outline" onClick={() => setIsAnnouncementDialogOpen(false)}>
+                        Cancelar
+                      </Button>
+                      <Button onClick={handleCreateAnnouncement} disabled={isSendingAnnouncement}>
+                        {isSendingAnnouncement ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
+                        Enviar a Todos
+                      </Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+
+                {/* Botón original de crear usuario */}
+                <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button>
+                      <Plus className="w-4 h-4 mr-2" />
+                      Nuevo Usuario
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Registrar Nuevo Usuario</DialogTitle>
+                      <DialogDescription className="font-serif">
+                        Ingresa los datos del nuevo usuario. Su contraseña inicial será <b>Uteq2026!</b>
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4 py-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="name">Nombre completo</Label>
+                        <Input
+                          id="name"
+                          placeholder="Juan Perez Garcia"
+                          value={formData.name}
+                          onChange={(e) =>
+                            setFormData({ ...formData, name: e.target.value })
+                          }
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="email">Correo electronico</Label>
+                        <Input
+                          id="email"
+                          type="email"
+                          placeholder="usuario@uteq.edu.mx"
+                          value={formData.email}
+                          onChange={(e) =>
+                            setFormData({ ...formData, email: e.target.value })
+                          }
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="matricula">Matricula / ID</Label>
+                        <Input
+                          id="matricula"
+                          placeholder="20210001"
+                          value={formData.matricula}
+                          onChange={(e) =>
+                            setFormData({ ...formData, matricula: e.target.value })
+                          }
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="role">Rol</Label>
+                        <Select
+                          value={formData.role}
+                          onValueChange={(value) =>
+                            setFormData({ ...formData, role: value })
+                          }
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecciona un rol" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="alumno">Estudiante</SelectItem>
+                            <SelectItem value="admin">Administrador</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                    <DialogFooter>
+                      <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
+                        Cancelar
+                      </Button>
+                      <Button onClick={handleCreateUser}>Registrar Usuario</Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+              </div>
             </div>
           </CardHeader>
           <CardContent>
