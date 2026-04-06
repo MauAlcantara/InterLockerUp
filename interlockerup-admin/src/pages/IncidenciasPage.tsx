@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { Textarea } from "@/components/ui/textarea"
+import { BASE_URL } from "@/api/apiConfig"
 import {
   Table,
   TableBody,
@@ -83,7 +84,7 @@ export default function IncidenciasPage() {
   // --- 1. CARGAR INCIDENCIAS DESDE LA BD ---
   const fetchIncidents = async () => {
     try {
-      const res = await fetch('https://admin.vigilia.world/api/incidents/admin');
+      const res = await fetch(`${BASE_URL}/api/incidents/admin`);
       const data = await res.json();
       
       // Mapeamos los datos de la base de datos al formato de tu UI
@@ -130,7 +131,7 @@ export default function IncidenciasPage() {
   // --- 2. CAMBIAR ESTADO DESDE EL MENÚ RÁPIDO ---
   const handleChangeStatus = async (incidentId: number, status: string) => {
     try {
-      const res = await fetch(`https://admin.vigilia.world/api/incidents/admin/${incidentId}`, {
+      const res = await fetch(`${BASE_URL}/api/incidents/admin/${incidentId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ estado: status })
@@ -146,7 +147,7 @@ export default function IncidenciasPage() {
     if (!selectedIncident) return
     
     try {
-      const res = await fetch(`https://admin.vigilia.world/api/incidents/admin/${selectedIncident.id}`, {
+      const res = await fetch(`${BASE_URL}/api/incidents/admin/${selectedIncident.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
@@ -478,7 +479,7 @@ export default function IncidenciasPage() {
                       <Label className="text-xs text-muted-foreground mb-2 block">Fotografía Original</Label>
                       {/* Node.js estático expone la carpeta uploads */}
                       <img 
-                        src={`https://admin.vigilia.world/${selectedIncident.evidencia_url.replace('\\', '/')}`} 
+                        src={`${BASE_URL}/${selectedIncident.evidencia_url.replace('\\', '/')}`}
                         alt="Evidencia del alumno" 
                         className="w-40 h-40 object-cover rounded-lg shadow-md border border-[#e2e8f0]"
                         onError={(e) => { e.currentTarget.style.display = 'none'; }}

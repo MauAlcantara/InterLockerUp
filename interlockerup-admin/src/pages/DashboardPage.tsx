@@ -10,6 +10,7 @@ import {
 import {
   AreaChart, Area, XAxis, YAxis, ResponsiveContainer, Tooltip, BarChart, Bar,
 } from "recharts"
+import { BASE_URL } from "@/api/apiConfig"
 
 
 // Datos estáticos para gráficas y fallbacks
@@ -40,7 +41,7 @@ export default function DashboardPage() {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const response = await fetch('https://admin.vigilia.world/api/dashboard/stats');
+        const response = await fetch(`${BASE_URL}/api/dashboard/stats`);
         if (response.ok) {
           const data = await response.json();
           setStats(data);

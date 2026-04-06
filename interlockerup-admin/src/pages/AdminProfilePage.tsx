@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { BASE_URL } from "@/api/apiConfig"
 import {
   Dialog,
   DialogContent,
@@ -27,13 +28,11 @@ export default function AdminProfilePage() {
     matricula: "",
   })
 
-  const API_URL = "http://localhost:3000/api"
-
   // --- 1. CARGAR DATOS DEL ADMIN ---
   const fetchUserData = async () => {
     try {
       const token = localStorage.getItem("admin_token") || localStorage.getItem("token")
-      const res = await fetch(`${API_URL}/perfil/me`, {
+      const res = await fetch(`${BASE_URL}/perfil/me`, {
         headers: { Authorization: `Bearer ${token}` }
       })
       
@@ -69,7 +68,7 @@ export default function AdminProfilePage() {
     setIsSubmitting(true)
     try {
       const token = localStorage.getItem("admin_token") || localStorage.getItem("token")
-      const res = await fetch(`${API_URL}/perfil/update`, {
+      const res = await fetch(`${BASE_URL}/perfil/update`, {
         method: "PUT",
         headers: { 
           "Content-Type": "application/json", 

@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { Textarea } from "@/components/ui/textarea"
 import toast from "react-hot-toast"
+import { BASE_URL } from "@/api/apiConfig"
 import {
   Table,
   TableBody,
@@ -50,7 +51,7 @@ import {
   UserPlus,
   ShieldCheck,
   Loader2,
-  Megaphone // <-- NUEVO ÍCONO
+  Megaphone 
 } from "lucide-react"
 import { StatsCard } from "@/components/admin/stats-card"
 
@@ -94,7 +95,7 @@ export default function UsuariosPage() {
 
   const fetchUsers = async () => {
     try {
-      const res = await fetch('https://admin.vigilia.world/api/users');
+      const res = await fetch(`${BASE_URL}/api/users`);
       if (res.ok) {
         const data = await res.json();
         setUsers(data);
@@ -112,7 +113,7 @@ export default function UsuariosPage() {
 
   const handleCreateUser = async () => {
     try {
-      const res = await fetch('https://admin.vigilia.world/api/users', {
+      const res = await fetch(`${BASE_URL}/api/users`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData)
@@ -135,7 +136,7 @@ export default function UsuariosPage() {
   const handleEditUser = async () => {
     if (!selectedUser) return;
     try {
-      const res = await fetch(`https://admin.vigilia.world/api/users/${selectedUser.id}`, {
+      const res = await fetch(`${BASE_URL}/api/users/${selectedUser.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData)
@@ -156,7 +157,7 @@ export default function UsuariosPage() {
 
   const handleToggleStatus = async (userId: number) => {
     try {
-      const res = await fetch(`https://admin.vigilia.world/api/users/${userId}/status`, {
+      const res = await fetch(`${BASE_URL}/api/users/${userId}/status`, {
         method: 'PATCH'
       });
       if (res.ok) {
@@ -180,7 +181,7 @@ export default function UsuariosPage() {
       // Tomamos el token del admin para pasar el middleware
       const token = localStorage.getItem("admin_token") || localStorage.getItem("token");
       
-      const res = await fetch('http://localhost:3000/api/notifications', {
+      const res = await fetch(`${BASE_URL}/api/notifications`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

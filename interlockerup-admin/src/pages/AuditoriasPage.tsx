@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { BASE_URL } from "@/api/apiConfig"
 import {
   Table,
   TableBody,
@@ -84,7 +85,7 @@ export default function AuditoriasPage() {
   useEffect(() => {
     const fetchAudits = async () => {
       try {
-        const res = await fetch('https://admin.vigilia.world/api/audits');
+        const res = await fetch(`${BASE_URL}/api/audits`);
         if (res.ok) {
           const data = await res.json();
           setAccessLogs(data.accessLogs);
