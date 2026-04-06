@@ -4,6 +4,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
+import { BASE_URL } from "@/api/apiConfig"
 import {
   Table,
   TableBody,
@@ -85,7 +86,7 @@ export default function LockersPage() {
     try {
       const token = localStorage.getItem('admin_token');
 
-      const res = await fetch('https://admin.vigilia.world/api/lockers/admin', {
+      const res = await fetch(`${BASE_URL}/api/lockers/admin`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await res.json();
@@ -129,7 +130,7 @@ export default function LockersPage() {
   const fetchUsers = async () => {
     try {
       const token = localStorage.getItem('admin_token');
-      const res = await fetch('https://admin.vigilia.world/api/users', {
+      const res = await fetch(`${BASE_URL}/api/users`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (res.ok) {
@@ -147,7 +148,7 @@ export default function LockersPage() {
     try {
       const token = localStorage.getItem('admin_token');
       // Ajusta esta ruta a como la tengas en tu backend
-      const res = await fetch('http://localhost:3000/api/lockers/requests/pending', {
+      const res = await fetch(`${BASE_URL}/api/lockers/requests/pending`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (res.ok) {
@@ -170,7 +171,7 @@ export default function LockersPage() {
     if (!selectedLocker || !selectedUser) return;
     try {
       const token = localStorage.getItem('admin_token');
-      const res = await fetch('https://admin.vigilia.world/api/lockers/admin/assign', {
+      const res = await fetch(`${BASE_URL}/api/lockers/admin/assign`, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
@@ -194,7 +195,7 @@ export default function LockersPage() {
     if (!selectedLocker) return;
     try {
       const token = localStorage.getItem('admin_token');
-      const res = await fetch(`https://admin.vigilia.world/api/lockers/admin/${selectedLocker.id}/release`, {
+      const res = await fetch(`${BASE_URL}/api/lockers/admin/${selectedLocker.id}/release`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -210,7 +211,7 @@ export default function LockersPage() {
     if (!selectedLocker) return;
     try {
       const token = localStorage.getItem('admin_token');
-      const res = await fetch(`https://admin.vigilia.world/api/lockers/admin/${selectedLocker.id}/status`, {
+      const res = await fetch(`${BASE_URL}/api/lockers/admin/${selectedLocker.id}/status`, {
         method: 'PATCH',
         headers: { 
           'Content-Type': 'application/json',
@@ -231,7 +232,7 @@ export default function LockersPage() {
     try {
       const token = localStorage.getItem('admin_token');
       // Ajusta la ruta según tu backend
-      const res = await fetch(`http://localhost:3000/api/lockers/requests/${id}/${action}`, {
+      const res = await fetch(`${BASE_URL}/api/lockers/requests/${id}/${action}`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}` }
       });

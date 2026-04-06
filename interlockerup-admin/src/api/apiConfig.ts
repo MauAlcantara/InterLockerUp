@@ -1,5 +1,7 @@
 // Forzamos la URL de producción directamente para eliminar el error de localhost
 export const BASE_URL = 'https://admin.vigilia.world';
+// http://localhost:3000
+// https://admin.vigilia.world
 
 export const fastFetch = async (endpoint: string, options: RequestInit = {}) => {
     // Aseguramos que el endpoint empiece con /
