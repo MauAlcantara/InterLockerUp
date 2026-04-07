@@ -2,6 +2,7 @@ import { useState, useEffect } from "react"
 import { Bell, Search, User, LogOut } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
+import { BASE_URL } from "@/api/apiConfig"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,8 +13,6 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Badge } from "@/components/ui/badge"
 
-// Asegúrate de importar tu API_URL. Ajusta la ruta según la estructura de tu proyecto admin.
-// import { API_URL } from "@/config" 
 
 interface HeaderProps {
   title: string
@@ -32,8 +31,6 @@ export function Header({ title, description }: HeaderProps) {
   const [adminName, setAdminName] = useState("Administrador")
   const [notificaciones, setNotificaciones] = useState<AppNotification[]>([])
   
-  // Asumimos API_URL para el ejemplo, cámbialo por tu variable real si la tienes
-  const API_URL = "https://admin.vigilia.world/api" 
 
   useEffect(() => {
     // 1. Cargar el nombre real del admin desde el almacenamiento
@@ -46,7 +43,7 @@ export function Header({ title, description }: HeaderProps) {
         const token = localStorage.getItem("admin_token")
         if (!token) return
 
-        const res = await fetch(`${API_URL}/admin/notificaciones`, {
+        const res = await fetch(`${BASE_URL}/api/admin/notificaciones`, { 
           headers: { "Authorization": `Bearer ${token}` }
         })
         
