@@ -1,22 +1,28 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import { RefreshCw, Lock, AlertCircle, Loader2, CheckCircle2, Clock, QrCode, Hash } from "lucide-react"
+import { RefreshCw, Lock, Loader2, CheckCircle2, Clock, QrCode, KeyRound, X, Mail } from "lucide-react"
 import Button from "../ui/button"
-import { KeyRound } from "lucide-react";
 import { Card, CardContent } from "../ui/card"
 import QRCode from "react-qr-code"
+import toast, { Toaster } from "react-hot-toast";
 
 const api = import.meta.env.VITE_API_URL
 
 export default function AccessScreen({ onNavigate }) {
   const [countdown, setCountdown] = useState(60)
   const [qrValue, setQrValue] = useState("")
-  const [pinValue, setPinValue] = useState("") 
   const [lockerData, setLockerData] = useState({ numero: null, id: null, ubicacion: "" })
   const [isRefreshing, setIsRefreshing] = useState(true)
   const [error, setError] = useState(null)
   const [hasAssignment, setHasAssignment] = useState(true)
+
+  // --- ESTADOS PARA LA APERTURA DE EMERGENCIA ---
+  const [showEmergencyModal, setShowEmergencyModal] = useState(false)
+  const [emergencyStep, setEmergencyStep] = useState("request") // "request" | "input"
+  const [emailPin, setEmailPin] = useState("")
+  const [isEmergencyLoading, setIsEmergencyLoading] = useState(false)
+  const [emergencyError, setEmergencyError] = useState("")
 
   const colors = {
     primary: "#0b4dbb",
@@ -29,7 +35,7 @@ export default function AccessScreen({ onNavigate }) {
     textSecondary: "#8a8a8a"
   }
 
-  const fetchNewToken = useCallback(async (updatePin = false) => {
+  const fetchNewToken = useCallback(async () => {
     setIsRefreshing(true)
     setError(null)
     try {
@@ -52,32 +58,99 @@ export default function AccessScreen({ onNavigate }) {
       if (response.ok) {
         const data = await response.json()
         setQrValue(data.token)
-        if (updatePin) setPinValue(data.pin?.code || "")
         setHasAssignment(true)
         setCountdown(60)
       } else {
         const errorData = await response.json()
-        setError(errorData.mensaje || "Error al generar código")
+        setError(errorData.mensaje || "Error al generar código QR")
       }
     } catch (err) {
-      setError("Error de conexión")
+      setError("Error de conexión al obtener QR")
     } finally {
       setIsRefreshing(false)
     }
   }, [])
 
-  useEffect(() => { fetchNewToken(true) }, [fetchNewToken])
+  useEffect(() => { fetchNewToken() }, [fetchNewToken])
 
   useEffect(() => {
     if (!hasAssignment || error || isRefreshing) return;
     const timer = setInterval(() => {
       setCountdown((prev) => {
-        if (prev <= 1) { fetchNewToken(false); return 60 }
+        if (prev <= 1) { fetchNewToken(); return 60 }
         return prev - 1
       })
     }, 1000)
     return () => clearInterval(timer)
   }, [fetchNewToken, hasAssignment, error, isRefreshing])
+
+
+  // --- FUNCIONES DE EMERGENCIA (API) ---
+  const handleRequestPin = async () => {
+    setIsEmergencyLoading(true)
+    setEmergencyError("")
+    try {
+      const token = localStorage.getItem("token")
+      // Esta ruta debe coincidir con la que crees en tu backend para solicitarPinCorreo
+      const res = await fetch(`${api}/api/access/request-pin`, { 
+        method: "POST",
+        headers: { "Authorization": `Bearer ${token}` }
+      })
+      
+      if (res.ok) {
+        setEmergencyStep("input") // Cambiamos la vista a la entrada del PIN
+      } else {
+        const data = await res.json()
+        setEmergencyError(data.mensaje || "Error al solicitar el código")
+      }
+    } catch (e) {
+      setEmergencyError("Error de red al conectar con el servidor")
+    } finally {
+      setIsEmergencyLoading(false)
+    }
+  }
+
+  const handleSubmitPin = async () => {
+    if (!emailPin || emailPin.length < 6) {
+      setEmergencyError("Ingresa el código completo de 6 dígitos")
+      return
+    }
+
+    setIsEmergencyLoading(true)
+    setEmergencyError("")
+    try {
+      const token = localStorage.getItem("token")
+      // Esta ruta debe coincidir con abrirLockerRemoto en el backend
+      const res = await fetch(`${api}/api/access/remote-unlock`, {
+        method: "POST",
+        headers: { 
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ pin_ingresado: emailPin })
+      })
+
+      const data = await res.json()
+
+      if (res.ok) {
+        toast.success("¡Locker abierto exitosamente!"); 
+        closeEmergencyModal()
+      } else {
+        setEmergencyError(data.mensaje || "Código incorrecto o expirado")
+      }
+    } catch (e) {
+      setEmergencyError("Error de conexión al intentar abrir")
+    } finally {
+      setIsEmergencyLoading(false)
+    }
+  }
+
+  const closeEmergencyModal = () => {
+    setShowEmergencyModal(false)
+    setEmergencyStep("request")
+    setEmailPin("")
+    setEmergencyError("")
+  }
 
   if (isRefreshing && !qrValue) {
     return (
@@ -89,6 +162,7 @@ export default function AccessScreen({ onNavigate }) {
 
   return (
     <div style={{ minHeight: "100vh", paddingBottom: "90px", background: "#f8f9fb", fontFamily: "'Roboto', sans-serif" }}>
+      <Toaster position="top-center" reverseOrder={false} />
       <header style={{ background: colors.primary, color: "white", padding: "56px 16px 40px", textAlign: "center" }}>
         <div style={{ width: 56, height: 56, background: "rgba(255,255,255,0.15)", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px" }}>
           <Lock size={28} />
@@ -133,88 +207,169 @@ export default function AccessScreen({ onNavigate }) {
               </div>
             </div>
 
-            <Button onClick={() => fetchNewToken(false)} disabled={isRefreshing} style={{ width: "100%", marginTop: 24, height: 50, borderRadius: "12px", border: "none", color: colors.primary, fontWeight: "700", background: colors.backgroundSoft, display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+            <Button onClick={() => fetchNewToken()} disabled={isRefreshing} style={{ width: "100%", marginTop: 24, height: 50, borderRadius: "12px", border: "none", color: colors.primary, fontWeight: "700", background: colors.backgroundSoft, display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
               <RefreshCw size={18} className={isRefreshing ? "animate-spin" : ""} />
-              Actualizar Código
+              Actualizar Código QR
             </Button>
 
             <hr style={{ border: "none", height: "1px", background: "#f0f0f0", margin: "24px 0" }} />
 
-            {/* PIN SECTION */}
+            {/* SECCIÓN APERTURA DE EMERGENCIA */}
             <div style={{ textAlign: "center" }}>
-                <p style={{ fontSize: 12, color: colors.textSecondary, fontWeight: 700, textTransform: "uppercase", marginBottom: 8 }}>Código PIN Alternativo</p>
-                <div style={{ fontSize: 32, fontWeight: "800", color: colors.textMain, letterSpacing: 8, fontFamily: "'Montserrat', sans-serif" }}>
-                    {pinValue || "------"}
-                </div>
-                <p style={{ fontSize: 11, color: colors.textSecondary, marginTop: 6, display: "flex", alignItems: "center", justifyContent: "center", gap: 4 }}>
-                    <Clock size={12} /> Válido por 5 minutos
+                <p style={{ fontSize: 13, color: colors.textMain, fontWeight: 600, marginBottom: 12 }}>
+                  ¿Problemas con el escáner del casillero?
                 </p>
+                <Button 
+                  onClick={() => setShowEmergencyModal(true)}
+                  style={{ 
+                    width: "100%", 
+                    height: 44, 
+                    borderRadius: "12px", 
+                    border: `1px solid ${colors.warning}`, 
+                    color: colors.warning, 
+                    fontWeight: "600", 
+                    background: "transparent", 
+                    display: "flex", 
+                    alignItems: "center", 
+                    justifyContent: "center", 
+                    gap: 8 
+                  }}
+                >
+                  <KeyRound size={18} />
+                  Apertura Remota de Emergencia
+                </Button>
             </div>
           </CardContent>
         </Card>
 
-        {/* INSTRUCCIONES CLARAS Y SEPARADAS */}
+        {/* INSTRUCCIONES ACTUALIZADAS */}
         <h3 style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 16, fontWeight: 700, color: colors.textMain, margin: "24px 0 12px 8px" }}>
-          Instrucciones de uso
+          Modos de Apertura
         </h3>
 
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          {/* Instrucción QR */}
+          <div style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: 12,
+            background: "white",
+            padding: 16,
+            borderRadius: 12,
+            borderLeft: `4px solid ${colors.primary}`
+          }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <QrCode size={18} color={colors.primary} />
+              <strong style={{ fontSize: 14, color: colors.textMain }}>
+                Opción 1: Escáner QR (Recomendado)
+              </strong>
+            </div>
+            <p style={{ fontSize: 14, margin: 0, color: colors.textMain }}>
+              Ajusta el brillo de tu pantalla al máximo y coloca el código QR frente al lector óptico del casillero.
+            </p>
+          </div>
 
-  {/* HEADER */}
-  {/* QR */}
-  <div style={{
-    display: "flex",
-    flexDirection: "column",
-    gap: 12,
-    background: "white",
-    padding: 16,
-    borderRadius: 12,
-    borderLeft: `4px solid ${colors.primary}`
-  }}>
-    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-      <QrCode size={18} color={colors.primary} />
-      <strong style={{ fontSize: 14, color: colors.textMain }}>
-        Acceso con QR
-      </strong>
-    </div>
-
-    <p style={{ fontSize: 14, margin: 0, color: colors.textMain }}>
-      Ajusta el brillo de tu pantalla al máximo y coloca el código QR frente al lector del casillero.
-    </p>
-
-    <p style={{ fontSize: 13, margin: 0, color: colors.textSecondary }}>
-      El código QR se actualiza automáticamente cada 60 segundos por seguridad.
-    </p>
-  </div>
-
-  {/* PIN */}
-  <div style={{
-    display: "flex",
-    flexDirection: "column",
-    gap: 12,
-    background: "white",
-    padding: 16,
-    borderRadius: 12,
-    borderLeft: `4px solid ${colors.warning}`
-  }}>
-    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-      <KeyRound size={18} color={colors.warning} />
-      <strong style={{ fontSize: 14, color: colors.textMain }}>
-        Acceso con PIN
-      </strong>
-    </div>
-
-    <p style={{ fontSize: 14, margin: 0, color: colors.textMain }}>
-      Ingresa tu código de 6 dígitos en el teclado del casillero y presiona la tecla # para confirmar.
-    </p>
-
-    <p style={{ fontSize: 13, margin: 0, color: colors.textSecondary }}>
-      El PIN es de un solo uso y vence en 5 minutos. Puedes utilizarlo aunque el código QR haya cambiado.
-    </p>
-  </div>
-
-</div>
+          {/* Instrucción Emergencia */}
+          <div style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: 12,
+            background: "white",
+            padding: 16,
+            borderRadius: 12,
+            borderLeft: `4px solid ${colors.warning}`
+          }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <KeyRound size={18} color={colors.warning} />
+              <strong style={{ fontSize: 14, color: colors.textMain }}>
+                Opción 2: Emergencia (App Web)
+              </strong>
+            </div>
+            <p style={{ fontSize: 14, margin: 0, color: colors.textMain }}>
+              Si el lector está sucio o dañado, usa la opción de "Apertura Remota". Recibirás un código de un solo uso por correo para abrirlo desde aquí.
+            </p>
+          </div>
+        </div>
       </main>
+
+      {/* --- MODAL DE APERTURA DE EMERGENCIA --- */}
+      {showEmergencyModal && (
+        <div style={{
+          position: "fixed", top: 0, left: 0, width: "100vw", height: "100vh", 
+          backgroundColor: "rgba(0,0,0,0.5)", zIndex: 999, display: "flex", 
+          alignItems: "center", justifyContent: "center", padding: "16px"
+        }}>
+          <div style={{
+            background: "white", width: "100%", maxWidth: "400px", borderRadius: "20px", 
+            padding: "24px", position: "relative", boxShadow: "0 10px 40px rgba(0,0,0,0.2)"
+          }}>
+            <button 
+              onClick={closeEmergencyModal}
+              style={{ position: "absolute", top: "16px", right: "16px", background: "none", border: "none", color: colors.textSecondary }}
+            >
+              <X size={24} />
+            </button>
+
+            {emergencyStep === "request" ? (
+              <div style={{ textAlign: "center", paddingTop: "8px" }}>
+                <div style={{ width: 48, height: 48, background: `${colors.warning}20`, color: colors.warning, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px" }}>
+                  <Mail size={24} />
+                </div>
+                <h3 style={{ fontSize: 18, fontWeight: "700", color: colors.textMain, marginBottom: 8, fontFamily: "'Montserrat', sans-serif" }}>
+                  Validación de Seguridad
+                </h3>
+                <p style={{ fontSize: 14, color: colors.textSecondary, marginBottom: 24 }}>
+                  Para abrir el casillero remotamente, enviaremos un código temporal de 6 dígitos a tu correo institucional.
+                </p>
+                {emergencyError && <p style={{ color: colors.error, fontSize: 13, marginBottom: 16 }}>{emergencyError}</p>}
+                
+                <Button 
+                  onClick={handleRequestPin} 
+                  disabled={isEmergencyLoading}
+                  style={{ width: "100%", height: 48, borderRadius: "12px", background: colors.warning, color: "white", fontWeight: "600", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, border: "none" }}
+                >
+                  {isEmergencyLoading ? <Loader2 size={18} className="animate-spin" /> : "Enviar Código a mi Correo"}
+                </Button>
+              </div>
+            ) : (
+              <div style={{ textAlign: "center", paddingTop: "8px" }}>
+                <div style={{ width: 48, height: 48, background: `${colors.primary}20`, color: colors.primary, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px" }}>
+                  <KeyRound size={24} />
+                </div>
+                <h3 style={{ fontSize: 18, fontWeight: "700", color: colors.textMain, marginBottom: 8, fontFamily: "'Montserrat', sans-serif" }}>
+                  Ingresa tu Código
+                </h3>
+                <p style={{ fontSize: 14, color: colors.textSecondary, marginBottom: 20 }}>
+                  Revisa tu correo (incluyendo SPAM). El código expira en 5 minutos.
+                </p>
+                
+                <input 
+                  type="text" 
+                  maxLength={6}
+                  value={emailPin}
+                  onChange={(e) => setEmailPin(e.target.value.replace(/\D/g, ''))} // Solo permite números
+                  placeholder="000000"
+                  style={{
+                    width: "100%", height: 56, fontSize: "28px", letterSpacing: "8px", 
+                    textAlign: "center", borderRadius: "12px", border: `2px solid ${colors.backgroundSoft}`,
+                    marginBottom: 16, outline: "none", color: colors.textMain, fontWeight: "bold"
+                  }}
+                />
+
+                {emergencyError && <p style={{ color: colors.error, fontSize: 13, marginBottom: 16 }}>{emergencyError}</p>}
+
+                <Button 
+                  onClick={handleSubmitPin} 
+                  disabled={isEmergencyLoading || emailPin.length < 6}
+                  style={{ width: "100%", height: 48, borderRadius: "12px", background: colors.primary, color: "white", fontWeight: "600", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, border: "none" }}
+                >
+                  {isEmergencyLoading ? <Loader2 size={18} className="animate-spin" /> : "Abrir Casillero Remotamente"}
+                </Button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
