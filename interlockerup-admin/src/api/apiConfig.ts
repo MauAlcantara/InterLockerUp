@@ -1,5 +1,5 @@
 // Forzamos la URL de producción directamente para eliminar el error de localhost
-export const BASE_URL = 'https://admin.vigilia.world';
+export const BASE_URL = 'http://localhost:3000';
 // http://localhost:3000
 // https://admin.vigilia.world
 
