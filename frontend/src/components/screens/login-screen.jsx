@@ -7,9 +7,19 @@ import { Card, CardContent } from "../ui/card"
 import colors from "../theme/colors"
 import fonts from "../theme/typography"
 import forge from "node-forge"
-import toast, { Toaster } from "react-hot-toast" // Importar toast
+import toast from "react-hot-toast"
 
 const api = import.meta.env.VITE_API_URL
+
+// Genera un ID único y persistente para este dispositivo/navegador
+function getDeviceId() {
+    let id = localStorage.getItem("device_id")
+    if (!id) {
+        id = crypto.randomUUID()
+        localStorage.setItem("device_id", id)
+    }
+    return id
+}
 
 async function getPublicKey() {
     const res = await fetch(`${api}/api/auth/public-key`)
@@ -21,23 +31,15 @@ async function encryptPassword(password) {
     try {
         const publicKeyPem = await getPublicKey()
         const publicKey = forge.pki.publicKeyFromPem(publicKeyPem)
-
         const aesKey = forge.random.getBytesSync(32)
         const iv = forge.random.getBytesSync(16)
-
         const cipher = forge.cipher.createCipher("AES-CBC", aesKey)
         cipher.start({ iv })
         cipher.update(forge.util.createBuffer(password))
         cipher.finish()
-
-        const encryptedPassword = forge.util.encode64(cipher.output.getBytes())
-        const encryptedAesKey = forge.util.encode64(
-            publicKey.encrypt(aesKey, "RSA-OAEP")
-        )
-
         return {
-            encryptedPassword,
-            encryptedAesKey,
+            encryptedPassword: forge.util.encode64(cipher.output.getBytes()),
+            encryptedAesKey: forge.util.encode64(publicKey.encrypt(aesKey, "RSA-OAEP")),
             iv: forge.util.encode64(iv)
         }
     } catch (e) {
@@ -50,25 +52,17 @@ export default function LoginScreen({ onLogin, onGoToRegister }) {
     const [isLoading, setIsLoading] = useState(false)
     const [studentId, setStudentId] = useState("")
     const [password, setPassword] = useState("")
+    const [otpStep, setOtpStep] = useState(false)
+    const [otpCode, setOtpCode] = useState("")
 
     const handleSubmit = async (e) => {
         e.preventDefault()
-
-        // --- VALIDACIONES PREVIAS ---
-        if (studentId.length < 5) {
-            return toast.error("La matrícula parece ser demasiado corta")
-        }
-
-        if (password.length < 6) {
-            return toast.error("La contraseña debe tener al menos 6 caracteres")
-        }
+        if (studentId.length < 5) return toast.error("La matrícula parece ser demasiado corta")
+        if (password.length < 6) return toast.error("La contraseña debe tener al menos 6 caracteres")
 
         setIsLoading(true)
-
         try {
-            // Notificación de proceso de seguridad
             const encrypted = await encryptPassword(password)
-
             const response = await fetch(`${api}/api/auth/login`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -76,22 +70,22 @@ export default function LoginScreen({ onLogin, onGoToRegister }) {
                     studentId,
                     encryptedPassword: encrypted.encryptedPassword,
                     encryptedAesKey: encrypted.encryptedAesKey,
-                    iv: encrypted.iv
+                    iv: encrypted.iv,
+                    deviceId: getDeviceId()
                 })
             })
-
             const data = await response.json()
 
-            if (!response.ok) {
-                throw new Error(data.mensaje || "Error al iniciar sesión")
+            if (data.requiereOTP) {
+                toast.success("Código enviado a tu correo institucional")
+                setOtpStep(true)
+                return
             }
 
-            localStorage.setItem("token", data.token)
-            toast.success("¡Bienvenido!")
-            
-            // Pequeña espera para que el usuario vea el mensaje de éxito
-            setTimeout(() => onLogin(data.usuario), 1000)
+            if (!response.ok) throw new Error(data.mensaje || "Error al iniciar sesión")
 
+            localStorage.setItem("token", data.token)
+            onLogin(data.usuario)
         } catch (err) {
             toast.error(err.message)
         } finally {
@@ -99,15 +93,100 @@ export default function LoginScreen({ onLogin, onGoToRegister }) {
         }
     }
 
-    return (
-        <div
-            className="min-h-screen flex flex-col bg-gradient-to-b"
-            style={{ backgroundImage: `linear-gradient(to bottom, ${colors.primary}, ${colors.secondary})` }}
-        >
-            {/* Componente que renderiza los mensajes flotantes */}
-            <Toaster position="top-center" reverseOrder={false} />
+    const handleVerifyOtp = async (e) => {
+        e.preventDefault()
+        if (otpCode.length < 6) return toast.error("El código debe tener 6 dígitos")
 
-            {/* Header */}
+        setIsLoading(true)
+        try {
+            const encrypted = await encryptPassword(password)
+            const response = await fetch(`${api}/api/auth/login`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    studentId,
+                    encryptedPassword: encrypted.encryptedPassword,
+                    encryptedAesKey: encrypted.encryptedAesKey,
+                    iv: encrypted.iv,
+                    deviceId: getDeviceId(),
+                    otpCode  // ← segundo intento con el código
+                })
+            })
+            const data = await response.json()
+            if (!response.ok) throw new Error(data.mensaje || "Código incorrecto")
+
+            localStorage.setItem("token", data.token)
+            onLogin(data.usuario)
+        } catch (err) {
+            toast.error(err.message)
+        } finally {
+            setIsLoading(false)
+        }
+    }
+
+    // --- PANTALLA DE OTP ---
+    if (otpStep) {
+        return (
+            <div className="min-h-screen flex flex-col bg-gradient-to-b"
+                style={{ backgroundImage: `linear-gradient(to bottom, ${colors.primary}, ${colors.secondary})` }}>
+                <div className="flex-1 flex flex-col items-center justify-center px-6 pt-12 pb-8">
+                    <div className="w-20 h-20 bg-white rounded-2xl flex items-center justify-center shadow-xl mb-4">
+                        <img src="/logo.png" alt="logo" className="w-40 h-40 object-contain" />
+                    </div>
+                    <h1 style={{ fontFamily: fonts.primary }} className="text-2xl font-bold text-white text-center">
+                        Verificación
+                    </h1>
+                    <p style={{ fontFamily: fonts.secondary }} className="text-white/80 text-sm mt-2 text-center px-4">
+                        Ingresa el código de 6 dígitos enviado a tu correo institucional
+                    </p>
+                </div>
+                <Card className="rounded-t-3xl rounded-b-none shadow-2xl border-0">
+                    <CardContent className="p-6 pt-8">
+                        <form onSubmit={handleVerifyOtp} className="space-y-5">
+                            <div className="space-y-2">
+                                <Label className="text-sm font-medium text-foreground">Código de verificación</Label>
+                                <Input
+                                    type="text"
+                                    inputMode="numeric"
+                                    placeholder="000000"
+                                    value={otpCode}
+                                    onChange={(e) => setOtpCode(e.target.value.trim())}
+                                    className="h-14 rounded-lg border-border bg-muted/50 text-center text-2xl tracking-widest"
+                                    maxLength={6}
+                                    required
+                                />
+                            </div>
+                            <Button
+                                type="submit"
+                                disabled={isLoading || otpCode.length < 6}
+                                style={{ fontFamily: fonts.primary, backgroundColor: colors.primary }}
+                                className="w-full h-12 rounded-lg text-white font-semibold text-base shadow-lg"
+                            >
+                                <div className="flex items-center justify-center w-full h-full">
+                                    {isLoading
+                                        ? <><Loader2 className="w-5 h-5 mr-2 animate-spin" /><span>Verificando...</span></>
+                                        : <span>Verificar</span>
+                                    }
+                                </div>
+                            </Button>
+                            <button
+                                type="button"
+                                onClick={() => { setOtpStep(false); setOtpCode("") }}
+                                className="w-full text-sm text-muted-foreground text-center"
+                            >
+                                ← Volver al inicio de sesión
+                            </button>
+                        </form>
+                    </CardContent>
+                </Card>
+            </div>
+        )
+    }
+
+    // --- PANTALLA DE LOGIN NORMAL ---
+    return (
+        <div className="min-h-screen flex flex-col bg-gradient-to-b"
+            style={{ backgroundImage: `linear-gradient(to bottom, ${colors.primary}, ${colors.secondary})` }}>
             <div className="flex-1 flex flex-col items-center justify-center px-6 pt-12 pb-8">
                 <div className="w-20 h-20 bg-white rounded-2xl flex items-center justify-center shadow-xl mb-4">
                     <img src="/logo.png" alt="logo" className="w-40 h-40 object-contain" />
@@ -120,18 +199,14 @@ export default function LoginScreen({ onLogin, onGoToRegister }) {
                 </p>
             </div>
 
-            {/* Login Card */}
             <Card className="rounded-t-3xl rounded-b-none shadow-2xl border-0">
                 <CardContent className="p-6 pt-8">
                     <h2 style={{ fontFamily: fonts.primary }} className="text-xl font-semibold text-foreground text-center mb-6">
                         Iniciar Sesión
                     </h2>
-
                     <form onSubmit={handleSubmit} className="space-y-5">
                         <div className="space-y-2">
-                            <Label htmlFor="studentId" className="text-sm font-medium text-foreground">
-                                Matrícula
-                            </Label>
+                            <Label htmlFor="studentId" className="text-sm font-medium text-foreground">Matrícula</Label>
                             <div className="relative">
                                 <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                                 <Input
@@ -145,11 +220,8 @@ export default function LoginScreen({ onLogin, onGoToRegister }) {
                                 />
                             </div>
                         </div>
-
                         <div className="space-y-2">
-                            <Label htmlFor="password" className="text-sm font-medium text-foreground">
-                                Contraseña
-                            </Label>
+                            <Label htmlFor="password" className="text-sm font-medium text-foreground">Contraseña</Label>
                             <div className="relative">
                                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                                 <Input
@@ -170,26 +242,17 @@ export default function LoginScreen({ onLogin, onGoToRegister }) {
                                 </button>
                             </div>
                         </div>
-
                         <Button
                             type="submit"
                             disabled={isLoading || !studentId || !password}
-                            style={{
-                                fontFamily: fonts.primary,
-                                backgroundColor: colors.primary
-                            }}
+                            style={{ fontFamily: fonts.primary, backgroundColor: colors.primary }}
                             className="w-full h-12 rounded-lg hover:bg-opacity-90 text-white font-semibold text-base shadow-lg transition-all"
                         >
-                            {/* El contenedor div asegura que el contenido no rompa el diseño del botón */}
                             <div className="flex items-center justify-center w-full h-full">
-                                {isLoading ? (
-                                    <>
-                                        <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                                        <span>Ingresando...</span>
-                                    </>
-                                ) : (
-                                    <span>Ingresar</span>
-                                )}
+                                {isLoading
+                                    ? <><Loader2 className="w-5 h-5 mr-2 animate-spin" /><span>Ingresando...</span></>
+                                    : <span>Ingresar</span>
+                                }
                             </div>
                         </Button>
                     </form>
@@ -198,7 +261,6 @@ export default function LoginScreen({ onLogin, onGoToRegister }) {
                         <button type="button" className="text-sm text-secondary hover:text-primary font-medium transition-colors">
                             ¿Olvidaste tu contraseña?
                         </button>
-
                         <div className="flex items-center gap-2 justify-center">
                             <span className="text-sm text-muted-foreground">¿No tienes cuenta?</span>
                             <button

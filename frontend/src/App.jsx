@@ -12,7 +12,7 @@ import SupportScreen from "./components/screens/support-screen"
 import { ProfileScreen } from "./components/screens/ProfileScreen"
 
 export default function App() {
-const [isLoggedIn, setIsLoggedIn] = useState(() => {
+  const [isLoggedIn, setIsLoggedIn] = useState(() => {
     return !!localStorage.getItem("token");
   })
   const [authScreen, setAuthScreen] = useState("login")
@@ -25,59 +25,56 @@ const [isLoggedIn, setIsLoggedIn] = useState(() => {
     setAuthScreen("login")
   }
 
+  const renderScreen = () => {
+    switch (activeTab) {
+      case "home":
+        return <HomeScreen onNavigate={setActiveTab} onLogout={handleLogout} />
+      case "request":
+        return <RequestScreen />
+      case "access":
+        return <AccessScreen />
+      case "history":
+        return <HistoryScreen />
+      case "support":
+        return <SupportScreen />
+      case "profile":
+        return <ProfileScreen onLogout={handleLogout} />
+      default:
+        return <HomeScreen onNavigate={setActiveTab} onLogout={handleLogout} />
+    }
+  }
+
   if (!isLoggedIn) {
     if (authScreen === "register") {
       return (
-<>
-<Toaster position="top-center" />
-        <RegisterScreen
-          onRegister={() => setIsLoggedIn(true)}
-          onBackToLogin={() => setAuthScreen("login")}
-        />
+        <>
+          <Toaster position="top-center" />
+          <RegisterScreen
+            onRegister={() => setIsLoggedIn(true)}
+            onBackToLogin={() => setAuthScreen("login")}
+          />
         </>
       )
     }
 
     return (
       <>
-<Toaster position="top-center" />
-      <LoginScreen
-        onLogin={() => setIsLoggedIn(true)}
-        onGoToRegister={() => setAuthScreen("register")}
-      />
+        <Toaster position="top-center" />
+        <LoginScreen
+          onLogin={() => setIsLoggedIn(true)}
+          onGoToRegister={() => setAuthScreen("register")}
+        />
       </>
     )
   }
 
-  const renderScreen = () => {
-    switch (activeTab) {
-      case "home":
-        return <HomeScreen onNavigate={setActiveTab} onLogout={handleLogout} />
-
-      case "request":
-        return <RequestScreen />
-
-      case "access":
-        return <AccessScreen />
-
-      case "history":
-        return <HistoryScreen />
-
-      case "support":
-        return <SupportScreen />
-
-      case "profile":
-        return <ProfileScreen onLogout={handleLogout} />
-
-      default:
-        return <HomeScreen onNavigate={setActiveTab} onLogout={handleLogout} />
-    }
-  }
-
   return (
-    <div className="min-h-screen bg-background">
-      {renderScreen()}
-      <BottomNav activeTab={activeTab} onTabChange={setActiveTab} />
-    </div>
+    <>
+      <Toaster position="top-center" />
+      <div className="min-h-screen bg-background">
+        {renderScreen()}
+        <BottomNav activeTab={activeTab} onTabChange={setActiveTab} />
+      </div>
+    </>
   )
 }
