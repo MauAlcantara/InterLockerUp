@@ -32,7 +32,7 @@ export default function AdminProfilePage() {
   const fetchUserData = async () => {
     try {
       const token = localStorage.getItem("admin_token") || localStorage.getItem("token")
-      const res = await fetch(`${BASE_URL}/perfil/me`, {
+      const res = await fetch(`${BASE_URL}/api/perfil/me`, {
         headers: { Authorization: `Bearer ${token}` }
       })
       
@@ -68,7 +68,7 @@ export default function AdminProfilePage() {
     setIsSubmitting(true)
     try {
       const token = localStorage.getItem("admin_token") || localStorage.getItem("token")
-      const res = await fetch(`${BASE_URL}/perfil/update`, {
+      const res = await fetch(`${BASE_URL}/api/perfil/update`, {
         method: "PUT",
         headers: { 
           "Content-Type": "application/json", 
