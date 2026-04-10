@@ -43,6 +43,7 @@ const registerUserRoutes = require('./routes/registerUserRoutes');
 
 // Definición de Endpoints
 app.use('/api/auth', authRoutes); 
+app.use('/api/me', perfilRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/lockers', lockerRoutes);
 app.use('/api/access', accessRoutes);
