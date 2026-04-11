@@ -56,7 +56,8 @@ const solicitarPinCorreo = async (req, res) => {
     }
 };
 
-// 2. Recibe el PIN ingresado en la app y abre el locker
+// 2. Recibe el PIN ingresado en la app y ab
+// re el locker
 const abrirLockerRemoto = async (req, res) => {
     const userId = req.user.id;
     const { pin_ingresado } = req.body;
