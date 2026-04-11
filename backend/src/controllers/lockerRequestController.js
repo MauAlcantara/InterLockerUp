@@ -177,4 +177,155 @@ const cancelLockerRequest = async (req, res) => {
     }
 };
 
-module.exports = { createLockerRequest, getUserLockerRequests, getAvailableLockers, cancelLockerRequest};
+// ADMIN: Obtener todas las solicitudes pendientes
+const getPendingRequests = async (req, res) => {
+    try {
+        const result = await db.query(`
+            SELECT 
+                lr.id,
+                lr.status,
+                lr.shared,
+                lr.companions,
+                lr.created_at,
+                u.nombre_completo,
+                u.matricula,
+                u.carrera,
+                l.identificador AS locker,
+                b.name AS edificio
+            FROM locker_requests lr
+            JOIN users u ON lr.user_id = u.id
+            LEFT JOIN lockers l ON lr.locker_id = l.id
+            LEFT JOIN buildings b ON l.building_id = b.id
+            WHERE lr.status = 'pending'
+            ORDER BY lr.created_at DESC
+        `);
+        res.json(result.rows);
+    } catch (error) {
+        console.error("Error al obtener solicitudes pendientes:", error.message);
+        res.status(500).json({ mensaje: 'Error al obtener solicitudes.' });
+    }
+};
+
+// ADMIN: Aceptar solicitud
+const acceptLockerRequest = async (req, res) => {
+    const { id } = req.params;
+    const { fecha_vencimiento } = req.body;
+
+    try {
+        await db.query('BEGIN');
+
+        // 1. Obtener la solicitud
+        const { rows, rowCount } = await db.query(
+            "SELECT * FROM locker_requests WHERE id = $1 AND status = 'pending'",
+            [id]
+        );
+        if (rowCount === 0) {
+            await db.query('ROLLBACK');
+            return res.status(404).json({ mensaje: 'Solicitud no encontrada o ya procesada.' });
+        }
+        const request = rows[0];
+
+        // 2. Crear el assignment
+        const assignResult = await db.query(
+            `INSERT INTO assignments (locker_id, fecha_vencimiento, es_compartido)
+             VALUES ($1, $2, $3) RETURNING id`,
+            [request.locker_id, fecha_vencimiento || '2025-12-31', request.shared]
+        );
+        const assignmentId = assignResult.rows[0].id;
+
+        // 3. Vincular usuario principal + companions en assignment_users
+        const allUsers = [request.user_id, ...(request.companions || [])];
+        for (const userId of allUsers) {
+            await db.query(
+                'INSERT INTO assignment_users (assignment_id, user_id) VALUES ($1, $2)',
+                [assignmentId, userId]
+            );
+        }
+
+        // 4. Cambiar locker a 'ocupado'
+        await db.query(
+            "UPDATE lockers SET estado = 'ocupado', updated_at = NOW() WHERE id = $1",
+            [request.locker_id]
+        );
+
+        // 5. Marcar solicitud como accepted
+        await db.query(
+            "UPDATE locker_requests SET status = 'accepted' WHERE id = $1",
+            [id]
+        );
+
+        // 6. Notificar al alumno
+        await db.query(
+            `INSERT INTO notifications (user_id, mensaje, tipo)
+             VALUES ($1, '¡Tu solicitud de locker fue aprobada! Ya puedes usarlo.', 'info')`,
+            [request.user_id]
+        );
+
+        await db.query('COMMIT');
+        res.json({ success: true, assignmentId });
+
+    } catch (error) {
+        await db.query('ROLLBACK');
+        console.error("Error al aceptar solicitud:", error.message);
+        res.status(500).json({ mensaje: 'Error al aceptar la solicitud.' });
+    }
+};
+
+// ADMIN: Rechazar solicitud
+const rejectLockerRequest = async (req, res) => {
+    const { id } = req.params;
+    const { motivo } = req.body;
+
+    try {
+        await db.query('BEGIN');
+
+        const { rows, rowCount } = await db.query(
+            "SELECT * FROM locker_requests WHERE id = $1 AND status = 'pending'",
+            [id]
+        );
+        if (rowCount === 0) {
+            await db.query('ROLLBACK');
+            return res.status(404).json({ mensaje: 'Solicitud no encontrada o ya procesada.' });
+        }
+        const request = rows[0];
+
+        // 1. Marcar como rejected
+        await db.query(
+            "UPDATE locker_requests SET status = 'rejected' WHERE id = $1",
+            [id]
+        );
+
+        // 2. Liberar el locker (vuelve a 'disponible')
+        await db.query(
+            "UPDATE lockers SET estado = 'disponible', updated_at = NOW() WHERE id = $1",
+            [request.locker_id]
+        );
+
+        // 3. Notificar al alumno
+        const mensaje = motivo
+            ? `Tu solicitud de locker fue rechazada. Motivo: ${motivo}`
+            : 'Tu solicitud de locker fue rechazada.';
+        await db.query(
+            `INSERT INTO notifications (user_id, mensaje, tipo) VALUES ($1, $2, 'info')`,
+            [request.user_id, mensaje]
+        );
+
+        await db.query('COMMIT');
+        res.json({ success: true });
+
+    } catch (error) {
+        await db.query('ROLLBACK');
+        console.error("Error al rechazar solicitud:", error.message);
+        res.status(500).json({ mensaje: 'Error al rechazar la solicitud.' });
+    }
+};
+
+module.exports = { 
+    createLockerRequest, 
+    getUserLockerRequests, 
+    getAvailableLockers, 
+    cancelLockerRequest,
+    getPendingRequests,      // <-- nuevo
+    acceptLockerRequest,     // <-- nuevo
+    rejectLockerRequest      // <-- nuevo
+};
