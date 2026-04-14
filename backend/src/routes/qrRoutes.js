@@ -7,7 +7,7 @@ const { generateQRToken } = require('../controllers/qrController');
 router.post('/generate', verificarToken, generateQRToken);
 
 // // Valida el token
-// router.post('/validar', validarQRToken);
+router.post('/validar', validarQRToken);
 
 
 
