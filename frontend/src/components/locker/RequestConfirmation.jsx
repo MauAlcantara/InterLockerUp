@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Check, Lock, User, Clock, XCircle, Home, MapPin, History, LifeBuoy, AlertTriangle } from "lucide-react";
+import { Check, Lock, User, Clock, XCircle, AlertTriangle, Loader2, KeyRound } from "lucide-react";
 import { Card, CardContent } from "../ui/card";
 import { Alert, AlertTitle, AlertDescription } from "../ui/alert"; 
 import Button from "../ui/button";
@@ -12,12 +12,15 @@ export default function RequestConfirmation({
     isShared, 
     partners = [], 
     status, 
-    onCancel, 
-    onRetry 
+    onCancel 
 }) {
-    // Estado para controlar la visibilidad de la alerta de confirmación
     const [showCancelAlert, setShowCancelAlert] = useState(false);
     const [isCancelling, setIsCancelling] = useState(false);
+
+    // --- NUEVOS ESTADOS PARA EL FLUJO DE APERTURA ---
+    const [pinStep, setPinStep] = useState(false); // Cambia entre botón y teclado de PIN
+    const [pinValue, setPinValue] = useState("");
+    const [isWorking, setIsWorking] = useState(false);
 
     const statusConfig = {
         pending: {
@@ -51,11 +54,60 @@ export default function RequestConfirmation({
 
     const config = statusConfig[status] || statusConfig.pending;
 
+    // --- LÓGICA DE APERTURA (REPLICA EL CURL) ---
+
+    // 1. Solicitar que el servidor envíe el correo (request-pin)
+    const handleRequestPin = async () => {
+        setIsWorking(true);
+        try {
+            const token = localStorage.getItem("token");
+            const res = await fetch(`${import.meta.env.VITE_API_URL}/api/access/request-pin`, {
+                method: 'POST',
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            const data = await res.json();
+            alert(data.mensaje || "PIN enviado a tu correo");
+            setPinStep(true);
+        } catch (error) {
+            alert("Error al conectar con el servidor");
+        } finally {
+            setIsWorking(false);
+        }
+    };
+
+    // 2. Enviar el PIN ingresado para abrir (remote-unlock)
+    const handleRemoteUnlock = async () => {
+        setIsWorking(true);
+        try {
+            const token = localStorage.getItem("token");
+            const res = await fetch(`${import.meta.env.VITE_API_URL}/api/access/remote-unlock`, {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}` 
+                },
+                body: JSON.stringify({ pin_ingresado: pinValue }) // Clave idéntica a la del backend
+            });
+            const data = await res.json();
+            
+            if (res.ok) {
+                alert("✅ " + data.mensaje);
+                setPinStep(false);
+                setPinValue("");
+            } else {
+                alert("❌ " + data.mensaje);
+            }
+        } catch (error) {
+            alert("Error al validar el PIN");
+        } finally {
+            setIsWorking(false);
+        }
+    };
+
     const handleConfirmCancel = async () => {
         setIsCancelling(true);
         try {
             await onCancel(requestId);
-            // La redirección o cambio de estado lo maneja el padre (RequestScreen)
         } catch (error) {
             setIsCancelling(false);
             setShowCancelAlert(false);
@@ -64,13 +116,12 @@ export default function RequestConfirmation({
 
     return (
         <div className="min-h-screen bg-slate-50 flex flex-col font-roboto">
-            <header className="text-white px-6 pt-12 pb-14  shadow-lg transition-colors duration-500"
+            <header className="text-white px-6 pt-12 pb-14 shadow-lg transition-colors duration-500"
                     style={{ backgroundColor: config.mainColor }}>
                 <h1 className="text-2xl font-montserrat font-bold text-center">{config.title}</h1>
             </header>
 
             <main className="px-6 -mt-8 flex-1 pb-10">
-                {/* ALERTA DE CONFIRMACIÓN PERSONALIZADA */}
                 {showCancelAlert && (
                     <div className="mb-4 animate-in fade-in slide-in-from-top-4 duration-300">
                         <Alert variant="error">
@@ -78,23 +129,12 @@ export default function RequestConfirmation({
                                 <AlertTriangle className="text-red-500 shrink-0" size={20} />
                                 <div className="flex-1">
                                     <AlertTitle>¿Confirmar cancelación?</AlertTitle>
-                                    <AlertDescription>
-                                        Esta acción liberará el locker y no se puede deshacer.
-                                    </AlertDescription>
+                                    <AlertDescription>Esta acción liberará el locker y no se puede deshacer.</AlertDescription>
                                     <div className="flex gap-3 mt-4">
-                                        <button 
-                                            onClick={handleConfirmCancel}
-                                            disabled={isCancelling}
-                                            className="bg-red-500 text-white px-4 py-2 rounded-lg font-bold text-xs uppercase"
-                                        >
+                                        <button onClick={handleConfirmCancel} disabled={isCancelling} className="bg-red-500 text-white px-4 py-2 rounded-lg font-bold text-xs uppercase">
                                             {isCancelling ? "Cancelando..." : "Sí, cancelar"}
                                         </button>
-                                        <button 
-                                            onClick={() => setShowCancelAlert(false)}
-                                            className="bg-slate-200 text-slate-600 px-4 py-2 rounded-lg font-bold text-xs uppercase"
-                                        >
-                                            No, mantener
-                                        </button>
+                                        <button onClick={() => setShowCancelAlert(false)} className="bg-slate-200 text-slate-600 px-4 py-2 rounded-lg font-bold text-xs uppercase">No, mantener</button>
                                     </div>
                                 </div>
                             </div>
@@ -139,54 +179,63 @@ export default function RequestConfirmation({
                                         {isShared ? "Compartido" : "Individual"}
                                     </span>
                                 </div>
-
-                                {/* LISTA DE COMPAÑEROS */}
-{isShared && partners && partners.length > 0 && (
-    <div className="mt-4 pt-4 border-t border-dashed border-slate-300">
-        <p className="text-[10px] text-slate-400 mb-3 uppercase tracking-widest font-bold">
-            Compañeros de acceso:
-        </p>
-        <div className="space-y-2">
-            {partners.map((p, idx) => (
-                <div key={idx} className="flex items-center gap-3 bg-white p-2 rounded-xl border border-slate-100">
-                    <div className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center">
-                        <User className="w-4 h-4 text-slate-400" />
-                    </div>
-                    <div className="flex flex-col">
-                        <p className="font-bold text-slate-700 text-xs leading-none">
-                            {/* Soporta 'name' (front local) y 'nombre_completo' (backend) */}
-                            {p.name || p.nombre_completo}
-                        </p>
-                        <p className="text-[9px] text-slate-400">{p.matricula}</p>
-                    </div>
-                </div>
-            ))}
-        </div>
-    </div>
-)}
                             </div>
                         </div>
 
+                        {/* SECCIÓN INTERACTIVA DE APERTURA */}
                         <div className="space-y-3">
                             {status === 'pending' && !showCancelAlert && (
                                 <Button 
                                     onClick={() => setShowCancelAlert(true)}
-                                    className="w-full h-16 rounded-2xl bg-slate-50 text-slate-500 font-montserrat font-bold border border-slate-200 hover:bg-red-50 hover:text-red-600 hover:border-red-100 transition-all"
+                                    className="w-full h-16 rounded-2xl bg-slate-50 text-slate-500 font-montserrat font-bold border border-slate-200"
                                 >
                                     Cancelar Solicitud
                                 </Button>
                             )}
 
                             {status === 'approved' && (
-                                <div className="p-4 bg-emerald-50 rounded-2xl border border-emerald-100 text-emerald-700 font-bold text-sm">
-                                    Puedes generar tu QR para abrir el casillero en cualquier momento.
+                                <div className="animate-in fade-in zoom-in duration-300 space-y-4">
+                                    {!pinStep ? (
+                                        <Button 
+                                            onClick={handleRequestPin}
+                                            disabled={isWorking}
+                                            className="w-full h-16 rounded-2xl text-white font-montserrat font-bold shadow-lg flex items-center justify-center gap-2"
+                                            style={{ backgroundColor: colors.success }}
+                                        >
+                                            {isWorking ? <Loader2 className="animate-spin" /> : <KeyRound size={20} />}
+                                            Solicitar PIN de Apertura
+                                        </Button>
+                                    ) : (
+                                        <div className="bg-slate-50 p-6 rounded-3xl border-2 border-dashed border-emerald-200 space-y-4">
+                                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Ingresa el PIN recibido:</p>
+                                            <input 
+                                                type="text" 
+                                                maxLength="6"
+                                                value={pinValue}
+                                                onChange={(e) => setPinValue(e.target.value.replace(/\D/g, ""))}
+                                                className="w-full text-center text-3xl font-bold tracking-[8px] h-16 bg-white rounded-2xl border-none focus:ring-2 focus:ring-emerald-500"
+                                                placeholder="000000"
+                                            />
+                                            <div className="flex gap-2">
+                                                <Button onClick={() => setPinStep(false)} className="flex-1 h-12 rounded-xl bg-slate-200 text-slate-500 font-bold">Cancelar</Button>
+                                                <Button 
+                                                    onClick={handleRemoteUnlock} 
+                                                    disabled={pinValue.length < 6 || isWorking}
+                                                    className="flex-[2] h-12 rounded-xl text-white font-bold"
+                                                    style={{ backgroundColor: colors.success }}
+                                                >
+                                                    {isWorking ? "Validando..." : "Confirmar Apertura"}
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    )}
+                                    <p className="text-[10px] text-slate-400">El PIN caduca en 5 minutos.</p>
                                 </div>
                             )}
                         </div>
                     </CardContent>
                 </Card>
             </main>
-           
         </div>
     );
 }

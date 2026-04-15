@@ -45,7 +45,8 @@ async function encryptPassword(password) {
     }
 }
 
-export default function LoginScreen({ onLogin, onGoToRegister }) {
+// Añadimos onOtpRequired como prop para manejar el flujo de seguridad
+export default function LoginScreen({ onLogin, onGoToRegister, onOtpRequired }) {
     const [showPassword, setShowPassword] = useState(false)
     const [isLoading, setIsLoading] = useState(false)
     const [studentId, setStudentId] = useState("")
@@ -54,7 +55,6 @@ export default function LoginScreen({ onLogin, onGoToRegister }) {
     const handleSubmit = async (e) => {
         e.preventDefault()
 
-        // --- VALIDACIONES PREVIAS ---
         if (studentId.length < 5) {
             return toast.error("La matrícula parece ser demasiado corta")
         }
@@ -66,7 +66,6 @@ export default function LoginScreen({ onLogin, onGoToRegister }) {
         setIsLoading(true)
 
         try {
-            // Notificación de proceso de seguridad
             const encrypted = await encryptPassword(password)
 
             const response = await fetch(`${api}/api/auth/login`, {
@@ -87,16 +86,27 @@ export default function LoginScreen({ onLogin, onGoToRegister }) {
             }
 
             console.log("✅ Respuesta del servidor:", data)
-console.log("✅ Token recibido:", data.token)
 
-if (!data.token) {
-    throw new Error("El servidor no devolvió un token")
-}
+            // --- CORRECCIÓN: MANEJO DE OTP ---
+            if (data.requiereOTP) {
+                toast.success("Verificación requerida. Revisa tu correo.")
+                // Avisamos al componente padre que cambie a la vista de OTP
+                // Le pasamos el studentId para que la siguiente pantalla sepa de quién es el código
+                if (onOtpRequired) {
+                    onOtpRequired(studentId)
+                }
+                return; 
+            }
 
-localStorage.setItem("token", data.token)
-console.log("✅ Token guardado:", localStorage.getItem("token"))
+            // --- FLUJO NORMAL ---
+            if (!data.token) {
+                throw new Error("El servidor no devolvió un token de acceso")
+            }
 
-onLogin(data.usuario)
+            localStorage.setItem("token", data.token)
+            console.log("✅ Token guardado correctamente")
+
+            onLogin(data.usuario)
 
         } catch (err) {
             toast.error(err.message)
@@ -110,12 +120,10 @@ onLogin(data.usuario)
             className="min-h-screen flex flex-col bg-gradient-to-b"
             style={{ backgroundImage: `linear-gradient(to bottom, ${colors.primary}, ${colors.secondary})` }}
         >
-            {/* Componente que renderiza los mensajes flotantes */}
-
             {/* Header */}
             <div className="flex-1 flex flex-col items-center justify-center px-6 pt-12 pb-8">
-                <div className="w-20 h-20 bg-white rounded-2xl flex items-center justify-center shadow-xl mb-4">
-                    <img src="/logo.png" alt="logo" className="w-40 h-40 object-contain" />
+                <div className="w-20 h-20 bg-white rounded-2xl flex items-center justify-center shadow-xl mb-4 overflow-hidden">
+                    <img src="/logo.png" alt="logo" className="w-full h-full object-contain p-2" />
                 </div>
                 <h1 style={{ fontFamily: fonts.primary }} className="text-3xl font-bold text-white text-center">
                     InterLockerUp
@@ -185,12 +193,11 @@ onLogin(data.usuario)
                             }}
                             className="w-full h-12 rounded-lg hover:bg-opacity-90 text-white font-semibold text-base shadow-lg transition-all"
                         >
-                            {/* El contenedor div asegura que el contenido no rompa el diseño del botón */}
                             <div className="flex items-center justify-center w-full h-full">
                                 {isLoading ? (
                                     <>
                                         <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                                        <span>Ingresando...</span>
+                                        <span>Verificando...</span>
                                     </>
                                 ) : (
                                     <span>Ingresar</span>
