@@ -50,4 +50,65 @@ const generateQRToken = async (req, res) => {
     }
 }
 
-module.exports = { generateQRToken }
+/**
+ * VALIDAR QR (para ESP32)
+ * Recibe el código escaneado y valida acceso
+ */
+const validarQRToken = async (req, res) => {
+    const { codigo } = req.body
+
+    try {
+        if (!codigo) {
+            return res.json({ acceso: false })
+        }
+
+        // Convertir a hash
+        const tokenHash = crypto
+            .createHash("sha256")
+            .update(codigo)
+            .digest("hex")
+
+        const result = await db.query(`
+            SELECT 
+                qt.assignment_id,
+                qt.expires_at,
+                l.identificador AS locker_numero
+            FROM qr_tokens qt
+            JOIN assignments a ON qt.assignment_id = a.id
+            JOIN lockers l ON a.locker_id = l.id
+            WHERE qt.token_hash = $1
+            LIMIT 1
+        `, [tokenHash])
+
+        // Token no encontrado
+        if (result.rows.length === 0) {
+            return res.json({ acceso: false })
+        }
+
+        const token = result.rows[0]
+
+        // Token expirado
+        if (new Date(token.expires_at) < new Date()) {
+            return res.json({ acceso: false })
+        }
+
+        // Eliminar token (uso único)
+        await db.query(
+            "DELETE FROM qr_tokens WHERE assignment_id = $1",
+            [token.assignment_id]
+        )
+
+        return res.json({
+            acceso: true,
+            locker: token.locker_numero
+        })
+
+    } catch (error) {
+        console.error("Error al validar QR:", error)
+
+        res.status(500).json({ acceso: false })
+    }
+}
+
+
+module.exports = { generateQRToken, validarQRToken }

@@ -18,8 +18,9 @@ router.get('/available', verificarToken, getAvailableLockers);
 router.delete('/cancel-request/:requestId', verificarToken, cancelLockerRequest);
 
 // Rutas nuevas — solo admin debería llamarlas (puedes agregar middleware de rol si tienes)
-router.get('/pending', verificarToken, getPendingRequests);
-router.post('/:id/accept', verificarToken, acceptLockerRequest);
-router.post('/:id/reject', verificarToken, rejectLockerRequest);
+
+router.get('/pending', getPendingRequests)
+router.post('/:id/accept', acceptLockerRequest);
+router.post('/:id/reject', rejectLockerRequest);
 
 module.exports = router;
