@@ -170,4 +170,56 @@ const getCarreras = async (req, res) => {
     }
 };
 
-module.exports = { login, getPublicKey, getCarreras };
+const verifyOTP = async (req, res) => {
+    const { studentId, otp } = req.body;
+
+    try {
+        // 1. Buscamos al usuario por su matrícula
+        const result = await db.query(
+            'SELECT * FROM users WHERE matricula = $1', 
+            [studentId]
+        );
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({ mensaje: 'Usuario no encontrado.' });
+        }
+
+        const user = result.rows[0];
+
+        // 2. Validamos el código y la expiración (usando las columnas de tu DB)
+        const isOtpValid = (otp === user.temp_otp) && (new Date() < new Date(user.otp_expires));
+
+        if (!isOtpValid) {
+            return res.status(401).json({ mensaje: 'Código de verificación inválido o expirado.' });
+        }
+
+        // 3. Limpiamos el código usado para que no se use de nuevo
+        await db.query(
+            'UPDATE users SET temp_otp = NULL, otp_expires = NULL WHERE id = $1',
+            [user.id]
+        );
+
+        // 4. Generamos el token de acceso real
+        const token = jwt.sign(
+            { id: user.id, rol: user.rol },
+            process.env.JWT_SECRET,
+            { expiresIn: '8h' }
+        );
+
+        res.json({
+            mensaje: '¡Verificación exitosa!',
+            token,
+            usuario: { 
+                id: user.id, 
+                nombre: user.nombre_completo, 
+                rol: user.rol 
+            }
+        });
+
+    } catch (error) {
+        console.error("Error en verifyOTP:", error);
+        res.status(500).json({ mensaje: 'Error al verificar el código de seguridad.' });
+    }
+};
+
+module.exports = { login, getPublicKey, getCarreras, verifyOTP };
