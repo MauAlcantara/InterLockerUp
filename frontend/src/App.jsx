@@ -1,28 +1,34 @@
 import { useState } from "react"
-
 import BottomNav from "./components/bottom-nav"
 import { Toaster } from "react-hot-toast"
 import LoginScreen from "./components/screens/login-screen"
 import RegisterScreen from "./components/screens/register-screen"
 import HomeScreen from "./components/screens/home-screen"
-import {RequestScreen} from "./components/screens/request-screen"
+import { RequestScreen } from "./components/screens/request-screen"
 import AccessScreen from "./components/screens/access-screen"
-import {HistoryScreen} from "./components/screens/history-screen"
+import { HistoryScreen } from "./components/screens/history-screen"
 import SupportScreen from "./components/screens/support-screen"
 import { ProfileScreen } from "./components/screens/ProfileScreen"
+import OtpScreen from "./components/screens/OtpScreen" // Importamos la nueva pantalla
 
 export default function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(() => {
     return !!localStorage.getItem("token");
   })
-  const [authScreen, setAuthScreen] = useState("login")
+  const [authScreen, setAuthScreen] = useState("login") // login, register, otp
   const [activeTab, setActiveTab] = useState("home")
+  const [tempStudentId, setTempStudentId] = useState("") // Para guardar la matrícula durante el OTP
 
   const handleLogout = () => {
     localStorage.removeItem("token");
     setIsLoggedIn(false)
     setActiveTab("home")
     setAuthScreen("login")
+  }
+
+  const handleLoginSuccess = () => {
+    setIsLoggedIn(true)
+    setAuthScreen("login") // Reset para futuros logouts
   }
 
   const renderScreen = () => {
@@ -44,30 +50,41 @@ export default function App() {
     }
   }
 
+  // --- FLUJO DE AUTENTICACIÓN ---
   if (!isLoggedIn) {
-    if (authScreen === "register") {
-      return (
-        <>
-          <Toaster position="top-center" />
-          <RegisterScreen
-            onRegister={() => setIsLoggedIn(true)}
-            onBackToLogin={() => setAuthScreen("login")}
-          />
-        </>
-      )
-    }
-
     return (
       <>
         <Toaster position="top-center" />
-        <LoginScreen
-          onLogin={() => setIsLoggedIn(true)}
-          onGoToRegister={() => setAuthScreen("register")}
-        />
+        {authScreen === "register" && (
+          <RegisterScreen
+            onRegister={handleLoginSuccess}
+            onBackToLogin={() => setAuthScreen("login")}
+          />
+        )}
+
+        {authScreen === "login" && (
+          <LoginScreen
+            onLogin={handleLoginSuccess}
+            onGoToRegister={() => setAuthScreen("register")}
+            onOtpRequired={(id) => {
+              setTempStudentId(id)
+              setAuthScreen("otp")
+            }}
+          />
+        )}
+
+        {authScreen === "otp" && (
+          <OtpScreen
+            studentId={tempStudentId}
+            onVerified={handleLoginSuccess}
+            onBack={() => setAuthScreen("login")}
+          />
+        )}
       </>
     )
   }
 
+  // --- APP PRINCIPAL (LOGUEADO) ---
   return (
     <>
       <Toaster position="top-center" />
