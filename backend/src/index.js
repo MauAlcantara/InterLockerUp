@@ -11,6 +11,7 @@ const app = express();
 const corsOptions = {
     origin: [
         'https://admin.vigilia.world', // Tu dominio en producción
+	'https://vigilia.world',
         'http://localhost:5173',
         'http://localhost:5174', // Desarrollo local con Vite
         'http://localhost:3000'        // Otros entornos locales
