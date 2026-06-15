@@ -98,6 +98,6 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log('==============================================');
     console.log(`🚀 Servidor listo en puerto: ${PORT}`);
-    console.log(`🔒 CORS configurado para: admin.vigilia.world`);
+    console.log(`🔒 CORS configurado para: admin.interlockerup.xyz`);
     console.log('==============================================');
 });

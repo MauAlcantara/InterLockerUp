@@ -1,12 +1,16 @@
 const { body, validationResult } = require('express-validator');
 
 exports.validateLogin = [
-  body('matricula').notEmpty().withMessage('La matrícula es obligatoria'),
-  body('password').notEmpty().withMessage('La contraseña es obligatoria'),
   (req, res, next) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ errores: errors.array() });
+    const { studentId, email, password, encryptedPassword } = req.body;
+    const hasId = studentId || email;
+    const hasPassword = password || encryptedPassword;
+
+    if (!hasId) {
+      return res.status(400).json({ errores: [{ msg: 'Se requiere matrícula o correo electrónico' }] });
+    }
+    if (!hasPassword) {
+      return res.status(400).json({ errores: [{ msg: 'Se requiere contraseña o datos cifrados' }] });
     }
     next();
   }
