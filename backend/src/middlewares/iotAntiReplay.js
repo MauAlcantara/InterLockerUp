@@ -13,7 +13,9 @@ exports.iotAntiReplay = (req, res, next) => {
     return res.status(400).json({ error: 'Faltan parámetros IoT: timestamp, nonce, signature' });
   }
 
-  const reqTime = parseInt(timestamp, 10);
+  // Detectar si el timestamp viene en segundos (ESP32 común) y convertir a ms
+  const timestampNum = Number(timestamp);
+  const reqTime = timestampNum < 1e12 ? timestampNum * 1000 : timestampNum; // Si es < 1e12, asume segundos
   const currentTime = Date.now();
   if (Math.abs(currentTime - reqTime) > MAX_TIMESTAMP_DIFF_MS) {
     return res.status(403).json({ error: 'Solicitud expirada. El timestamp no está dentro de la ventana de seguridad.' });
