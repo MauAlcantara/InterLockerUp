@@ -9,8 +9,8 @@ const app = express();
 
 const corsOptions = {
     origin: [
-        'https://admin.vigilia.world',
-        'https://vigilia.world',
+        'https://admin.interlockerup.xyz',
+        'https://interlockerup.xyz',
         'http://localhost:5173',
         'http://localhost:5174',
         'http://localhost:3000'
@@ -62,7 +62,7 @@ app.get('/api/status', (req, res) => {
     res.json({ 
         mensaje: 'Backend de InterLockerUp funcionando al 100% 🚀',
         servidor: 'Producción / Online',
-        cors_permitido: 'https://admin.vigilia.world'
+        cors_permitido: 'https://admin.interlockerup.xyz'
     });
 });
 
