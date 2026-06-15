@@ -1,31 +1,17 @@
 const express = require('express');
 const router = express.Router();
-
-// Middleware
 const verificarToken = require('../middlewares/authMiddleware');
-
-// Controlador
-const { 
-    solicitarPinCorreo, 
-    abrirLockerRemoto 
-} = require('../controllers/accessController');
-
-//  IMPORTANTE: DB para el endpoint IoT
+const { solicitarPinCorreo, abrirLockerRemoto } = require('../controllers/accessController');
 const db = require('../config/db');
-
-// SOLICITAR PIN POR CORREO
+const { generalLimiter } = require('../middlewares/rateLimiter');
+const { validateLockerRequest } = require('../middlewares/inputValidator');
+const { iotAntiReplay } = require('../middlewares/iotAntiReplay');
 
 router.post('/request-pin', verificarToken, solicitarPinCorreo);
+router.post('/remote-unlock', verificarToken, validateLockerRequest, abrirLockerRemoto);
 
-// VALIDAR PIN Y ABRIR (lógica backend)
-
-router.post('/remote-unlock', verificarToken, abrirLockerRemoto);
-
-// NUEVO: ENDPOINT PARA ESP32
-router.get('/iot/pending', async (req, res) => {
-
-    const { locker } = req.query; // Ej: "K-01"
-
+router.get('/iot/pending', iotAntiReplay, async (req, res) => {
+    const { locker } = req.query;
     try {
         const result = await db.query(
             `SELECT ic.id, l.identificador 
@@ -38,23 +24,11 @@ router.get('/iot/pending', async (req, res) => {
         );
 
         if (result.rows.length > 0) {
-
             const comando = result.rows[0];
-
-            // marcar como ejecutado (para no repetir)
-            await db.query(
-                "UPDATE iot_commands SET ejecutado = true WHERE id = $1",
-                [comando.id]
-            );
-
-            return res.json({
-                abrir: true,
-                locker: comando.identificador
-            });
+            await db.query("UPDATE iot_commands SET ejecutado = true WHERE id = $1", [comando.id]);
+            return res.json({ abrir: true, locker: comando.identificador });
         }
-
         res.json({ abrir: false });
-
     } catch (error) {
         console.error("Error en /iot/pending:", error);
         res.status(500).json({ abrir: false });

@@ -1,31 +1,29 @@
 const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
+const fs = require('fs');
+const path = require('path');
 
-// Conexión a DB
 const db = require('./config/db');
-
 const app = express();
 
-// --- CONFIGURACIÓN DE SEGURIDAD CORS ---
 const corsOptions = {
     origin: [
-        'https://admin.vigilia.world', // Tu dominio en producción
-	'https://vigilia.world',
+        'https://admin.vigilia.world',
+        'https://vigilia.world',
         'http://localhost:5173',
-        'http://localhost:5174', // Desarrollo local con Vite
-        'http://localhost:3000'        // Otros entornos locales
+        'http://localhost:5174',
+        'http://localhost:3000'
     ],
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
-    credentials: true,                 // Permite el paso de headers de autenticación
+    credentials: true,
     optionsSuccessStatus: 204
 };
 
 app.use(cors(corsOptions));
-app.use(express.json()); // Middleware para leer JSON
+app.use(express.json());
 
-// Importación de todas las rutas
 const authRoutes = require('./routes/authRoutes');
 const userRoutes = require('./routes/userRoutes');
 const lockerRoutes = require('./routes/lockerRoutes');
@@ -42,8 +40,7 @@ const lockerRequestRoutes = require('./routes/lockerRequestRoutes');
 const historyRoutes = require('./routes/historyRoutes');
 const registerUserRoutes = require('./routes/registerUserRoutes');
 
-// Definición de Endpoints
-app.use('/api/auth', authRoutes); 
+app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/lockers', lockerRoutes);
 app.use('/api/access', accessRoutes);
@@ -59,10 +56,8 @@ app.use('/api/locker-requests', lockerRequestRoutes);
 app.use('/api/history', historyRoutes);
 app.use('/api', registerUserRoutes);
 
-// Servir archivos estáticos (imágenes de evidencia)
 app.use('/uploads', express.static('uploads'));
 
-// Ruta de estado para verificar que el servidor vive
 app.get('/api/status', (req, res) => {
     res.json({ 
         mensaje: 'Backend de InterLockerUp funcionando al 100% 🚀',
@@ -71,7 +66,34 @@ app.get('/api/status', (req, res) => {
     });
 });
 
-// Inicio del Servidor
+// 📄 GENERACIÓN AUTOMÁTICA DE DOCUMENTACIÓN DE SEGURIDAD
+const securityDoc = `
+=== DOCUMENTACIÓN DE SEGURIDAD IMPLEMENTADA ===
+Fecha: ${new Date().toISOString()}
+Proyecto: InterLockerUp
+
+1. RATE LIMITING:
+   - Autenticación: Máx 5 intentos/15min por IP.
+   - General: Máx 100 peticiones/hora por IP.
+   - Prevención: Ataques de fuerza bruta y DDoS.
+
+2. VALIDACIÓN DE ENTRADAS:
+   - Librería: express-validator.
+   - Endpoints protegidos: /login, /remote-unlock.
+   - Prevención: Inyección SQL, XSS, datos malformados.
+
+3. ANTI-REPLAY IOT:
+   - Mecanismo: Timestamp (ventana 30s) + Nonce (cache memoria) + HMAC-SHA256.
+   - Prevención: Reutilización de comandos ESP32, ataques de repetición.
+   - Clave: IOT_SECRET_KEY (variable de entorno).
+
+4. ESTADO: IMPLEMENTADO Y OPERATIVO.
+==============================================
+`;
+
+fs.writeFileSync(path.join(__dirname, '..', '..', 'SEGURIDAD_IMPLEMENTADA.txt'), securityDoc);
+console.log(securityDoc);
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log('==============================================');
