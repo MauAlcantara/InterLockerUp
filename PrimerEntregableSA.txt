@@ -1,0 +1,541 @@
+Materia: 
+Seguridad en el Desarrollo de Aplicaciones 
+
+Docente: 
+Gerardo Ramírez Villareal 
+
+Grupo: 
+IDGS17 
+
+  
+
+​​Contenido 
+​ 
+
+
+
+Introducción 
+
+Actualmente, la seguridad informática es un aspecto fundamental en el desarrollo de aplicaciones, especialmente en sistemas que gestionan información de usuarios y controlan dispositivos físicos conectados a internet. La implementación de prácticas de seguridad desde las primeras etapas del desarrollo permite reducir vulnerabilidades, proteger la información y garantizar la confiabilidad del sistema. 
+
+InterLockerUp es una plataforma web e IoT desarrollada para la Universidad Tecnológica de Querétaro (UTEQ), cuyo propósito es administrar y gestionar lockers inteligentes mediante una interfaz web para administradores y alumnos. El sistema permite realizar procesos como la asignación de lockers, gestión de usuarios, generación de códigos QR para acceso, consulta de historial, reportes de incidencias y control de dispositivos IoT encargados de la apertura de los casilleros. 
+
+Debido a que InterLockerUp maneja información personal de los usuarios, credenciales de acceso y mecanismos de control físico sobre los lockers, resulta necesario incorporar medidas de seguridad durante todo el ciclo de desarrollo del software. Para ello, se emplea el modelo Secure Software Development Life Cycle (S-SDLC), el cual integra actividades de seguridad en cada fase del desarrollo para prevenir riesgos y fortalecer la protección del sistema. 
+
+El presente documento describe las etapas del ciclo de vida seguro aplicadas al proyecto InterLockerUp, incluyendo el análisis de requerimientos, el diseño de mecanismos de protección, los estándares de codificación utilizados y las pruebas de seguridad consideradas para garantizar la integridad, confidencialidad y disponibilidad de la información. 
+
+  
+
+Análisis 
+
+Requerimientos Funcionales 
+
+Los requerimientos funcionales de InterLockerUp definen las funciones y servicios que el sistema debe proporcionar para satisfacer las necesidades de la Universidad Tecnológica de Querétaro (UTEQ) en la administración y uso de lockers inteligentes. El sistema se divide en dos plataformas principales: la plataforma administrativa y la plataforma para alumnos. 
+
+Plataforma Administrativa 
+
+La plataforma administrativa permite la gestión integral del sistema de lockers IoT mediante funcionalidades orientadas al control, supervisión y mantenimiento de la infraestructura. Entre sus principales funciones se encuentran: 
+
+    Inicio de sesión seguro para administradores. 
+
+    Visualización del estado general del sistema mediante un panel principal. 
+
+    Gestión de usuarios y asignación de roles. 
+
+    Administración de lockers y control de estados. 
+
+    Visualización y seguimiento de incidencias. 
+
+    Consulta de auditorías e historial de operaciones. 
+
+    Apertura de emergencia de lockers en situaciones especiales. 
+
+    Recuperación de contraseñas mediante correo institucional. 
+
+Estas funcionalidades permiten centralizar la administración del sistema y mantener un control adecuado sobre los recursos y usuarios registrados. 
+
+Plataforma de Alumnos 
+
+La plataforma de alumnos está diseñada para facilitar la interacción de los estudiantes con los lockers asignados, proporcionando herramientas para la gestión de su espacio de almacenamiento de forma sencilla y segura. 
+
+Entre sus principales funcionalidades se encuentran: 
+
+    Registro e inicio de sesión de usuarios. 
+
+    Solicitud y asignación de lockers. 
+
+    Consulta de información del locker asignado. 
+
+    Visualización del estado y disponibilidad de lockers. 
+
+    Consulta del historial de uso personal. 
+
+    Recepción de avisos y notificaciones. 
+
+    Generación y visualización de códigos QR para acceso. 
+
+    Reporte de incidencias relacionadas con los lockers. 
+
+Estas funciones permiten a los alumnos administrar de manera autónoma el uso de los lockers, así como mantenerse informados sobre el estado de sus asignaciones y reportes. 
+
+Integración con IoT 
+
+InterLockerUp incorpora dispositivos IoT para el control físico de los lockers. La integración entre la plataforma web y los dispositivos permite: 
+
+    Validar códigos QR generados por el sistema. 
+
+    Autorizar aperturas de lockers. 
+
+    Monitorear el estado de conexión de los dispositivos. 
+
+    Registrar eventos de acceso y uso. 
+
+    Ejecutar aperturas de emergencia autorizadas por administradores. 
+
+La integración tecnológica entre software y hardware permite ofrecer un sistema moderno, automatizado y seguro para la gestión de lockers inteligentes. 
+
+  
+
+Requerimientos de Seguridad 
+
+Debido a que InterLockerUp administra información de usuarios y controla el acceso físico a lockers mediante dispositivos IoT, es necesario implementar medidas de seguridad que garanticen la confidencialidad, integridad y disponibilidad de la información, así como la protección de los recursos del sistema. 
+
+Autenticación de Usuarios 
+
+El sistema debe permitir el acceso únicamente a usuarios previamente registrados y autenticados. Tanto administradores como alumnos deberán proporcionar credenciales válidas para acceder a las funcionalidades correspondientes a su perfil. 
+
+Asimismo, el sistema contará con mecanismos de recuperación de contraseña mediante correo institucional, permitiendo restablecer credenciales de forma segura cuando sea necesario. 
+
+Control de Roles y Permisos 
+
+Las funcionalidades del sistema estarán restringidas de acuerdo con el rol asignado a cada usuario. Los administradores tendrán acceso a funciones de gestión, supervisión y configuración, mientras que los alumnos únicamente podrán acceder a las opciones relacionadas con la administración de sus lockers asignados. 
+
+Este control evita accesos indebidos y reduce el riesgo de modificaciones no autorizadas en la información del sistema. 
+
+Protección de Datos 
+
+La información almacenada por InterLockerUp deberá mantenerse protegida contra accesos no autorizados. Los datos personales de alumnos y administradores únicamente podrán ser consultados o modificados por usuarios con los permisos correspondientes. 
+
+Además, el sistema deberá garantizar la integridad de la información para evitar alteraciones no autorizadas que puedan comprometer la operación del servicio. 
+
+  
+
+Seguridad en el Acceso a Lockers 
+
+El acceso a los lockers se realizará mediante códigos QR generados dinámicamente por el sistema. Cada código estará asociado a un usuario y a un locker específico, contando con un tiempo de vigencia limitado para reducir el riesgo de reutilización o acceso no autorizado. 
+
+La validación del código QR deberá realizarse antes de permitir cualquier apertura física del locker. 
+
+Auditoría y Registro de Eventos 
+
+Las acciones relevantes realizadas dentro del sistema deberán quedar registradas para permitir el seguimiento y control de operaciones. Entre los eventos registrados se incluyen: 
+
+    Inicios de sesión. 
+
+    Aperturas de lockers. 
+
+    Asignaciones y liberaciones de lockers. 
+
+    Modificaciones realizadas por administradores. 
+
+    Aperturas de emergencia. 
+
+    Recuperaciones de contraseña. 
+
+Estos registros permiten identificar incidentes de seguridad y facilitan las actividades de auditoría. 
+
+Seguridad en la Comunicación IoT 
+
+La comunicación entre la plataforma web y los dispositivos IoT deberá realizarse mediante mecanismos que permitan validar la autenticidad de las solicitudes enviadas al hardware encargado de controlar los lockers. 
+
+Además, se deberán implementar mecanismos que reduzcan el riesgo de manipulación de comandos, accesos no autorizados o ataques de repetición que puedan afectar el funcionamiento del sistema. 
+
+Disponibilidad del Servicio 
+
+El sistema deberá mantenerse disponible para los usuarios durante la mayor parte del tiempo operativo, garantizando la continuidad del servicio y permitiendo el acceso oportuno a los lockers y a las plataformas web. 
+
+La disponibilidad es un aspecto crítico debido a la dependencia existente entre los usuarios y los recursos físicos administrados por el sistema. 
+
+Diseño 
+
+Buenas Prácticas de Seguridad 
+
+Durante la etapa de diseño de InterLockerUp se establecieron diversas prácticas de seguridad con el objetivo de proteger la información de los usuarios, garantizar la integridad del sistema y reducir posibles vulnerabilidades durante la operación de la plataforma web y los dispositivos IoT. 
+
+Autenticación Segura 
+
+Se definió que todos los usuarios deben autenticarse antes de acceder a cualquier funcionalidad protegida del sistema. Este principio permite garantizar que únicamente usuarios legítimos puedan utilizar los recursos disponibles dentro de la plataforma. 
+
+Además, se contempló la implementación de mecanismos adicionales de validación para reforzar la verificación de identidad cuando sea necesario. 
+
+Protección de Credenciales 
+
+Desde la etapa de diseño se estableció que ninguna contraseña debe almacenarse o transmitirse en texto plano. La información relacionada con credenciales debe mantenerse protegida mediante mecanismos criptográficos que reduzcan el riesgo de exposición ante posibles incidentes de seguridad. 
+
+Control de Acceso Basado en Roles 
+
+El sistema fue diseñado bajo un esquema de separación de privilegios, donde cada usuario tiene acceso únicamente a las funciones correspondientes a su rol. 
+
+Los administradores poseen privilegios para gestionar usuarios, lockers, incidencias y auditorías, mientras que los alumnos únicamente pueden acceder a la información y operaciones relacionadas con sus propias asignaciones. 
+
+  
+
+Validación de Identidad 
+
+Se consideró la implementación de mecanismos de validación adicionales para confirmar la identidad de los usuarios cuando se detecten accesos desde dispositivos no reconocidos o situaciones que representen un posible riesgo para la seguridad del sistema. 
+
+Esta medida busca minimizar el impacto de accesos no autorizados derivados del robo o filtración de credenciales. 
+
+Protección de la Información 
+
+La información almacenada dentro de la plataforma debe mantenerse protegida durante todo su ciclo de vida. Los datos personales, registros de actividad, asignaciones de lockers y demás información sensible únicamente podrán ser consultados o modificados por usuarios autorizados. 
+
+Asimismo, se busca preservar la integridad de los datos evitando alteraciones no autorizadas. 
+
+Trazabilidad y Auditoría 
+
+Se estableció que todas las acciones relevantes realizadas dentro del sistema deben quedar registradas para permitir la supervisión de actividades y facilitar la detección de incidentes de seguridad. 
+
+La generación de registros históricos proporciona evidencia de las operaciones realizadas y permite mantener un control adecuado sobre los recursos administrados. 
+
+Seguridad en la Integración IoT 
+
+Debido a la interacción directa con dispositivos físicos encargados del control de lockers, se contempló la validación de todas las solicitudes antes de ejecutar acciones sobre el hardware. 
+
+Esta práctica busca evitar aperturas no autorizadas y garantizar que únicamente comandos legítimos puedan ser procesados por los dispositivos IoT. 
+
+  
+
+Monitoreo de Actividades Sospechosas 
+
+El diseño del sistema considera la identificación de comportamientos inusuales que puedan representar riesgos para la seguridad. 
+
+La detección temprana de actividades sospechosas permite aplicar controles preventivos y reducir la posibilidad de accesos indebidos o intentos de abuso del sistema. 
+
+Disponibilidad del Servicio 
+
+InterLockerUp fue diseñado considerando la necesidad de mantener la disponibilidad de los servicios para alumnos y administradores. La continuidad operativa es especialmente importante debido a que el sistema controla recursos físicos utilizados diariamente dentro de la institución. 
+
+Técnicas y Mecanismos de Protección 
+
+Con el propósito de implementar las buenas prácticas definidas durante la etapa de diseño, InterLockerUp incorpora diversos mecanismos de protección orientados a la autenticación, autorización, protección de datos y seguridad de la infraestructura IoT. 
+
+JSON Web Token (JWT) 
+
+El sistema utiliza JSON Web Tokens (JWT) para gestionar la autenticación de usuarios. Después de validar correctamente las credenciales, se genera un token que identifica al usuario durante su sesión. 
+
+Cada solicitud protegida debe incluir un token válido para acceder a los recursos del sistema. Cuando el token es inválido o ha expirado, el acceso es rechazado automáticamente. 
+
+Cifrado de Contraseñas mediante BCrypt 
+
+Las contraseñas de los usuarios son almacenadas utilizando el algoritmo BCrypt. Este mecanismo genera hashes seguros que impiden conocer la contraseña original incluso si la base de datos fuera comprometida. 
+
+Durante el proceso de autenticación, la contraseña ingresada por el usuario es comparada contra el hash almacenado para verificar su validez. 
+
+Cifrado Híbrido RSA y AES 
+
+Para proteger la transmisión de credenciales y datos sensibles, el sistema implementa un esquema de cifrado híbrido basado en RSA y AES. 
+
+La información es cifrada mediante AES-256 y posteriormente la clave utilizada es protegida utilizando criptografía asimétrica RSA. Este mecanismo proporciona una capa adicional de protección durante la comunicación entre cliente y servidor. 
+
+Verificación de Dispositivos y Doble Factor de Autenticación 
+
+Cuando un usuario intenta iniciar sesión desde un dispositivo no reconocido, el sistema genera un código OTP enviado al correo electrónico institucional registrado. 
+
+La sesión únicamente es autorizada después de validar correctamente dicho código, fortaleciendo la protección frente a accesos no autorizados. 
+
+Control de Roles y Permisos 
+
+El acceso a las funcionalidades se controla mediante roles previamente definidos dentro del sistema. 
+
+Los administradores cuentan con permisos avanzados para la gestión de recursos, mientras que los alumnos tienen acceso limitado a las operaciones relacionadas con sus lockers asignados. 
+
+Tokens QR Temporales 
+
+Para la apertura de lockers se generan códigos QR dinámicos asociados a un token único. 
+
+Cada token posee las siguientes características: 
+
+    Generación aleatoria. 
+
+    Vigencia limitada. 
+
+    Uso único. 
+
+    Asociación directa con el usuario y locker asignado. 
+
+    Almacenamiento mediante hash SHA-256. 
+
+Estas características reducen significativamente el riesgo de reutilización o falsificación de códigos QR. 
+
+  
+
+Seguridad en la Comunicación con Dispositivos IoT 
+
+La interacción entre la plataforma y los dispositivos encargados de controlar los lockers se realiza mediante mecanismos de validación que permiten verificar la autenticidad de las solicitudes antes de ejecutar cualquier acción física. 
+
+Esto evita que dispositivos no autorizados puedan enviar comandos al sistema. 
+
+Monitoreo Inteligente de Accesos 
+
+InterLockerUp incorpora un mecanismo de análisis de comportamiento capaz de evaluar distintos factores relacionados con cada acceso realizado por los usuarios. 
+
+Entre los factores evaluados se encuentran: 
+
+    Horario de acceso. 
+
+    Día de la semana. 
+
+    Frecuencia de solicitudes. 
+
+    Comportamiento histórico del usuario. 
+
+Con base en estos parámetros se calcula un nivel de riesgo que permite detectar posibles comportamientos anómalos y aplicar medidas preventivas cuando sea necesario. 
+
+Auditoría y Registro de Eventos 
+
+El sistema mantiene registros detallados de las actividades realizadas por los usuarios. 
+
+Entre los eventos almacenados se encuentran: 
+
+    Inicios de sesión. 
+
+    Intentos fallidos de acceso. 
+
+    Aperturas de lockers. 
+
+    Generación y validación de códigos QR. 
+
+    Acciones administrativas. 
+
+    Aperturas de emergencia. 
+
+    Actividades relacionadas con la seguridad del sistema. 
+
+Estos registros facilitan la supervisión, el análisis de incidentes y las actividades de auditoría. 
+
+Codificación 
+
+Estándares de Codificación 
+
+Durante el desarrollo de InterLockerUp se siguieron estándares y buenas prácticas de programación con el propósito de mantener un código organizado, seguro, mantenible y escalable. La aplicación fue desarrollada bajo una arquitectura modular que facilita la separación de responsabilidades entre los distintos componentes del sistema. 
+
+Organización Modular del Código 
+
+El proyecto se encuentra estructurado en módulos independientes para separar la lógica de negocio, el acceso a datos, las rutas de la aplicación y los mecanismos de seguridad. 
+
+Esta organización facilita el mantenimiento del sistema, mejora la legibilidad del código y permite realizar modificaciones sin afectar otros componentes de la aplicación. 
+
+Nomenclatura Descriptiva 
+
+Se utilizaron nombres descriptivos para variables, funciones, controladores, rutas y modelos con el objetivo de facilitar la comprensión del código por parte de cualquier integrante del equipo de desarrollo. 
+
+La nomenclatura utilizada busca representar claramente la función o propósito de cada elemento dentro del sistema. 
+
+Separación de Responsabilidades 
+
+Cada componente del sistema fue desarrollado para cumplir una función específica. 
+
+Por ejemplo: 
+
+    Los controladores gestionan las solicitudes recibidas. 
+
+    Los servicios contienen la lógica de negocio. 
+
+    Los modelos representan las entidades de la base de datos. 
+
+    Los middlewares administran procesos de autenticación y autorización. 
+
+Esta práctica permite mantener un código más limpio y fácil de mantener. 
+
+Validación de Datos 
+
+La información recibida desde formularios, peticiones HTTP y dispositivos externos es validada antes de ser procesada por el sistema. 
+
+La validación de datos ayuda a prevenir errores de ejecución, inconsistencias en la base de datos y posibles vulnerabilidades derivadas de entradas maliciosas. 
+
+Manejo de Errores 
+
+Se implementaron mecanismos de manejo de excepciones para controlar situaciones inesperadas durante la ejecución de la aplicación. 
+
+Cuando ocurre un error, el sistema genera respuestas controladas que permiten informar adecuadamente al usuario sin exponer información sensible de la infraestructura interna. 
+
+Implementación de Middleware de Seguridad 
+
+Se utilizaron middlewares para centralizar procesos relacionados con la seguridad del sistema, tales como: 
+
+    Validación de tokens de autenticación. 
+
+    Verificación de permisos. 
+
+    Control de acceso basado en roles. 
+
+    Protección de rutas privadas. 
+
+    Registro de actividades relevantes. 
+
+Esta estrategia reduce la duplicación de código y facilita la administración de la seguridad de la aplicación. 
+
+Protección de Información Sensible 
+
+Las claves secretas, configuraciones de seguridad y credenciales utilizadas por la aplicación son gestionadas mediante variables de entorno, evitando su exposición directa dentro del código fuente. 
+
+Esta práctica reduce significativamente el riesgo de filtración de información sensible. 
+
+  
+
+Reutilización de Código 
+
+Se promovió la reutilización de funciones y componentes comunes para evitar duplicidad de código y facilitar futuras actualizaciones. 
+
+La reutilización contribuye a mantener una base de código más consistente y sencilla de administrar. 
+
+Mantenibilidad y Escalabilidad 
+
+Las decisiones de diseño y codificación fueron orientadas a facilitar futuras ampliaciones del sistema, permitiendo incorporar nuevas funcionalidades, usuarios y dispositivos IoT sin requerir cambios significativos en la estructura principal de la aplicación. 
+
+  
+
+Pruebas de Seguridad 
+
+Con el objetivo de verificar la efectividad de los mecanismos de seguridad implementados en InterLockerUp, se realizaron pruebas orientadas a validar la autenticación, autorización, protección de recursos y acceso seguro a los lockers inteligentes. 
+
+Prueba de Inicio de Sesión 
+
+Objetivo: Verificar que únicamente los usuarios con credenciales válidas puedan acceder al sistema. 
+
+Procedimiento: 
+
+    Ingresar usuario y contraseña correctos. 
+
+    Ingresar usuario y contraseña incorrectos. 
+
+Resultado esperado: 
+
+    Las credenciales válidas permiten el acceso al sistema y valida con un pin a el correo institucional. 
+
+    Las credenciales incorrectas generan un mensaje de error y bloquean el acceso. 
+
+Prueba de Acceso Sin Autenticación 
+
+Objetivo: Comprobar que las rutas protegidas no puedan ser utilizadas sin una sesión válida. 
+
+Procedimiento: Intentar acceder directamente a recursos protegidos sin proporcionar un token de autenticación. 
+
+Resultado esperado: El sistema rechaza la solicitud y devuelve un mensaje de acceso no autorizado. 
+
+Prueba de Token JWT Inválido 
+
+Objetivo: Validar el correcto funcionamiento del mecanismo de autenticación basado en JWT. 
+
+Procedimiento: Enviar solicitudes utilizando un token alterado o expirado. 
+
+Resultado esperado: El sistema rechaza la petición y solicita una nueva autenticación. 
+
+  
+
+Prueba de Verificación OTP 
+
+Objetivo: Comprobar la validación de identidad mediante códigos de verificación enviados por correo electrónico. 
+
+Procedimiento: 
+
+    Intentar iniciar sesión desde un dispositivo no reconocido. 
+
+    Ingresar un código OTP incorrecto. 
+
+Resultado esperado: El sistema bloquea el acceso hasta que se proporcione un código válido. 
+
+Prueba de Control de Roles 
+
+Objetivo: Verificar que los usuarios únicamente puedan acceder a las funciones permitidas por su rol. 
+
+Procedimiento: Intentar acceder a funcionalidades administrativas utilizando una cuenta de alumno. 
+
+Resultado esperado: sistema deniega el acceso a las funciones restringidas. 
+
+Prueba de Generación de Código QR 
+
+Objetivo: Validar la correcta generación de códigos QR para el acceso a lockers. 
+
+Procedimiento: Generar un código QR asociado a una asignación activa. 
+
+Resultado esperado: El sistema genera un código válido y único para el usuario. 
+
+Prueba de Expiración de Código QR 
+
+Objetivo: Comprobar que los códigos QR no puedan reutilizarse después de su tiempo de vigencia. 
+
+Procedimiento: 
+
+    Generar un código QR. 
+
+    Esperar a que expire. 
+
+    Intentar utilizarlo nuevamente. 
+
+Resultado esperado: El sistema rechaza el acceso y solicita la generación de un nuevo código. 
+
+  
+
+Prueba de Detección de Accesos Sospechosos 
+
+Objetivo: Validar el mecanismo de monitoreo de comportamiento implementado en el sistema. 
+
+Procedimiento: Simular múltiples accesos inusuales o solicitudes repetitivas. 
+
+Resultado esperado: El sistema identifica el comportamiento como potencialmente riesgoso y aplica las restricciones correspondientes. 
+
+Prueba de Auditoría 
+
+Objetivo: Verificar que las acciones importantes sean registradas correctamente. 
+
+Procedimiento: 
+
+    Realizar operaciones administrativas. 
+
+    Consultar los registros generados. 
+
+Resultado esperado: Todas las acciones relevantes quedan almacenadas en el historial de auditoría. 
+
+Resultados Generales 
+
+Las pruebas realizadas permitieron verificar el correcto funcionamiento de los mecanismos de autenticación, autorización, protección de datos y control de acceso implementados en InterLockerUp. 
+
+Los resultados obtenidos demuestran que el sistema incorpora controles de seguridad que contribuyen a proteger la información de los usuarios, restringir accesos no autorizados y mantener la integridad de las operaciones realizadas tanto en la plataforma web como en los dispositivos IoT asociados al proyecto. 
+
+  
+
+Conclusiones 
+
+La seguridad es un aspecto fundamental en el desarrollo de sistemas que administran información sensible y controlan recursos físicos. A través de la aplicación del ciclo de vida seguro de desarrollo de software (S-SDLC), fue posible identificar los riesgos asociados al proyecto InterLockerUp y establecer mecanismos que contribuyen a proteger tanto la información de los usuarios como la infraestructura tecnológica involucrada. 
+
+Durante el análisis se identificaron los requerimientos funcionales y de seguridad necesarios para garantizar un funcionamiento confiable del sistema. Posteriormente, en la etapa de diseño se definieron buenas prácticas y mecanismos de protección orientados a la autenticación, autorización, protección de datos y seguridad de los dispositivos IoT. 
+
+Asimismo, se establecieron estándares de codificación que favorecen la mantenibilidad, escalabilidad y seguridad de la aplicación. Finalmente, se definieron pruebas de seguridad destinadas a validar el correcto funcionamiento de los controles implementados y reducir la posibilidad de accesos no autorizados o vulnerabilidades. 
+
+En conclusión, la incorporación de prácticas de seguridad desde las primeras etapas del desarrollo permitió fortalecer la confiabilidad de InterLockerUp, proporcionando una solución más segura para la gestión de lockers inteligentes dentro de la Universidad Tecnológica de Querétaro. 
+
+  
+
+Referencias 
+
+OWASP Foundation. (2024). OWASP Top 10: The Ten Most Critical Web Application Security Risks. Recuperado de: https://owasp.org/www-project-top-ten/ 
+
+A10 Networks. (2024). Web Application Security Best Practices. Recuperado de: https://www.a10networks.com/blog/web-application-security-best-practices/  
+
+Node.js Foundation. (2026). Node.js Documentation. Recuperado de: 
+https://nodejs.org/docs/latest/api/  
+
+Obregón, A. (2024). Exploring JSON Web Tokens (JWT): An Introduction to Secure Data Exchange. Recuperado de: https://medium.com/@AlexanderObregon/exploring-json-web-tokens-jwt-an-introduction-to-secure-data-exchange-529efd5a4c08  
+
+National Institute of Standards and Technology (NIST). (2024). Secure Software Development Framework (SSDF). Recuperado de: 
+https://csrc.nist.gov/projects/ssdf  
+
+Universidad Tecnológica de Querétaro. (2026). InterLockerUp – Solicitud de Requerimientos Funcionales. 
+
+Universidad Tecnológica de Querétaro. (2026). InterLockerUp – Solicitud de Requerimientos No Funcionales. 
+
+ 
+
+ 

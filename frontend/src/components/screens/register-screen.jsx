@@ -33,7 +33,7 @@ export default function RegisterScreen({ onRegister, onBackToLogin }) {
     useEffect(() => {
         const fetchCarreras = async () => {
             try {
-                const response = await fetch(`${api}/api/auth/carreras`)
+                const response = await fetch(`${api}/api/carreras`)
                 if (response.ok) {
                     const data = await response.json()
                     setCarreras(data)
