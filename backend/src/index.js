@@ -39,6 +39,7 @@ const qrRoutes = require('./routes/qrRoutes');
 const lockerRequestRoutes = require('./routes/lockerRequestRoutes');
 const historyRoutes = require('./routes/historyRoutes');
 const registerUserRoutes = require('./routes/registerUserRoutes');
+const carrerasRoutes = require('./routes/carrerasRoutes');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
@@ -54,6 +55,7 @@ app.use('/api/notifications', notificationsRoutes);
 app.use('/api/qr', qrRoutes);
 app.use('/api/locker-requests', lockerRequestRoutes);
 app.use('/api/history', historyRoutes);
+app.use('/api/carreras', carrerasRoutes);
 app.use('/api', registerUserRoutes);
 
 app.use('/uploads', express.static('uploads'));
