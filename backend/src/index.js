@@ -6,6 +6,7 @@ const path = require('path');
 
 const db = require('./config/db');
 const app = express();
+app.set('trust proxy', 1);
 
 const corsOptions = {
     origin: [

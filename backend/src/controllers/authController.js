@@ -159,7 +159,7 @@ const login = async (req, res) => {
 const getCarreras = async (req, res) => {
     try {
         // Buscamos las carreras únicas (DISTINCT) en la tabla buildings y las ordenamos alfabéticamente
-        const result = await db.query('SELECT DISTINCT career FROM buildings ORDER BY career ASC');
+        const result = await db.query('SELECT DISTINCT career FROM gestion.buildings ORDER BY career ASC');
         
         // Transformamos el resultado para enviar un arreglo simple de textos
         const carreras = result.rows.map(row => row.career);

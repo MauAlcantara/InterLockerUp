@@ -29,7 +29,7 @@ const registerUserController = async (req, res) => {
          * los cuales deben ser únicos en el sistema.
          */
         const userExists = await db.query(
-            `select * from users
+            `select * from gestion.users
             where matricula = $1
             or email = $2`,
             [matricula, email]
@@ -55,7 +55,7 @@ const registerUserController = async (req, res) => {
          * El uso de 'returning' permite obtener los datos recién creados sin la contraseña.
          */
         const newUser = await db.query(
-            `insert into users
+            `insert into gestion.users
             (matricula, nombre_completo, email, password_hash, rol, carrera)
             values ($1,$2,$3,$4,$5,$6)
             returning id, matricula, nombre_completo, email`,
