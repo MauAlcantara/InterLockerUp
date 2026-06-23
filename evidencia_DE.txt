@@ -1,0 +1,86 @@
+============================================================
+🧪  PRUEBAS DE SEGURIDAD - INTERLOCKERUP  (Criterio DE)
+============================================================
+
+📡 0. Obtener Clave Pública RSA
+
+🔐 LOGIN — obteniendo token JWT real...
+⚠️  No se obtuvo token. Usando token de respaldo (puede estar expirado).
+
+
+════════════════════════════════════════════════════════════
+🔹 PRUEBA 1: RATE LIMITING (Fuerza Bruta)
+════════════════════════════════════════════════════════════
+Enviando 6 intentos de login inválidos...
+  Intento 1 → HTTP 000
+  Intento 2 → HTTP 000
+  Intento 3 → HTTP 000
+  Intento 4 → HTTP 000
+  Intento 5 → HTTP 000
+  Intento 6 → HTTP 000
+⬆️  El intento 6 debe devolver 429. Si no, el rate limit aún no se activa (límite puede ser mayor).
+
+
+════════════════════════════════════════════════════════════
+🔹 PRUEBA 2: VALIDACIÓN DE ENTRADAS
+════════════════════════════════════════════════════════════
+
+2.1 Login con campos vacíos (esperado: 400)
+
+2.2 Remote-unlock con PIN muy corto (esperado: 400)
+
+2.3 Remote-unlock con PIN válido para referencia
+
+
+════════════════════════════════════════════════════════════
+🔹 PRUEBA 3: PROTECCIÓN ANTI-REPLAY IoT
+════════════════════════════════════════════════════════════
+
+3.1 Sin parámetros IoT (esperado: 400 - faltan parámetros)
+
+3.2 Timestamp expirado (esperado: 403)
+
+3.3 Firma HMAC inválida (esperado: 403)
+
+3.4 Nonce duplicado / Anti-Replay (esperado: 2da llamada devuelve 403)
+  → Primera llamada (esperado: éxito o 401 por token):
+  → Segunda llamada con mismo nonce (esperado: 403 nonce duplicado):
+
+
+════════════════════════════════════════════════════════════
+🔹 PRUEBA 4: DOCUMENTACIÓN AUTOMÁTICA
+════════════════════════════════════════════════════════════
+✅ Archivo SEGURIDAD_IMPLEMENTADA.txt existe:
+-rw-r--r-- 1 root root 757 Jun 15 03:59 /root/InterLockerUp/SEGURIDAD_IMPLEMENTADA.txt
+
+Contenido:
+
+=== DOCUMENTACIÓN DE SEGURIDAD IMPLEMENTADA ===
+Fecha: 2026-06-15T03:59:10.474Z
+Proyecto: InterLockerUp
+
+1. RATE LIMITING:
+   - Autenticación: Máx 5 intentos/15min por IP.
+   - General: Máx 100 peticiones/hora por IP.
+   - Prevención: Ataques de fuerza bruta y DDoS.
+
+2. VALIDACIÓN DE ENTRADAS:
+   - Librería: express-validator.
+   - Endpoints protegidos: /login, /remote-unlock.
+   - Prevención: Inyección SQL, XSS, datos malformados.
+
+3. ANTI-REPLAY IOT:
+   - Mecanismo: Timestamp (ventana 30s) + Nonce (cache memoria) + HMAC-SHA256.
+   - Prevención: Reutilización de comandos ESP32, ataques de repetición.
+   - Clave: IOT_SECRET_KEY (variable de entorno).
+
+4. ESTADO: IMPLEMENTADO Y OPERATIVO.
+==============================================
+
+
+============================================================
+✅ PRUEBAS FINALIZADAS
+============================================================
+Para guardar evidencia completa ejecuta:
+  bash test_seguridad_DE.sh 2>&1 | tee evidencia_DE.txt
+============================================================
