@@ -1,0 +1,22 @@
+
+=== DOCUMENTACIÓN DE SEGURIDAD IMPLEMENTADA ===
+Fecha: 2026-06-17T04:12:10.742Z
+Proyecto: InterLockerUp
+
+1. RATE LIMITING:
+   - Autenticación: Máx 5 intentos/15min por IP.
+   - General: Máx 100 peticiones/hora por IP.
+   - Prevención: Ataques de fuerza bruta y DDoS.
+
+2. VALIDACIÓN DE ENTRADAS:
+   - Librería: express-validator.
+   - Endpoints protegidos: /login, /remote-unlock.
+   - Prevención: Inyección SQL, XSS, datos malformados.
+
+3. ANTI-REPLAY IOT:
+   - Mecanismo: Timestamp (ventana 30s) + Nonce (cache memoria) + HMAC-SHA256.
+   - Prevención: Reutilización de comandos ESP32, ataques de repetición.
+   - Clave: IOT_SECRET_KEY (variable de entorno).
+
+4. ESTADO: IMPLEMENTADO Y OPERATIVO.
+==============================================
