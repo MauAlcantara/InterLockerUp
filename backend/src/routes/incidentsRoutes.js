@@ -2,6 +2,8 @@ const express = require('express');
 const router = express.Router();
 const multer = require('multer');
 const fs = require('fs');
+const path = require('path');
+const crypto = require('crypto');
 const { reportarIncidencia, getIncidenciasAdmin, actualizarIncidencia } = require('../controllers/incidentsController');
 const { verificarToken } = require('../middlewares/authMiddleware');
 
@@ -14,7 +16,8 @@ const storage = multer.diskStorage({
         cb(null, './uploads/') 
     },
     filename: function (req, file, cb) {
-        cb(null, Date.now() + '-' + file.originalname) 
+        const ext = path.extname(file.originalname).toLowerCase().replace(/[^a-zA-Z0-9.]/g, '');
+        cb(null, crypto.randomUUID() + ext);
     }
 });
 const upload = multer({ storage: storage });
