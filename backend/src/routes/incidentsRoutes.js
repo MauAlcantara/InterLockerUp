@@ -5,7 +5,7 @@ const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 const { reportarIncidencia, getIncidenciasAdmin, actualizarIncidencia } = require('../controllers/incidentsController');
-const { verificarToken } = require('../middlewares/authMiddleware');
+const verificarToken = require('../middlewares/authMiddleware');
 
 if (!fs.existsSync('./uploads')){
     fs.mkdirSync('./uploads');
