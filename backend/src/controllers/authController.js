@@ -64,7 +64,7 @@ const login = async (req, res) => {
 
         if (deviceCheck.rows.length === 0) {
             if (!otpCode) {
-                const generatedCode = Math.floor(100000 + Math.random() * 900000).toString();
+                const generatedCode = crypto.randomInt(100000, 1000000).toString();
                 
                 await db.query(
                     'UPDATE users SET temp_otp = $1, otp_expires = NOW() + INTERVAL \'5 minutes\' WHERE id = $2',

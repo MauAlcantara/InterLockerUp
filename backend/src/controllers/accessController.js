@@ -19,7 +19,7 @@ const solicitarPinCorreo = async (req, res) => {
         if (result.rows.length === 0) return res.status(404).json({ mensaje: 'Sin casillero activo.' });
 
         const { assignment_id, email, nombre_completo } = result.rows[0];
-        const rawPin = Math.floor(100000 + Math.random() * 900000).toString();
+        const rawPin = crypto.randomInt(100000, 1000000).toString();
         const pinHash = crypto.createHash("sha256").update(rawPin).digest("hex");
         const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
 
