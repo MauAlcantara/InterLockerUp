@@ -1,0 +1,21 @@
+rules:
+  - id: sqli-template-literal-pg-query
+    languages: [javascript, typescript]
+    severity: ERROR
+    message: >
+      Posible inyección SQL: se está construyendo una consulta SQL mediante un
+      template literal con interpolación de variables (${...}) y pasándola
+      directamente a pool.query()/client.query(). Usa parámetros de sustitución
+      ($1, $2, ...) en vez de interpolar valores dentro de la cadena SQL.
+    metadata:
+      cwe: "CWE-89: Improper Neutralization of Special Elements used in an SQL Command"
+      owasp: "A03:2021 - Injection"
+      references:
+        - https://owasp.org/Top10/A03_2021-Injection/
+    patterns:
+      - pattern-either:
+          - pattern: $POOL.query(`...${$VAR}...`)
+          - pattern: |
+              const $Q = `...${$VAR}...`;
+              ...
+              $POOL.query($Q)
