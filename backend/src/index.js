@@ -18,6 +18,7 @@ app.use(helmet({
             connectSrc: ["'self'", "https://admin.interlockerup.xyz", "https://interlockerup.xyz"],
             objectSrc: ["'none'"],
             frameAncestors: ["'none'"],
+		formAction: ["'self'"],
         },
     },
     hsts: {
@@ -82,12 +83,24 @@ app.use('/api', registerUserRoutes);
 
 app.use('/uploads', express.static('uploads'));
 
+app.get('/', (req, res) => {
+    res.redirect('/api/status');
+});
+
+app.get('/robots.txt', (req, res) => {
+    res.type('text/plain');
+    res.send('User-agent: *\nDisallow: /');
+});
 app.get('/api/status', (req, res) => {
     res.json({
         mensaje: 'Backend de InterLockerUp funcionando al 100% 🚀',
         servidor: 'Producción / Online',
         cors_permitido: 'https://admin.interlockerup.xyz'
     });
+});
+
+app.use((req, res) => {
+    res.status(404).json({ mensaje: 'Ruta no encontrada' });
 });
 
 const PORT = process.env.PORT || 3000;
