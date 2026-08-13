@@ -30,14 +30,17 @@ app.use(helmet({
     noSniff: true,
 }));
 
+const whitelist = [
+    'https://admin.interlockerup.xyz',
+    'https://interlockerup.xyz'
+];
+
+if (process.env.NODE_ENV !== 'production') {
+    whitelist.push('http://localhost:5173', 'http://localhost:5174', 'http://localhost:3000');
+}
+
 const corsOptions = {
-    origin: [
-        'https://admin.interlockerup.xyz',
-        'https://interlockerup.xyz',
-        'http://localhost:5173',
-        'http://localhost:5174',
-        'http://localhost:3000'
-    ],
+    origin: whitelist,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true,
