@@ -12,7 +12,8 @@ router.get('/profile', verificarToken, async (req, res) => {
             [req.user.id]
         );
         res.json(result.rows[0]);
-    } catch (error) {
+   } catch (error) {
+        console.error('Error interno al obtener el perfil:', error); 
         res.status(500).json({ mensaje: 'Error al obtener el perfil.' });
     }
 });

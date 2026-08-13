@@ -8,7 +8,7 @@ const { validateLockerRequest } = require('../middlewares/inputValidator');
 const { iotAntiReplay } = require('../middlewares/iotAntiReplay');
 
 router.post('/request-pin', verificarToken, solicitarPinCorreo);
-router.post('/remote-unlock', verificarToken, generalLimiter, validateLockerRequest, abrirLockerRemoto);
+router.post('/remote-unlock', verificarToken, validateLockerRequest, abrirLockerRemoto);
 
 router.get('/iot/pending', iotAntiReplay, async (req, res) => {
     const { locker } = req.query;
