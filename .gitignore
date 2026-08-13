@@ -3,3 +3,6 @@ node_modules/
 .env
 backend/.scannerwork/
 interlockerup-admin/@/
+SEGURIDAD_IMPLEMENTADA.txt
+backend/ZAP_2_16_1_unix.sh
+zap-reports/
