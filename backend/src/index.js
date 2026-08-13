@@ -1,12 +1,33 @@
 const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
-const fs = require('fs');
-const path = require('path');
+const helmet = require('helmet');
 
 const db = require('./config/db');
 const app = express();
 app.set('trust proxy', 1);
+app.disable('x-powered-by');
+
+app.use(helmet({
+    contentSecurityPolicy: {
+        directives: {
+            defaultSrc: ["'self'"],
+            scriptSrc: ["'self'"],
+            styleSrc: ["'self'", "'unsafe-inline'"],
+            imgSrc: ["'self'", "data:", "https://admin.interlockerup.xyz", "https://interlockerup.xyz"],
+            connectSrc: ["'self'", "https://admin.interlockerup.xyz", "https://interlockerup.xyz"],
+            objectSrc: ["'none'"],
+            frameAncestors: ["'none'"],
+        },
+    },
+    hsts: {
+        maxAge: 31536000,
+        includeSubDomains: true,
+        preload: true,
+    },
+    frameguard: { action: 'deny' },
+    noSniff: true,
+}));
 
 const corsOptions = {
     origin: [
@@ -62,40 +83,12 @@ app.use('/api', registerUserRoutes);
 app.use('/uploads', express.static('uploads'));
 
 app.get('/api/status', (req, res) => {
-    res.json({ 
+    res.json({
         mensaje: 'Backend de InterLockerUp funcionando al 100% 🚀',
         servidor: 'Producción / Online',
         cors_permitido: 'https://admin.interlockerup.xyz'
     });
 });
-
-// 📄 GENERACIÓN AUTOMÁTICA DE DOCUMENTACIÓN DE SEGURIDAD
-const securityDoc = `
-=== DOCUMENTACIÓN DE SEGURIDAD IMPLEMENTADA ===
-Fecha: ${new Date().toISOString()}
-Proyecto: InterLockerUp
-
-1. RATE LIMITING:
-   - Autenticación: Máx 5 intentos/15min por IP.
-   - General: Máx 100 peticiones/hora por IP.
-   - Prevención: Ataques de fuerza bruta y DDoS.
-
-2. VALIDACIÓN DE ENTRADAS:
-   - Librería: express-validator.
-   - Endpoints protegidos: /login, /remote-unlock.
-   - Prevención: Inyección SQL, XSS, datos malformados.
-
-3. ANTI-REPLAY IOT:
-   - Mecanismo: Timestamp (ventana 30s) + Nonce (cache memoria) + HMAC-SHA256.
-   - Prevención: Reutilización de comandos ESP32, ataques de repetición.
-   - Clave: IOT_SECRET_KEY (variable de entorno).
-
-4. ESTADO: IMPLEMENTADO Y OPERATIVO.
-==============================================
-`;
-
-fs.writeFileSync(path.join(__dirname, '..', '..', 'SEGURIDAD_IMPLEMENTADA.txt'), securityDoc);
-console.log(securityDoc);
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
