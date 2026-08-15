@@ -1,7 +1,7 @@
 const db = require('../config/db');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const crypto = require("crypto");
+const crypto = require('node:crypto');
 
 // 1. Importamos y configuramos Resend en lugar de Nodemailer
 const { Resend } = require('resend');
@@ -64,7 +64,7 @@ const login = async (req, res) => {
 
         if (deviceCheck.rows.length === 0) {
             if (!otpCode) {
-                const generatedCode = crypto.randomInt(100000, 1000000).toString();
+               const generatedCode = crypto.randomInt(100000, 1000000).toString();
                 
                 await db.query(
                     'UPDATE users SET temp_otp = $1, otp_expires = NOW() + INTERVAL \'5 minutes\' WHERE id = $2',

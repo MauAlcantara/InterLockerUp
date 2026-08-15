@@ -1,5 +1,5 @@
 const db = require("../config/db")
-const crypto = require("crypto")
+const crypto = require("node:crypto");
 
 const generateQRToken = async (req, res) => {
     const userId = req.user.id

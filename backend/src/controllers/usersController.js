@@ -10,7 +10,8 @@ const getUsuarios = async (req, res) => {
             FROM users ORDER BY id DESC
         `);
         res.json(result.rows);
-    } catch (error) {
+  } catch (error) {
+        console.error("Error interno al obtener usuarios:", error);
         res.status(500).json({ mensaje: "Error al obtener usuarios" });
     }
 };
@@ -30,6 +31,7 @@ const crearUsuario = async (req, res) => {
         );
         res.status(201).json(newUser.rows[0]);
     } catch (error) {
+        console.error("Error interno al crear usuario:", error); // <- Agregamos el log del error
         res.status(500).json({ mensaje: "Error al crear usuario (Revisa que la matrícula/correo no estén repetidos)" });
     }
 };
@@ -45,7 +47,8 @@ const editarUsuario = async (req, res) => {
             [name, email, matricula, role, id]
         );
         res.json(updatedUser.rows[0]);
-    } catch (error) {
+   } catch (error) {
+        console.error("Error interno al editar usuario:", error);
         res.status(500).json({ mensaje: "Error al editar usuario" });
     }
 };
@@ -60,7 +63,8 @@ const cambiarEstado = async (req, res) => {
 
         await db.query("UPDATE users SET status = $1 WHERE id = $2", [nuevoEstado, id]);
         res.json({ id, status: nuevoEstado });
-    } catch (error) {
+  } catch (error) {
+        console.error("Error interno al cambiar estado de usuario:", error);
         res.status(500).json({ mensaje: "Error al cambiar estado" });
     }
 };

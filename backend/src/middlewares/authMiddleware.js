@@ -11,7 +11,9 @@ const verificarToken = (req, res, next) => {
         const verified = jwt.verify(token.split(" ")[1], process.env.JWT_SECRET);
         req.user = verified;
         next();
+
     } catch (error) {
+        console.warn('Error de validación de token:', error.message); 
         res.status(400).json({ mensaje: 'Token no válido o expirado.' });
     }
 };

@@ -1,4 +1,4 @@
-const crypto = require('crypto');
+const crypto = require('node:crypto');
 
 const SECRET_IOT = process.env.IOT_SECRET_KEY || 'clave_secreta_default_segura';
 const MAX_TIMESTAMP_DIFF_MS = 30000; // Ventana de 30 segundos

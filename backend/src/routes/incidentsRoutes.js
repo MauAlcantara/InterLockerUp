@@ -1,11 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const multer = require('multer');
-const fs = require('fs');
-const path = require('path');
-const crypto = require('crypto');
+const fs = require('node:fs');
 const { reportarIncidencia, getIncidenciasAdmin, actualizarIncidencia } = require('../controllers/incidentsController');
-const verificarToken = require('../middlewares/authMiddleware');
 
 if (!fs.existsSync('./uploads')){
     fs.mkdirSync('./uploads');
@@ -16,14 +13,18 @@ const storage = multer.diskStorage({
         cb(null, './uploads/') 
     },
     filename: function (req, file, cb) {
-        const ext = path.extname(file.originalname).toLowerCase().replace(/[^a-zA-Z0-9.]/g, '');
-        cb(null, crypto.randomUUID() + ext);
+        cb(null, Date.now() + '-' + file.originalname) 
     }
 });
-const upload = multer({ storage: storage });
+const upload = multer({ 
+    storage: storage,
+    limits: {
+        fileSize: 5 * 1024 * 1024 
+    }
+});
 
-router.post('/reportar', verificarToken, upload.single('evidencia'), reportarIncidencia);
-router.get('/admin', verificarToken, getIncidenciasAdmin);
-router.patch('/admin/:id', verificarToken, actualizarIncidencia);
+router.post('/reportar', upload.single('evidencia'), reportarIncidencia);
+router.get('/admin', getIncidenciasAdmin);
+router.patch('/admin/:id', actualizarIncidencia);
 
 module.exports = router;

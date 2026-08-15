@@ -31,19 +31,19 @@ const getDashboardStats = async (req, res) => {
         `);
 
         // Esperamos a que todas las consultas terminen
-        const [kpisRes, actividadRes, alertasRes] = await Promise.all([kpisReq, actividadReq, alertasReq]);
+       const [kpisRes, actividadRes, alertasRes] = await Promise.all([kpisReq, actividadReq, alertasReq]);
         const kpis = kpisRes.rows[0];
 
         // 2. Matemáticas para los KPIs
-        const total = parseInt(kpis.total_lockers) || 1; // Evitar división por cero
-        const tasaOcupacion = Math.round((parseInt(kpis.lockers_ocupados) / total) * 100);
-        const disponibilidad = Math.round((parseInt(kpis.lockers_disponibles) / total) * 100);
+       const total = Number.parseInt(kpis.total_lockers, 10) || 1; // Evitar división por cero
+        const tasaOcupacion = Math.round((Number.parseInt(kpis.lockers_ocupados, 10) / total) * 100);
+        const disponibilidad = Math.round((Number.parseInt(kpis.lockers_disponibles, 10) / total) * 100);
 
         // 3. Empaquetamos y enviamos a React
         res.json({
             kpis: {
                 tasaOcupacion: tasaOcupacion,
-                accesosHoy: parseInt(kpis.accesos_hoy),
+                accesosHoy: Number.parseInt(kpis.accesos_hoy, 10),
                 tiempoPromedio: 4.2, // Dato simulado por ahora
                 disponibilidad: disponibilidad
             },

@@ -1,5 +1,6 @@
 const db = require('../config/db');
-const crypto = require('crypto');
+const crypto = require('node:crypto');
+
 const { Resend } = require('resend');
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -19,7 +20,7 @@ const solicitarPinCorreo = async (req, res) => {
         if (result.rows.length === 0) return res.status(404).json({ mensaje: 'Sin casillero activo.' });
 
         const { assignment_id, email, nombre_completo } = result.rows[0];
-        const rawPin = crypto.randomInt(100000, 1000000).toString();
+       const rawPin = crypto.randomInt(100000, 1000000).toString();
         const pinHash = crypto.createHash("sha256").update(rawPin).digest("hex");
         const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
 

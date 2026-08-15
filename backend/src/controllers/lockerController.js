@@ -65,7 +65,7 @@ const assignLocker = async (req, res) => {
         res.status(201).json({ mensaje: '¡Casillero asignado con éxito!', assignmentId });
 
     } catch (error) {
-        await client.query('ROLLBACK'); // Si algo falla, deshacemos todo
+        await client.query('ROLLBACK'); 
         res.status(400).json({ mensaje: error.message || 'Error al procesar la asignación.' });
     } finally {
         client.release();
@@ -170,6 +170,7 @@ const releaseLockerAdmin = async (req, res) => {
         res.json({ mensaje: 'Casillero liberado correctamente.' });
     } catch (error) {
         await client.query('ROLLBACK');
+        console.error('Error interno al liberar el casillero:', error); // <- Agregamos el log
         res.status(500).json({ mensaje: 'Error al liberar el casillero.' });
     } finally {
         client.release();
@@ -183,7 +184,8 @@ const changeLockerStatusAdmin = async (req, res) => {
     try {
         await db.query("UPDATE lockers SET estado = $1 WHERE id = $2", [nuevo_estado, id]);
         res.json({ mensaje: `Estado actualizado a ${nuevo_estado}` });
-    } catch (error) {
+   } catch (error) {
+        console.error('Error interno al actualizar estado del casillero:', error); 
         res.status(500).json({ mensaje: 'Error al actualizar el estado.' });
     }
 };

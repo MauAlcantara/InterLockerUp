@@ -1,6 +1,6 @@
 const db = require('../config/db');
-const crypto = require('crypto');
-const fs = require('fs');
+const crypto = require('node:crypto');
+const fs = require('node:fs');
 
 const reportarIncidencia = async (req, res) => {
     try {
@@ -8,7 +8,7 @@ const reportarIncidencia = async (req, res) => {
         const { userId, lockerId, categoria, descripcion } = req.body;
         
         // 2. Genera un folio único
-        const folio = 'INC-' + Math.floor(10000 + Math.random() * 90000);
+        const folio = 'INC-' + crypto.randomInt(10000, 100000);
         
         let evidenciaUrl = null;
         let archivoHash = null;
@@ -76,11 +76,15 @@ const actualizarIncidencia = async (req, res) => {
         let observaciones = actual.rows[0].observaciones_admin;
         
         // se guarda los comentarios como un arreglo JSON en la base de datos
-        let comentariosArray = [];
-        if (observaciones) {
-            try { comentariosArray = JSON.parse(observaciones); } 
-            catch(e) { comentariosArray = []; }
-        }
+let comentariosArray = [];
+if (observaciones) {
+    try { 
+        comentariosArray = JSON.parse(observaciones); 
+    } catch(e) { 
+        console.warn("Advertencia: No se pudo parsear 'observaciones'. Se asignará un arreglo vacío.", e.message);
+        comentariosArray = []; 
+    }
+}
 
         if (nuevo_comentario) {
             comentariosArray.push({
@@ -91,8 +95,11 @@ const actualizarIncidencia = async (req, res) => {
         }
 
         // Mapeo de estado de React a la base de datos
-        const estadoDB = estado === 'en_proceso' ? 'en proceso' : estado === 'resuelto' ? 'resuelta' : estado;
-
+     const mapaEstados = {
+    'en_proceso': 'en proceso',
+    'resuelto': 'resuelta'
+};
+const estadoDB = mapaEstados[estado] || estado;
         await db.query(
             `UPDATE incidents SET estado = $1, observaciones_admin = $2 WHERE id = $3`,
             [estadoDB, JSON.stringify(comentariosArray), id]

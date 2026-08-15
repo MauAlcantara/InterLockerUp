@@ -30,7 +30,7 @@ const getHomeData = async (req, res) => {
             const timeLeft = Math.max(0, Math.floor(diffMs / 1000 / 60)); // Mínimo 0
             
             // Calculo totalTime
-            const totalTime = timeLeft > 120 ? timeLeft : 120;
+           const totalTime = Math.max(timeLeft, 120);
 
             lockerData = {
                 number: row.number,

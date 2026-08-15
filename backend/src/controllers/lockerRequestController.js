@@ -15,11 +15,11 @@ const createLockerRequest = async (req, res) => {
             RETURNING id
         `;
 
-        const values = [
-            userId,
-            lockerId,
-            isShared ? true : false,
-            partners || []
+ const values = [
+    userId,
+    lockerId,
+    Boolean(isShared),
+    partners || []
         ];
 
         const result = await db.query(queryText, values);
