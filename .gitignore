@@ -1,0 +1,12 @@
+node_modules/
+.aider*
+.env
+backend/src/uploads/
+1. Backend: Controlador de Carreras
+2. Backend: Rutas de Carreras
+InterLockerUp.geany
+PrimerEntregableSA.txt
+SegundoEntregableDE_SeguridadImplementada.txt
+[Done]
+conexionBackend.txt
+login

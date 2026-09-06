@@ -1,0 +1,130 @@
+============================================================
+🧪  PRUEBAS DE SEGURIDAD - INTERLOCKERUP  (Criterio DE)
+============================================================
+
+📡 0. Obtener Clave Pública RSA
+{
+  "publicKey": "-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA21mKyZp9VYp+bo/lR0fP\nRxqSwp31l6/7ikH+U7mTCoozi4XIaatoXkXw3a+4mAxQ2dg7EM6F+9fLSxzYCcXN\ngYh5ETSW6lOUzmrZafmVAyr50PrWhX0tMTEufn2r0BScrY18HhQ02qCXSG5KuBV+\nRMevQ9KjScLkrtWhCAFxkyqAERp9hx8Ip1h/e7Il+BlrgDp+0nXYU+sqtEkitHWO\neumEYvSk5rOYe6nQBYZ5WMx7k0ZTh1AF6zVjQr1AXi+HfoaL+ks0EsvPK7zADH5P\nvfFxg2vg/4zvzkJD7Nxx0bupvnxJ5ftuiME9tu0K1ZGqKCLLpePtnt0r7+zhJZHv\nbQIDAQAB\n-----END PUBLIC KEY-----\n"
+}
+
+🔐 LOGIN — obteniendo token JWT real...
+{
+  "mensaje": "¡Bienvenido!",
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6Niwicm9sIjoiYWx1bW5vIiwiaWF0IjoxNzg1OTYwMDI5LCJleHAiOjE3ODU5ODg4Mjl9.g8ne9QVwrH-jKA6K6vB0xy2nwelkimWOIhgghymrgYI",
+  "usuario": {
+    "id": 6,
+    "nombre": "Elian Ramírez",
+    "rol": "alumno"
+  }
+}
+✅ Token obtenido correctamente.
+
+
+════════════════════════════════════════════════════════════
+🔹 PRUEBA 1: RATE LIMITING (Fuerza Bruta)
+════════════════════════════════════════════════════════════
+Enviando 6 intentos de login inválidos...
+  Intento 1 → HTTP 400
+  Intento 2 → HTTP 400
+  Intento 3 → HTTP 400
+  Intento 4 → HTTP 400
+  Intento 5 → HTTP 429
+  Intento 6 → HTTP 429
+⬆️  El intento 6 debe devolver 429. Si no, el rate limit aún no se activa (límite puede ser mayor).
+
+
+════════════════════════════════════════════════════════════
+🔹 PRUEBA 2: VALIDACIÓN DE ENTRADAS
+════════════════════════════════════════════════════════════
+
+2.1 Login con campos vacíos (esperado: 400)
+{
+  "error": "Demasiados intentos de autenticación. Intente nuevamente en 15 minutos."
+}
+
+2.2 Remote-unlock con PIN muy corto (esperado: 400)
+{
+  "errores": [
+    {
+      "type": "field",
+      "value": "12",
+      "msg": "El PIN debe tener entre 4 y 6 dígitos",
+      "path": "pin_ingresado",
+      "location": "body"
+    }
+  ]
+}
+
+2.3 Remote-unlock con PIN válido para referencia
+{
+  "mensaje": "El PIN expiró o no existe."
+}
+
+
+════════════════════════════════════════════════════════════
+🔹 PRUEBA 3: PROTECCIÓN ANTI-REPLAY IoT
+════════════════════════════════════════════════════════════
+
+3.1 Sin parámetros IoT (esperado: 400 - faltan parámetros)
+{
+  "error": "Faltan parámetros IoT: timestamp, nonce, signature"
+}
+
+3.2 Timestamp expirado (esperado: 403)
+{
+  "error": "Solicitud expirada. El timestamp no está dentro de la ventana de seguridad."
+}
+
+3.3 Firma HMAC inválida (esperado: 403)
+{
+  "error": "Firma HMAC inválida. Posible manipulación de datos."
+}
+
+3.4 Nonce duplicado / Anti-Replay (esperado: 2da llamada devuelve 403)
+  → Primera llamada (esperado: éxito o 401 por token):
+{
+  "abrir": false
+}
+  → Segunda llamada con mismo nonce (esperado: 403 nonce duplicado):
+{
+  "error": "Solicitud ya procesada. Nonce duplicado detectado."
+}
+
+
+════════════════════════════════════════════════════════════
+🔹 PRUEBA 4: DOCUMENTACIÓN AUTOMÁTICA
+════════════════════════════════════════════════════════════
+✅ Archivo SEGURIDAD_IMPLEMENTADA.txt existe:
+-rw-r--r-- 1 root root 757 Jul  9 00:22 /root/InterLockerUp/SEGURIDAD_IMPLEMENTADA.txt
+
+Contenido:
+
+=== DOCUMENTACIÓN DE SEGURIDAD IMPLEMENTADA ===
+Fecha: 2026-07-09T00:22:43.702Z
+Proyecto: InterLockerUp
+
+1. RATE LIMITING:
+   - Autenticación: Máx 5 intentos/15min por IP.
+   - General: Máx 100 peticiones/hora por IP.
+   - Prevención: Ataques de fuerza bruta y DDoS.
+
+2. VALIDACIÓN DE ENTRADAS:
+   - Librería: express-validator.
+   - Endpoints protegidos: /login, /remote-unlock.
+   - Prevención: Inyección SQL, XSS, datos malformados.
+
+3. ANTI-REPLAY IOT:
+   - Mecanismo: Timestamp (ventana 30s) + Nonce (cache memoria) + HMAC-SHA256.
+   - Prevención: Reutilización de comandos ESP32, ataques de repetición.
+   - Clave: IOT_SECRET_KEY (variable de entorno).
+
+4. ESTADO: IMPLEMENTADO Y OPERATIVO.
+==============================================
+
+
+============================================================
+✅ PRUEBAS FINALIZADAS
+============================================================
+Para guardar evidencia completa ejecuta:
+  bash test_seguridad_DE.sh 2>&1 | tee evidencia_DE.txt
+============================================================
