@@ -1540,7 +1540,7 @@ export default function HomeScreen({ onNavigate, onLogout }) {
                   background: "#f8f9fb",
                   borderRadius: "16px",
                   padding: "16px",
-                  marginBottom: 16
+                  marginBottom: 54
                 }}
               >
 
@@ -1550,7 +1550,7 @@ export default function HomeScreen({ onNavigate, onLogout }) {
                     color: colors.text,
                     lineHeight: "1.6",
                     margin: 0,
-                    wordBreak: "break-word"
+                    wordBreak: "break-word",
                   }}
                 >
                   {selectedNotification.mensaje}
