@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { MapPin, History, LifeBuoy, Home, Loader2 } from "lucide-react";
+import { MapPin, History, LifeBuoy, Home, Loader2, Lock, LogIn } from "lucide-react";
 import Button from "../ui/button";
 import { cn } from "../../lib/utils";
 import colors from "../theme/colors";
@@ -29,7 +29,6 @@ export function RequestScreen() {
     const [loading, setLoading] = useState(true); 
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    // Función unificada para sincronizar datos con el servidor
     // Función unificada para sincronizar datos con el servidor
     const initData = async () => {
         try {
@@ -127,9 +126,86 @@ export function RequestScreen() {
         }
     };
 
+    // SIN SESIÓN: pantalla informativa (mismo token y misma redirección que usa el Home)
+    if (!localStorage.getItem("token")) {
+        return (
+            <div className="min-h-screen bg-slate-50 flex flex-col font-roboto text-[14px]">
+                <header className="text-white px-4 pt-14 pb-9" style={{ backgroundColor: colors.primary }}>
+                    <h1 className="font-montserrat text-[22px] font-bold leading-tight">Solicitar Casillero</h1>
+                    <p className="font-roboto text-[13px] text-white/85 mt-1">Necesitas una sesión activa para continuar</p>
+                </header>
+
+                <main className="px-4 -mt-5 space-y-5 flex-1 pb-24">
+                    <div
+                        className="bg-white rounded-2xl p-5"
+                        style={{ boxShadow: "0 8px 16px rgba(0,0,0,0.06)" }}
+                    >
+                        <div className="flex items-center gap-3 mb-5">
+                            <div
+                                className="w-[52px] h-[52px] rounded-[14px] flex items-center justify-center flex-shrink-0"
+                                style={{ backgroundColor: `${colors.primary}15` }}
+                            >
+                                <Lock size={26} color={colors.primary} />
+                            </div>
+                            <div>
+                                <h2 className="font-montserrat text-[18px] font-bold text-slate-700 leading-tight">
+                                    Primero solicita tu locker
+                                </h2>
+                                <p className="font-roboto text-[13px] text-slate-500 mt-1">
+                                    Para acceder a un casillero, debes iniciar sesión y solicitar uno.
+                                </p>
+                            </div>
+                        </div>
+
+                        <ol className="space-y-4 mb-6">
+                            {[
+                                { title: "Inicia sesión", text: "Entra con tu cuenta de alumno." },
+                                { title: "Solicita tu locker", text: "Elige la ubicación que prefieras en el mapa y confirma." },
+                                { title: "Accede", text: "Cuando tu solicitud sea aprobada, podrás usar tu casillero." }
+                            ].map((step, i) => (
+                                <li key={step.title} className="flex items-start gap-3">
+                                    <span
+                                        className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 font-montserrat text-[14px] font-bold"
+                                        style={{ backgroundColor: `${colors.primary}15`, color: colors.primary }}
+                                    >
+                                        {i + 1}
+                                    </span>
+                                    <div>
+                                        <p className="text-[14px] font-semibold text-slate-700 m-0">{step.title}</p>
+                                        <p className="text-[12px] text-slate-500 m-0 mt-0.5">{step.text}</p>
+                                    </div>
+                                </li>
+                            ))}
+                        </ol>
+
+                        <Button
+                            onClick={() => { window.location.href = "/login"; }}
+                            className="w-full h-12 rounded-xl flex items-center justify-center gap-2 text-white"
+                            style={{
+                                fontFamily: "'Montserrat', sans-serif",
+                                fontSize: "16px",
+                                fontWeight: "700",
+                                backgroundColor: colors.primary,
+                                border: "none",
+                                cursor: "pointer"
+                            }}
+                        >
+                            <LogIn size={20} />
+                            Iniciar sesión
+                        </Button>
+                    </div>
+                </main>
+            </div>
+        );
+    }
+
     if (loading) {
         return (
-            <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50">
+            <div
+                className="min-h-screen flex flex-col items-center justify-center bg-slate-50"
+                role="status"
+                aria-live="polite"
+            >
                 <div className="w-12 h-12 border-4 border-slate-200 border-t-blue-600 rounded-full animate-spin mb-4" 
                      style={{ borderTopColor: colors.primary }} />
                 <p className="font-roboto text-[14px] text-slate-500">Cargando información...</p>
@@ -154,12 +230,12 @@ export function RequestScreen() {
     // PANTALLA DE SOLICITUD (MAPA)
     return (
         <div className="min-h-screen bg-slate-50 flex flex-col font-roboto text-[14px]">
-            <header className="text-white px-6 pt-12 pb-10 " style={{ backgroundColor: colors.primary }}>
-                <h1 className="font-montserrat text-[28px] font-bold leading-tight">Solicitar Casillero</h1>
-                <p className="font-roboto text-[12px] text-white/90 mt-1">Selecciona la ubicación de tu preferencia</p>
+            <header className="text-white px-4 pt-14 pb-9" style={{ backgroundColor: colors.primary }}>
+                <h1 className="font-montserrat text-[22px] font-bold leading-tight">Solicitar Casillero</h1>
+                <p className="font-roboto text-[13px] text-white/85 mt-1">Selecciona la ubicación de tu preferencia</p>
             </header>
 
-            <main className="px-4 -mt-6 space-y-4 flex-1 pb-24">
+            <main className="px-4 -mt-5 space-y-5 flex-1 pb-24">
                 <SharedLocker 
                     isShared={isShared} 
                     setIsShared={setIsShared} 
@@ -169,10 +245,16 @@ export function RequestScreen() {
                     setSearchValue={setSearchValue} 
                 />
 
-                <div className="bg-white rounded-3xl p-5 shadow-sm border border-slate-100">
+                <div
+                    className="bg-white rounded-2xl p-5"
+                    style={{ boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}
+                >
                     <div className="flex justify-between items-center mb-4 px-1">
-                        <h3 className="font-montserrat text-[18px] font-medium text-slate-700">Mapa de Lockers</h3>
-                        <span className="font-roboto text-[12px] bg-slate-100 text-slate-500 px-2 py-1 rounded-md font-medium">
+                        <h3 className="font-montserrat text-[16px] font-bold text-slate-700">Mapa de Lockers</h3>
+                        <span
+                            className="font-roboto text-[12px] bg-slate-100 text-slate-500 px-2 py-1 rounded-md font-medium"
+                            aria-live="polite"
+                        >
                             {lockers.length} DISPONIBLES
                         </span>
                     </div>
@@ -183,34 +265,41 @@ export function RequestScreen() {
                     />
                 </div>
 
-  <Button
-    onClick={handleRequest}
-    disabled={!selectedLocker || isSubmitting}
-    className={cn(
-        "w-full h-16 rounded-2xl shadow-xl transition-all active:scale-95 flex items-center justify-center gap-3",
-        (!selectedLocker || isSubmitting) ? "bg-slate-200 text-slate-400" : "text-white"
-    )}
-    style={{
-        // Forzamos la tipografía aquí para evitar conflictos con Tailwind
-        fontFamily: "'Montserrat', sans-serif",
-        fontSize: "16px",
-        fontWeight: "700",
-        backgroundColor: selectedLocker && !isSubmitting ? colors.primary : undefined,
-        border: "none"
-    }}
->
-    {isSubmitting ? (
-        <>
-            <Loader2 className="animate-spin" size={20} />
-            <span style={{ fontFamily: "'Montserrat', sans-serif" }}>Procesando...</span>
-        </>
-    ) : (
-        "Confirmar Solicitud"
-    )}
-</Button>
-            </main>
+                <div>
+                    <Button
+                        onClick={handleRequest}
+                        disabled={!selectedLocker || isSubmitting}
+                        aria-busy={isSubmitting}
+                        className={cn(
+                            "w-full h-12 rounded-xl transition-all active:scale-[0.98] flex items-center justify-center gap-2",
+                            (!selectedLocker || isSubmitting) ? "bg-slate-200 text-slate-400 cursor-not-allowed" : "text-white cursor-pointer"
+                        )}
+                        style={{
+                            // Forzamos la tipografía aquí para evitar conflictos con Tailwind
+                            fontFamily: "'Montserrat', sans-serif",
+                            fontSize: "16px",
+                            fontWeight: "700",
+                            backgroundColor: selectedLocker && !isSubmitting ? colors.primary : undefined,
+                            border: "none"
+                        }}
+                    >
+                        {isSubmitting ? (
+                            <>
+                                <Loader2 className="animate-spin" size={20} />
+                                <span style={{ fontFamily: "'Montserrat', sans-serif" }}>Procesando...</span>
+                            </>
+                        ) : (
+                            "Confirmar Solicitud"
+                        )}
+                    </Button>
 
-          
+                    {!selectedLocker && !isSubmitting && (
+                        <p className="font-roboto text-[12px] text-slate-500 text-center mt-2 mb-0">
+                            Selecciona un locker del mapa para continuar.
+                        </p>
+                    )}
+                </div>
+            </main>
         </div>
     );
 }
