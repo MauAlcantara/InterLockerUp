@@ -20,20 +20,31 @@ git -C "$ROOT" pull --ff-only
 # --- Migraciones opcionales ---
 if [[ "${1:-}" == "--migrations" ]]; then
     echo "==> Aplicando migraciones de base de datos..."
-    # Cargar DATABASE_URL del backend si existe
-    if [[ -f "$ROOT/backend/.env" ]]; then
+    # Cargar el .env del backend (puede estar en backend/.env o backend/src/.env)
+    ENV_FILE=""
+    for candidate in "$ROOT/backend/.env" "$ROOT/backend/src/.env"; do
+        if [[ -f "$candidate" ]]; then ENV_FILE="$candidate"; break; fi
+    done
+    if [[ -n "$ENV_FILE" ]]; then
         set -a
-        source "$ROOT/backend/.env"
+        source "$ENV_FILE"
         set +a
     fi
-    if [[ -z "${DATABASE_URL:-}" ]]; then
-        echo "    AVISO: no hay DATABASE_URL definido; se omiten migraciones."
+    # Construir la cadena de conexión: DATABASE_URL directo o variables DB_*
+    DB_CONN="${DATABASE_URL:-}"
+    if [[ -z "$DB_CONN" ]] && [[ -n "${DB_USER:-}" && -n "${DB_PASSWORD:-}" && -n "${DB_NAME:-}" ]]; then
+        DB_HOST_EFECTIVO="${DB_HOST:-localhost}"
+        DB_PORT_EFECTIVO="${DB_PORT:-5432}"
+        DB_CONN="postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST_EFECTIVO}:${DB_PORT_EFECTIVO}/${DB_NAME}"
+    fi
+    if [[ -z "$DB_CONN" ]]; then
+        echo "    AVISO: no hay DATABASE_URL ni variables DB_*; se omiten migraciones."
     elif ! command -v psql >/dev/null 2>&1; then
         echo "    AVISO: psql no está instalado; se omiten migraciones."
     else
         for f in "$ROOT"/scripts/*.sql; do
             echo "    Aplicando: $(basename "$f")"
-            psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f "$f" || {
+            psql "$DB_CONN" -v ON_ERROR_STOP=1 -f "$f" || {
                 echo "    ERROR en $(basename "$f") — revisa si ya fue aplicado."
             }
         done
