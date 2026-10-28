@@ -3,16 +3,9 @@ import { Link } from "react-router-dom"
 import { Header } from "@/components/admin/header"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import {
-  Dialog, DialogContent, DialogHeader, DialogTitle,
-  DialogFooter, DialogDescription
-} from "@/components/ui/dialog"
-import { Textarea } from "@/components/ui/textarea"
 import {
   Box, Users, AlertTriangle, ClipboardList, ChevronRight, TrendingUp,
   TrendingDown, Clock, Bell, Activity, Calendar, Zap, Loader2,
-  CheckCircle, XCircle, User, Building2, Hash
 } from "lucide-react"
 import {
   AreaChart, Area, XAxis, YAxis, ResponsiveContainer, Tooltip, BarChart, Bar,
@@ -33,18 +26,6 @@ const tareasPendientes = [
   { id: 2, tarea: "Generar reporte mensual", prioridad: "baja" },
 ]
 
-// ─── Tipos ────────────────────────────────────────────────────────────────────
-type LockerRequest = {
-  id: number
-  nombre_completo: string
-  matricula: string
-  carrera: string
-  locker: string
-  edificio: string
-  shared: boolean
-  created_at: string
-}
-
 // ─── Componente ───────────────────────────────────────────────────────────────
 export default function DashboardPage() {
   const [hoveredAlert, setHoveredAlert] = useState<number | null>(null)
@@ -52,15 +33,6 @@ export default function DashboardPage() {
   // Stats del dashboard
   const [stats, setStats] = useState<any>(null)
   const [isLoading, setIsLoading] = useState(true)
-
-  // Solicitudes pendientes
-  const [requests, setRequests] = useState<LockerRequest[]>([])
-  const [loadingRequests, setLoadingRequests] = useState(true)
-  const [processingId, setProcessingId] = useState<number | null>(null)
-
-  // Modal rechazo
-  const [rejectTarget, setRejectTarget] = useState<LockerRequest | null>(null)
-  const [rejectMotivo, setRejectMotivo] = useState("")
 
   // ── Fetch stats ─────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -76,60 +48,6 @@ export default function DashboardPage() {
     }
     fetchStats()
   }, [])
-
-  // ── Fetch solicitudes pendientes ─────────────────────────────────────────────
-  useEffect(() => {
-    const fetchRequests = async () => {
-      try {
-        const res = await fetch(`${BASE_URL}/api/locker-requests/pending`)
-        if (res.ok) setRequests(await res.json())
-      } catch (e) {
-        console.error("Error cargando solicitudes:", e)
-      } finally {
-        setLoadingRequests(false)
-      }
-    }
-    fetchRequests()
-  }, [])
-
-  // ── Aceptar ──────────────────────────────────────────────────────────────────
-  const handleAccept = async (req: LockerRequest) => {
-    setProcessingId(req.id)
-    try {
-      const res = await fetch(`${BASE_URL}/api/locker-requests/${req.id}/accept`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ fecha_vencimiento: "2025-12-31" }),
-      })
-      if (res.ok) setRequests(prev => prev.filter(r => r.id !== req.id))
-    } catch (e) {
-      console.error(e)
-    } finally {
-      setProcessingId(null)
-    }
-  }
-
-  // ── Rechazar ─────────────────────────────────────────────────────────────────
-  const handleRejectConfirm = async () => {
-    if (!rejectTarget) return
-    setProcessingId(rejectTarget.id)
-    try {
-      const res = await fetch(`${BASE_URL}/api/locker-requests/${rejectTarget.id}/reject`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ motivo: rejectMotivo }),
-      })
-      if (res.ok) {
-        setRequests(prev => prev.filter(r => r.id !== rejectTarget.id))
-        setRejectTarget(null)
-        setRejectMotivo("")
-      }
-    } catch (e) {
-      console.error(e)
-    } finally {
-      setProcessingId(null)
-    }
-  }
 
   // ── Formateo de datos de stats ───────────────────────────────────────────────
   const displayAlerts = stats?.alertas?.length > 0
@@ -242,104 +160,6 @@ export default function DashboardPage() {
               </CardContent>
             </Card>
           </div>
-
-          {/* ── SOLICITUDES PENDIENTES ────────────────────────────────────────── */}
-          <Card className="border-0 shadow-sm">
-            <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-base font-medium flex items-center gap-2">
-                  <ClipboardList className="w-4 h-4 text-muted-foreground" />
-                  Solicitudes de Locker Pendientes
-                </CardTitle>
-                <Badge variant="secondary" className="bg-primary/10 text-primary">
-                  {requests.length} pendientes
-                </Badge>
-              </div>
-            </CardHeader>
-            <CardContent className="pt-0">
-              {loadingRequests ? (
-                <div className="flex items-center justify-center py-8">
-                  <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
-                </div>
-              ) : requests.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
-                  <CheckCircle className="w-8 h-8 mb-2 text-[#2fa4a9]" />
-                  <p className="text-sm">No hay solicitudes pendientes</p>
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  {requests.map((req) => (
-                    <div
-                      key={req.id}
-                      className="flex items-center gap-4 p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors"
-                    >
-                      {/* Info del alumno */}
-                      <div className="flex-1 grid grid-cols-2 lg:grid-cols-4 gap-2 min-w-0">
-                        <div className="flex items-center gap-1.5 min-w-0">
-                          <User className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
-                          <div className="min-w-0">
-                            <p className="text-sm font-medium truncate">{req.nombre_completo}</p>
-                            <p className="text-xs text-muted-foreground">{req.matricula}</p>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center gap-1.5 min-w-0">
-                          <Hash className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
-                          <div className="min-w-0">
-                            <p className="text-sm font-medium">Locker {req.locker}</p>
-                            <p className="text-xs text-muted-foreground truncate">{req.carrera}</p>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center gap-1.5 min-w-0">
-                          <Building2 className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
-                          <p className="text-sm truncate">{req.edificio || "Sin edificio"}</p>
-                        </div>
-
-                        <div className="flex items-center gap-2">
-                          {req.shared && (
-                            <Badge variant="secondary" className="text-xs bg-[#2fa4a9]/10 text-[#2fa4a9]">
-                              Compartido
-                            </Badge>
-                          )}
-                          <span className="text-xs text-muted-foreground">
-                            {new Date(req.created_at).toLocaleDateString("es-MX", {
-                              day: "2-digit", month: "short",
-                            })}
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Botones */}
-                      <div className="flex items-center gap-2 flex-shrink-0">
-                        <Button
-                          size="sm"
-                          onClick={() => handleAccept(req)}
-                          disabled={processingId === req.id}
-                          className="bg-[#2fa4a9] hover:bg-[#2fa4a9]/90 text-white h-8 px-3 text-xs gap-1"
-                        >
-                          {processingId === req.id
-                            ? <Loader2 className="w-3 h-3 animate-spin" />
-                            : <CheckCircle className="w-3 h-3" />}
-                          Aceptar
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => setRejectTarget(req)}
-                          disabled={processingId === req.id}
-                          className="border-[#c94a4a]/30 text-[#c94a4a] hover:bg-[#c94a4a]/10 h-8 px-3 text-xs gap-1"
-                        >
-                          <XCircle className="w-3 h-3" />
-                          Rechazar
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
 
           {/* ── GRÁFICAS Y ALERTAS ───────────────────────────────────────────── */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
@@ -512,46 +332,6 @@ export default function DashboardPage() {
 
         </div>
       </div>
-
-      {/* ── MODAL RECHAZO ────────────────────────────────────────────────────── */}
-      <Dialog open={!!rejectTarget} onOpenChange={() => { setRejectTarget(null); setRejectMotivo("") }}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Rechazar solicitud</DialogTitle>
-            <DialogDescription>
-              Rechazarás la solicitud de{" "}
-              <span className="font-semibold">{rejectTarget?.nombre_completo}</span>{" "}
-              para el locker <span className="font-semibold">{rejectTarget?.locker}</span>.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-2">
-            <p className="text-sm text-muted-foreground">
-              Motivo (opcional — se enviará como notificación al alumno)
-            </p>
-            <Textarea
-              placeholder="Ej: El locker solicitado ya fue asignado a otro alumno..."
-              value={rejectMotivo}
-              onChange={(e) => setRejectMotivo(e.target.value)}
-              rows={3}
-            />
-          </div>
-          <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => { setRejectTarget(null); setRejectMotivo("") }}>
-              Cancelar
-            </Button>
-            <Button
-              onClick={handleRejectConfirm}
-              disabled={processingId !== null}
-              className="bg-[#c94a4a] hover:bg-[#c94a4a]/90 text-white gap-1"
-            >
-              {processingId !== null
-                ? <Loader2 className="w-4 h-4 animate-spin" />
-                : <XCircle className="w-4 h-4" />}
-              Confirmar rechazo
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   )
 }
