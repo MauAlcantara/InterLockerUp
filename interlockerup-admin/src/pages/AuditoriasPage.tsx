@@ -243,7 +243,7 @@ export default function AuditoriasPage() {
                             <TableCell>
                               <div
                                 className={cn(
-                                  "inline-flex items-center gap-1 px-2 py-1 rounded-md text-sm",
+                                  "inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm",
                                   actionColors[log.action as keyof typeof actionColors] || "bg-muted"
                                 )}
                               >
@@ -303,7 +303,7 @@ export default function AuditoriasPage() {
                             <TableCell>
                               <div
                                 className={cn(
-                                  "inline-flex items-center gap-1 px-2 py-1 rounded-md text-sm",
+                                  "inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm",
                                   actionColors[log.action as keyof typeof actionColors]
                                 )}
                               >
@@ -349,7 +349,7 @@ export default function AuditoriasPage() {
                             <TableCell>
                               <div
                                 className={cn(
-                                  "inline-flex items-center gap-1 px-2 py-1 rounded-md text-sm",
+                                  "inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm",
                                   actionColors[log.action as keyof typeof actionColors]
                                 )}
                               >

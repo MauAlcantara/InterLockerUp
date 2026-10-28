@@ -52,7 +52,7 @@ function DialogContent({
           "max-w-[calc(100%-2rem)] sm:max-w-lg",
           "translate-x-[-50%] translate-y-[-50%]",
           "gap-4 rounded-xl border",
-          "bg-white dark:bg-gray-900",
+          "bg-background dark:bg-gray-900",
           "p-6 shadow-lg duration-200",
 
           "data-[state=open]:animate-in data-[state=closed]:animate-out",
@@ -132,8 +132,8 @@ function DialogDescription({ className, ...props }) {
     <DialogPrimitive.Description
       data-slot="dialog-description"
       className={cn(
-        "text-sm text-gray-500 dark:text-gray-400",
-        "font-roboto",
+        "text-sm text-muted-foreground dark:text-gray-400",
+        "font-sans",
         className
       )}
       {...props}

@@ -30,7 +30,7 @@ export function StatsCard({
   variant = "default",
 }: StatsCardProps) {
   return (
-    <Card className="border-0 shadow-sm">
+    <Card>
       <CardContent className="p-6">
         <div className="flex items-start justify-between">
           <div className="space-y-2">

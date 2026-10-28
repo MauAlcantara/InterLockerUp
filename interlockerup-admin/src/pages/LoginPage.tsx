@@ -3,8 +3,8 @@ import { useNavigate } from "react-router-dom"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Lock, User, Eye, EyeOff, Mail } from "lucide-react" // Agregamos Mail
+import { Card, CardContent } from "@/components/ui/card"
+import { Lock, User, Eye, EyeOff, Mail, Loader2 } from "lucide-react"
 import forge from "node-forge"
 import toast from "react-hot-toast"
 import { BASE_URL } from "@/api/apiConfig"
@@ -25,7 +25,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
-  
+
   // --- NUEVOS ESTADOS PARA VERIFICACIÓN ---
   const [showOTPField, setShowOTPField] = useState(false)
   const [otpCode, setOtpCode] = useState("")
@@ -35,7 +35,7 @@ export default function LoginPage() {
     setIsLoading(true)
 
     if (!email || !password) {
-      toast.error("Por favor ingresa tu usuario y contraseña") 
+      toast.error("Por favor ingresa tu usuario y contraseña")
       setIsLoading(false)
       return
     }
@@ -94,12 +94,12 @@ export default function LoginPage() {
 
         localStorage.setItem('admin_token', data.token);
         localStorage.setItem('userName', data.usuario.nombre_completo || data.usuario.nombre);
-        
+
         toast.success("¡Bienvenido al sistema!")
-        
+
         setTimeout(() => {
           navigate("/dashboard");
-          setIsLoading(false); 
+          setIsLoading(false);
         }, 1000);
 
       } else {
@@ -110,138 +110,150 @@ export default function LoginPage() {
       console.error(err);
       toast.error("Error de conexión o fallo de seguridad.")
       setIsLoading(false)
-    } 
+    }
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-muted p-4">
-      <div className="w-full max-w-md">
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-xl bg-primary mb-4 shadow-lg">
-            {showOTPField ? <Mail className="w-8 h-8 text-primary-foreground" /> : <Lock className="w-8 h-8 text-primary-foreground" />}
-          </div>
-          <h1 className="text-3xl font-bold text-primary tracking-tight">InterLockerUp</h1>
-          <p className="text-muted-foreground font-serif mt-2">Panel Administrativo</p>
+    <div
+      className="min-h-screen flex flex-col"
+      style={{ backgroundImage: "linear-gradient(to bottom, #0b4dbb, #1f78ff)" }}
+    >
+      {/* Header */}
+      <div className="flex-1 flex flex-col items-center justify-center px-6 pt-12 pb-8">
+        <div className="w-20 h-20 bg-white rounded-2xl flex items-center justify-center shadow-xl mb-4 overflow-hidden">
+          <img src="/logo.png" alt="logo" className="w-full h-full object-contain p-2" />
         </div>
-
-        <Card className="shadow-lg border-0">
-          <CardHeader className="space-y-1 pb-4">
-            <CardTitle className="text-2xl font-semibold text-center">
-              {showOTPField ? "Verificar Identidad" : "Iniciar Sesión"}
-            </CardTitle>
-            <CardDescription className="text-center font-serif">
-              {showOTPField 
-                ? "Se ha enviado un código de acceso a tu correo institucional" 
-                : "Ingresa tus credenciales para acceder al sistema"}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              
-              {!showOTPField ? (
-                /* VISTA NORMAL DE LOGIN */
-                <>
-                  <div className="space-y-2">
-                    <Label htmlFor="email" className="text-sm font-medium">Usuario o correo electrónico</Label>
-                    <div className="relative">
-                      <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        id="email"
-                        type="email"
-                        placeholder="admin@uteq.edu.mx"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        className="pl-10 h-11 font-serif"
-                        disabled={isLoading}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="password">Contraseña</Label>
-                    <div className="relative">
-                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        id="password"
-                        type={showPassword ? "text" : "password"}
-                        placeholder="........"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        className="pl-10 pr-10 h-11 font-serif"
-                        disabled={isLoading}
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
-                      >
-                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                      </button>
-                    </div>
-                  </div>
-                </>
-              ) : (
-                /* VISTA DE CÓDIGO OTP */
-                <div className="space-y-4 animate-in fade-in duration-500">
-                  <div className="space-y-2">
-                    <Label htmlFor="otpCode" className="text-sm font-medium text-center block">
-                      Código de Seguridad
-                    </Label>
-                    <div className="relative">
-                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        id="otpCode"
-                        type="text"
-                        placeholder="000000"
-                        maxLength={6}
-                        value={otpCode}
-                        onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ""))}
-                        className="pl-10 h-12 text-center text-xl tracking-[0.3em] font-bold border-primary"
-                        disabled={isLoading}
-                        autoFocus
-                      />
-                    </div>
-                  </div>
-                  <button 
-                    type="button" 
-                    onClick={() => setShowOTPField(false)}
-                    className="text-xs text-primary w-full text-center hover:underline font-serif"
-                  >
-                    Volver a ingresar datos
-                  </button>
-                </div>
-              )}
-
-              {!showOTPField && (
-                <div className="flex items-center justify-end">
-                  <button type="button" className="text-sm text-secondary hover:text-primary font-medium transition-colors">
-                    Recuperar contraseña
-                  </button>
-                </div>
-              )}
-
-              <Button
-                type="submit"
-                className="w-full h-11 font-semibold"
-                disabled={isLoading || (showOTPField && otpCode.length < 6)}
-              >
-                {isLoading ? (
-                  <span className="flex items-center gap-2">
-                    <span className="h-4 w-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
-                    {showOTPField ? "Verificando..." : "Iniciando sesión..."}
-                  </span>
-                ) : (
-                  showOTPField ? "Confirmar Acceso" : "Iniciar sesión"
-                )}
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
-
-        <p className="text-center text-sm text-muted-foreground mt-6 font-serif">
-          Sistema de gestión de lockers IoT - UTEQ 2026
+        <h1 className="text-3xl font-bold text-white text-center font-sans">
+          InterLockerUp
+        </h1>
+        <p className="text-white/80 text-sm mt-2 text-center font-serif">
+          Panel Administrativo
         </p>
       </div>
+
+      {/* Login Card */}
+      <Card className="rounded-t-3xl rounded-b-none shadow-2xl border-0">
+        <CardContent className="p-6 pt-8">
+          <h2 className="text-xl font-semibold text-foreground text-center mb-6 font-sans">
+            {showOTPField ? "Verificar Identidad" : "Iniciar Sesión"}
+          </h2>
+
+          <form onSubmit={handleSubmit} className="space-y-5">
+            {!showOTPField ? (
+              /* VISTA NORMAL DE LOGIN */
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="email" className="text-sm font-medium text-foreground">
+                    Usuario o correo electrónico
+                  </Label>
+                  <div className="relative">
+                    <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                    <Input
+                      id="email"
+                      type="email"
+                      placeholder="admin@uteq.edu.mx"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className="pl-10 h-12 rounded-lg border-border bg-muted/50 focus:bg-background"
+                      disabled={isLoading}
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="password" className="text-sm font-medium text-foreground">
+                    Contraseña
+                  </Label>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                    <Input
+                      id="password"
+                      type={showPassword ? "text" : "password"}
+                      placeholder="Ingresa tu contraseña"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className="pl-10 pr-10 h-12 rounded-lg border-border bg-muted/50 focus:bg-background"
+                      disabled={isLoading}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+                    >
+                      {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                    </button>
+                  </div>
+                </div>
+              </>
+            ) : (
+              /* VISTA DE CÓDIGO OTP */
+              <div className="space-y-5 animate-in fade-in duration-500">
+                <p className="text-sm text-center text-muted-foreground font-serif">
+                  Se ha enviado un código de acceso a tu correo institucional
+                </p>
+                <div className="space-y-2">
+                  <Label htmlFor="otpCode" className="text-sm font-medium text-foreground">
+                    Código de Seguridad
+                  </Label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                    <Input
+                      id="otpCode"
+                      type="text"
+                      placeholder="000000"
+                      maxLength={6}
+                      value={otpCode}
+                      onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ""))}
+                      className="pl-10 h-12 rounded-lg border-border bg-muted/50 focus:bg-background text-center text-xl tracking-[0.3em] font-bold"
+                      disabled={isLoading}
+                      autoFocus
+                    />
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowOTPField(false)}
+                  className="text-xs text-primary w-full text-center hover:underline font-serif"
+                >
+                  Volver a ingresar datos
+                </button>
+              </div>
+            )}
+
+            {!showOTPField && (
+              <div className="mt-6 text-center space-y-3">
+                <button type="button" className="text-sm text-secondary hover:text-primary font-medium transition-colors">
+                  ¿Olvidaste tu contraseña?
+                </button>
+              </div>
+            )}
+
+            <Button
+              type="submit"
+              disabled={isLoading || (showOTPField && otpCode.length < 6)}
+              className="w-full h-12 rounded-lg text-white font-semibold text-base shadow-lg transition-all"
+            >
+              <div className="flex items-center justify-center w-full h-full">
+                {isLoading ? (
+                  <>
+                    <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                    <span>{showOTPField ? "Verificando..." : "Iniciando sesión..."}</span>
+                  </>
+                ) : (
+                  <span>{showOTPField ? "Confirmar Acceso" : "Iniciar sesión"}</span>
+                )}
+              </div>
+            </Button>
+          </form>
+
+          <div className="mt-8 pt-6 border-t border-border">
+            <p className="text-xs text-muted-foreground text-center">Universidad Tecnológica de Querétaro</p>
+            <p className="text-xs text-muted-foreground text-center mt-1">
+              © 2026 InterLockerUp - Todos los derechos reservados
+            </p>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   )
 }

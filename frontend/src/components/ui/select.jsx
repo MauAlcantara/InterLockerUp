@@ -25,12 +25,12 @@ function SelectTrigger({ className, size = "default", children, ...props }) {
       className={cn(
         "flex w-full items-center justify-between gap-2",
         "rounded-md border px-3 py-2",
-        "text-sm font-roboto",
+        "text-sm font-sans",
 
-        "border-gray-300 bg-white text-gray-900",
-        "dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100",
+        "border-border bg-background text-foreground",
+        "dark:bg-gray-950 dark:border-gray-800 dark:text-gray-50",
 
-        "data-[placeholder]:text-gray-400",
+        "data-[placeholder]:text-muted-foreground",
 
         "focus-visible:outline-none",
         "focus-visible:ring-2",
@@ -65,9 +65,9 @@ function SelectContent({ className, children, position = "popper", ...props }) {
         position={position}
         className={cn(
           "relative z-50 min-w-[8rem] overflow-hidden rounded-md border",
-          "bg-white text-gray-900",
-          "dark:bg-gray-900 dark:text-gray-100",
-          "border-gray-200 dark:border-gray-700",
+          "bg-background text-foreground",
+          "dark:bg-gray-950 dark:text-gray-50",
+          "border-border dark:border-gray-800",
           "shadow-md",
           className
         )}
@@ -98,7 +98,7 @@ function SelectLabel({ className, ...props }) {
       className={cn(
         "px-2 py-1.5 text-xs",
         "font-montserrat",
-        "text-gray-500 dark:text-gray-400",
+        "text-muted-foreground dark:text-gray-400",
         className
       )}
       {...props}
@@ -113,9 +113,9 @@ function SelectItem({ className, children, ...props }) {
       className={cn(
         "relative flex w-full cursor-default items-center gap-2",
         "rounded-sm py-2 pl-2 pr-8",
-        "text-sm font-roboto",
+        "text-sm font-sans",
 
-        "text-gray-800 dark:text-gray-200",
+        "text-foreground dark:text-gray-200",
 
         "focus:bg-[#1f78ff]/10",
         "focus:text-[#0b4dbb]",
@@ -146,7 +146,7 @@ function SelectSeparator({ className, ...props }) {
       data-slot="select-separator"
       className={cn(
         "my-1 h-px -mx-1",
-        "bg-gray-200 dark:bg-gray-700",
+        "bg-muted dark:bg-gray-700",
         className
       )}
       {...props}

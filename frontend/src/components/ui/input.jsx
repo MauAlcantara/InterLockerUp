@@ -10,14 +10,14 @@ function Input({ className, type = "text", ...props }) {
         /* base */
         "w-full min-w-0 h-9 px-3 py-1",
         "rounded-md border",
-        "text-sm font-roboto",
+        "text-sm font-sans",
         "outline-none transition-[color,box-shadow]",
 
         /* colors */
-        "bg-white dark:bg-gray-900",
-        "border-gray-300 dark:border-gray-700",
-        "text-gray-900 dark:text-gray-100",
-        "placeholder:text-gray-400",
+        "bg-background dark:bg-gray-950",
+        "border-border dark:border-gray-800",
+        "text-foreground dark:text-gray-50",
+        "placeholder:text-muted-foreground dark:placeholder:text-gray-500",
 
         /* file input */
         "file:inline-flex file:h-7 file:border-0",

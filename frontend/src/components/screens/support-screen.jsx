@@ -18,16 +18,17 @@ const theme = {
   warning: "#f2b705",
   error: "#c94a4a",
   bgLight: "#eaf2ff",
+  border: "#e5e7eb",
   white: "#ffffff",
   textMain: "#2e2e2e",
   textSec: "#8a8a8a",
 }
 
 const categories = [
-  { id: "damage", label: "Daño", icon: AlertTriangle, color: theme.error, bg: "#fee2e2" },
-  { id: "access", label: "Acceso", icon: Lock, color: theme.warning, bg: "#fef9c3" },
-  { id: "maintenance", label: "Mantenimiento", icon: Wrench, color: theme.primary, bg: "#dbeafe" },
-  { id: "other", label: "Otro", icon: HelpCircle, color: theme.success, bg: "#d1fae5" },
+  { id: "damage", label: "Daño", icon: AlertTriangle, color: theme.error, bg: "#c94a4a1a" },
+  { id: "access", label: "Acceso", icon: Lock, color: theme.warning, bg: "#f2b7051a" },
+  { id: "maintenance", label: "Mantenimiento", icon: Wrench, color: theme.primary, bg: "#0b4dbb1a" },
+  { id: "other", label: "Otro", icon: HelpCircle, color: theme.success, bg: "#2fa4a91a" },
 ]
 
 export default function SupportScreen() {
@@ -187,7 +188,7 @@ export default function SupportScreen() {
                     const isSelected = selectedCategory === cat.id;
                     return (
                       <button key={cat.id} type="button" onClick={() => setSelectedCategory(cat.id)}
-                        style={{ padding: "16px", borderRadius: "12px", border: `2px solid ${isSelected ? cat.color : "#f0f0f0"}`, background: isSelected ? cat.bg : theme.white, textAlign: "left", transition: "all 0.2s ease", cursor: "pointer" }}>
+                        style={{ padding: "16px", borderRadius: "12px", border: `2px solid ${isSelected ? cat.color : theme.border}`, background: isSelected ? cat.bg : theme.white, textAlign: "left", transition: "all 0.2s ease", cursor: "pointer" }}>
                         <cat.icon size={20} color={isSelected ? cat.color : theme.textSec} style={{ marginBottom: "8px" }} />
                         <span style={{ display: "block", fontSize: "13px", fontWeight: 600, fontFamily: "'Montserrat', sans-serif", color: isSelected ? cat.color : theme.textMain }}>{cat.label}</span>
                       </button>
@@ -199,7 +200,7 @@ export default function SupportScreen() {
               <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
                 <Label style={{ fontFamily: "'Montserrat', sans-serif", fontSize: "14px", fontWeight: 600 }}>Casillero asociado</Label>
                 <Input readOnly value={lockerNumber} placeholder={isLoadingLocker ? "Cargando..." : "Sin casillero asignado"} 
-                  style={{ height: "48px", borderRadius: "10px", border: "1px solid #ddd", background: "#f9f9f9", fontSize: "15px" }} />
+                  style={{ height: "48px", borderRadius: "10px", border: "1px solid ${theme.border}", background: theme.background, fontSize: "15px" }} />
               </div>
 
               <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>

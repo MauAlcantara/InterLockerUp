@@ -115,7 +115,7 @@ export default function RequestConfirmation({
     };
 
     return (
-        <div className="min-h-screen bg-slate-50 flex flex-col font-roboto">
+        <div className="min-h-screen bg-background flex flex-col font-sans">
             <header className="text-white px-6 pt-12 pb-14 shadow-lg transition-colors duration-500"
                     style={{ backgroundColor: config.mainColor }}>
                 <h1 className="text-2xl font-montserrat font-bold text-center">{config.title}</h1>
@@ -134,7 +134,7 @@ export default function RequestConfirmation({
                                         <button onClick={handleConfirmCancel} disabled={isCancelling} className="bg-red-500 text-white px-4 py-2 rounded-lg font-bold text-xs uppercase">
                                             {isCancelling ? "Cancelando..." : "Sí, cancelar"}
                                         </button>
-                                        <button onClick={() => setShowCancelAlert(false)} className="bg-slate-200 text-slate-600 px-4 py-2 rounded-lg font-bold text-xs uppercase">No, mantener</button>
+                                        <button onClick={() => setShowCancelAlert(false)} className="bg-muted text-muted-foreground px-4 py-2 rounded-lg font-bold text-xs uppercase">No, mantener</button>
                                     </div>
                                 </div>
                             </div>
@@ -149,31 +149,31 @@ export default function RequestConfirmation({
                             {config.icon}
                         </div>
 
-                        <h2 className="text-2xl font-montserrat font-bold text-slate-800 mb-2">{config.subtitle}</h2>
-                        <p className="text-slate-400 text-sm mb-8 px-4 leading-relaxed">{config.message}</p>
+                        <h2 className="text-2xl font-montserrat font-bold text-foreground mb-2">{config.subtitle}</h2>
+                        <p className="text-muted-foreground text-sm mb-8 px-4 leading-relaxed">{config.message}</p>
 
-                        <div className="bg-slate-50 rounded-3xl p-6 text-left mb-8 border border-slate-100">
+                        <div className="bg-background rounded-3xl p-6 text-left mb-8 border border-border">
                             <div className="flex items-center gap-4 mb-5">
                                 <div className="w-14 h-14 rounded-2xl flex items-center justify-center shadow-inner bg-white">
                                     <Lock className="w-7 h-7" style={{ color: config.mainColor }} />
                                 </div>
                                 <div>
-                                    <h3 className="font-montserrat font-bold text-lg text-slate-800 leading-tight">
+                                    <h3 className="font-montserrat font-bold text-lg text-foreground leading-tight">
                                         Locker {selectedLocker?.identificador || "N/A"}
                                     </h3>
-                                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">
+                                    <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest">
                                         {selectedLocker?.edificio || "Edificio"}
                                     </p>
                                 </div>
                             </div>
 
-                            <div className="space-y-3 pt-4 border-t border-slate-200">
+                            <div className="space-y-3 pt-4 border-t border-border">
                                 <div className="flex justify-between text-sm">
-                                    <span className="text-slate-400">Ubicación:</span>
-                                    <span className="font-bold text-slate-700">{selectedLocker?.floor}</span>
+                                    <span className="text-muted-foreground">Ubicación:</span>
+                                    <span className="font-bold text-foreground">{selectedLocker?.floor}</span>
                                 </div>
                                 <div className="flex justify-between text-sm">
-                                    <span className="text-slate-400">Modalidad:</span>
+                                    <span className="text-muted-foreground">Modalidad:</span>
                                     <span className="font-bold px-2 py-0.5 rounded-md text-[10px] uppercase" 
                                           style={{ backgroundColor: config.lightColor, color: config.mainColor }}>
                                         {isShared ? "Compartido" : "Individual"}
@@ -187,7 +187,7 @@ export default function RequestConfirmation({
                             {status === 'pending' && !showCancelAlert && (
                                 <Button 
                                     onClick={() => setShowCancelAlert(true)}
-                                    className="w-full h-16 rounded-2xl bg-slate-50 text-slate-500 font-montserrat font-bold border border-slate-200"
+                                    className="w-full h-16 rounded-2xl bg-background text-muted-foreground font-montserrat font-bold border border-border"
                                 >
                                     Cancelar Solicitud
                                 </Button>
@@ -206,18 +206,18 @@ export default function RequestConfirmation({
                                             Solicitar PIN de Apertura
                                         </Button>
                                     ) : (
-                                        <div className="bg-slate-50 p-6 rounded-3xl border-2 border-dashed border-emerald-200 space-y-4">
-                                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Ingresa el PIN recibido:</p>
+                                        <div className="bg-background p-6 rounded-3xl border-2 border-dashed border-success/30 space-y-4">
+                                            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Ingresa el PIN recibido:</p>
                                             <input 
                                                 type="text" 
                                                 maxLength="6"
                                                 value={pinValue}
                                                 onChange={(e) => setPinValue(e.target.value.replace(/\D/g, ""))}
-                                                className="w-full text-center text-3xl font-bold tracking-[8px] h-16 bg-white rounded-2xl border-none focus:ring-2 focus:ring-emerald-500"
+                                                className="w-full text-center text-3xl font-bold tracking-[8px] h-16 bg-white rounded-2xl border-none focus:ring-2 focus:ring-success"
                                                 placeholder="000000"
                                             />
                                             <div className="flex gap-2">
-                                                <Button onClick={() => setPinStep(false)} className="flex-1 h-12 rounded-xl bg-slate-200 text-slate-500 font-bold">Cancelar</Button>
+                                                <Button onClick={() => setPinStep(false)} className="flex-1 h-12 rounded-xl bg-muted text-muted-foreground font-bold">Cancelar</Button>
                                                 <Button 
                                                     onClick={handleRemoteUnlock} 
                                                     disabled={pinValue.length < 6 || isWorking}
@@ -229,7 +229,7 @@ export default function RequestConfirmation({
                                             </div>
                                         </div>
                                     )}
-                                    <p className="text-[10px] text-slate-400">El PIN caduca en 5 minutos.</p>
+                                    <p className="text-[10px] text-muted-foreground">El PIN caduca en 5 minutos.</p>
                                 </div>
                             )}
                         </div>

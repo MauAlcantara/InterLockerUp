@@ -156,7 +156,7 @@ export function HistoryScreen() {
                       alignItems: "center", 
                       gap: "12px", 
                       padding: "16px", 
-                      borderBottom: idx !== items.length - 1 ? "1px solid #f0f0f0" : "none" 
+                      borderBottom: idx !== items.length - 1 ? "1px solid #e5e7eb" : "none" 
                     }}>
                       <div style={{ 
                         width: "40px", 
@@ -165,7 +165,7 @@ export function HistoryScreen() {
                         display: "flex", 
                         alignItems: "center", 
                         justifyContent: "center",
-                        background: item.type === "access" ? colors.backgroundSoft : "#fff9e6",
+                        background: item.type === "access" ? colors.backgroundSoft : "#f2b70514",
                         color: item.type === "access" ? colors.primary : colors.warning
                       }}>
                         {item.type === "access" ? <Unlock size={18} /> : <Lock size={18} />}
@@ -195,7 +195,7 @@ export function HistoryScreen() {
 
         {filteredHistory.length === 0 && (
           <div style={{ textAlign: "center", padding: "60px 20px" }}>
-            <div style={{ width: "64px", height: "64px", background: "#f0f0f0", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px" }}>
+            <div style={{ width: "64px", height: "64px", background: "#eaf2ff", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px" }}>
               <Filter size={32} color={colors.textSecondary} />
             </div>
             <p style={{ color: colors.textSecondary, fontSize: "14px" }}>

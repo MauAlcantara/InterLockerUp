@@ -16,7 +16,7 @@ function Label({ className, ...props }) {
         "select-none",
 
         /* colors */
-        "text-gray-700 dark:text-gray-300",
+        "text-foreground dark:text-gray-300",
 
         /* disabled states */
         "group-data-[disabled=true]:pointer-events-none",

@@ -9,9 +9,9 @@ function Card({ children, style, ...props }) {
   return (
     <div
       style={{
-        backgroundColor: theme.colors.background,
+        backgroundColor: theme.colors.card,
         borderRadius: "12px",
-        border: `1px solid ${theme.colors.backgroundSoft}`,
+        border: `1px solid ${theme.colors.cardBorder}`,
         padding: theme.spacing.cardPadding,
         display: "flex",
         flexDirection: "column",
@@ -68,7 +68,7 @@ function CardDescription({ children, style }) {
   return (
     <div
       style={{
-        fontFamily: "Roboto",
+        fontFamily: "Montserrat",
         fontSize: "14px",
         color: theme.colors.textSecondary,
         ...style

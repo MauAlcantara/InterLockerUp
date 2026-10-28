@@ -202,7 +202,7 @@ export default function AccessScreen({ onNavigate }) {
                 <span style={{ fontSize: 13, color: colors.textMain, fontWeight: 500 }}>Refresco automático en:</span>
                 <span style={{ fontSize: 20, fontWeight: "700", color: countdown <= 10 ? colors.error : colors.success }}>{countdown}s</span>
               </div>
-              <div style={{ height: 6, background: "#f0f0f0", borderRadius: 3, overflow: "hidden" }}>
+              <div style={{ height: 6, background: "#e5e7eb", borderRadius: 3, overflow: "hidden" }}>
                 <div style={{ height: "100%", width: `${(countdown / 60) * 100}%`, background: countdown <= 10 ? colors.error : colors.success, transition: "width 1s linear" }} />
               </div>
             </div>
@@ -212,7 +212,7 @@ export default function AccessScreen({ onNavigate }) {
               Actualizar Código QR
             </Button>
 
-            <hr style={{ border: "none", height: "1px", background: "#f0f0f0", margin: "24px 0" }} />
+            <hr style={{ border: "none", height: "1px", background: "#e5e7eb", margin: "24px 0" }} />
 
             {/* SECCIÓN APERTURA DE EMERGENCIA */}
             <div style={{ textAlign: "center" }}>

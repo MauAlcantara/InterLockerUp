@@ -74,13 +74,13 @@ export default function SharedLocker({ isShared, setIsShared, partners, setPartn
                     <div className="flex items-center gap-3">
                         <div 
                             className="w-10 h-10 rounded-xl flex items-center justify-center transition-colors"
-                            style={{ backgroundColor: isShared ? `${colors.primary}15` : '#f1f5f9' }}
+                            style={{ backgroundColor: isShared ? `${colors.primary}15` : colors.backgroundSoft }}
                         >
-                            <UsersIcon size={20} style={{ color: isShared ? colors.primary : '#94a3b8' }} />
+                            <UsersIcon size={20} style={{ color: isShared ? colors.primary : colors.textSecondary }} />
                         </div>
                         <div className="flex flex-col">
-                            <span className="text-sm font-bold text-slate-700">Casillero Compartido</span>
-                            <span className="text-[10px] text-slate-400 italic font-medium">Busca por nombre o matrícula</span>
+                            <span className="text-sm font-bold text-foreground">Casillero Compartido</span>
+                            <span className="text-[10px] text-muted-foreground italic font-medium">Busca por nombre o matrícula</span>
                         </div>
                     </div>
                     <Switch 
@@ -96,31 +96,31 @@ export default function SharedLocker({ isShared, setIsShared, partners, setPartn
                     <div className="space-y-3 animate-in fade-in duration-300">
                         {/* Input de búsqueda con ícono de lupa */}
                         <div className="relative">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={16} />
                             <Input
                                 placeholder={partners.length >= MAX_PARTNERS ? "Límite alcanzado" : "Escribe para buscar..."}
                                 value={searchValue}
                                 onChange={(e) => setSearchValue(e.target.value)}
                                 disabled={partners.length >= MAX_PARTNERS}
-                                className="pl-10 h-11 bg-slate-50 border-slate-200 rounded-xl focus:bg-white transition-all outline-none"
+                                className="pl-10 h-11 bg-background border-border rounded-xl focus:bg-white transition-all outline-none"
                             />
                         </div>
 
                         {/* Listado de sugerencias encontradas */}
                         {suggestions.length > 0 && (
-                            <div className="bg-slate-50/50 rounded-2xl border border-slate-100 overflow-hidden shadow-inner">
+                            <div className="bg-muted/50 rounded-2xl border border-border overflow-hidden shadow-inner">
                                 {suggestions.map(s => (
                                     <button 
                                         key={s.id}
                                         type="button"
                                         onClick={() => selectPartner(s)}
-                                        className="w-full text-left px-4 py-3 hover:bg-white flex justify-between items-center border-b border-slate-100 last:border-0 transition-colors group"
+                                        className="w-full text-left px-4 py-3 hover:bg-white flex justify-between items-center border-b border-border last:border-0 transition-colors group"
                                     >
                                         <div className="flex flex-col">
-                                            <span className="text-xs font-bold text-slate-700 group-hover:text-[#0b4dbb]">{s.name}</span>
-                                            <span className="text-[9px] text-slate-400 uppercase tracking-tighter">{s.matricula}</span>
+                                            <span className="text-xs font-bold text-foreground group-hover:text-[#0b4dbb]">{s.name}</span>
+                                            <span className="text-[9px] text-muted-foreground uppercase tracking-tighter">{s.matricula}</span>
                                         </div>
-                                        <div className="w-6 h-6 rounded-full bg-white flex items-center justify-center border border-slate-100 shadow-sm">
+                                        <div className="w-6 h-6 rounded-full bg-white flex items-center justify-center border border-border shadow-sm">
                                             <UserIcon size={12} style={{ color: colors.primary }} />
                                         </div>
                                     </button>
@@ -133,13 +133,13 @@ export default function SharedLocker({ isShared, setIsShared, partners, setPartn
                             {partners.map((p) => (
                                 <div 
                                     key={p.id} 
-                                    className="flex items-center gap-2 bg-slate-100 px-3 py-1.5 rounded-full border border-slate-200 animate-in zoom-in-95 duration-200"
+                                    className="flex items-center gap-2 bg-muted px-3 py-1.5 rounded-full border border-border animate-in zoom-in-95 duration-200"
                                 >
                                     <UserIcon size={10} style={{ color: colors.primary }} />
-                                    <span className="text-[10px] font-bold text-slate-600">{p.name}</span>
+                                    <span className="text-[10px] font-bold text-muted-foreground">{p.name}</span>
                                     <X 
                                         size={14} 
-                                        className="text-slate-400 cursor-pointer hover:text-red-500 transition-colors" 
+                                        className="text-muted-foreground cursor-pointer hover:text-red-500 transition-colors" 
                                         onClick={() => setPartners(partners.filter(item => item.id !== p.id))} 
                                     />
                                 </div>

@@ -305,7 +305,7 @@ export default function HomeScreen({ onNavigate, onLogout }) {
     e.currentTarget.style.background = "rgba(255,255,255,0.12)";
 
   const closeBtn = {
-    background: "#f4f5f7",
+    background: "#eaf2ff",
     border: "none",
     borderRadius: "10px",
     width: 36,
@@ -320,10 +320,10 @@ export default function HomeScreen({ onNavigate, onLogout }) {
   };
 
   const closeBtnOver = (e) =>
-    e.currentTarget.style.background = "#e9ebef";
+    e.currentTarget.style.background = "#e5e7eb";
 
   const closeBtnOut = (e) =>
-    e.currentTarget.style.background = "#f4f5f7";
+    e.currentTarget.style.background = "#eaf2ff";
 
   return (
 
@@ -631,7 +631,7 @@ export default function HomeScreen({ onNavigate, onLogout }) {
                   <div
                     style={{
                       height: 8,
-                      background: "#f0f0f0",
+                      background: "#e5e7eb",
                       borderRadius: 4,
                       overflow: "hidden"
                     }}
@@ -881,7 +881,7 @@ export default function HomeScreen({ onNavigate, onLogout }) {
                       padding: "14px 0",
                       borderBottom:
                         index !== recentActivity.length - 1
-                          ? "1px solid #f5f5f5"
+                          ? "1px solid #e5e7eb"
                           : "none"
                     }}
                   >
@@ -1005,7 +1005,7 @@ export default function HomeScreen({ onNavigate, onLogout }) {
                 width: 42,
                 height: 4,
                 borderRadius: 10,
-                background: "#d9d9d9",
+                background: "#e5e7eb",
                 margin: "10px auto 2px",
                 flexShrink: 0
               }}
@@ -1019,7 +1019,7 @@ export default function HomeScreen({ onNavigate, onLogout }) {
                 display: "flex",
                 justifyContent: "space-between",
                 alignItems: "center",
-                borderBottom: "1px solid #f1f1f1",
+                borderBottom: "1px solid #e5e7eb",
                 flexShrink: 0
               }}
             >
@@ -1172,7 +1172,7 @@ export default function HomeScreen({ onNavigate, onLogout }) {
                           margin: "0 -12px",
                           borderBottom:
                             index !== notifications.length - 1
-                              ? "1px solid #f5f5f5"
+                              ? "1px solid #e5e7eb"
                               : "none",
                           display: "flex",
                           gap: 12,
@@ -1319,7 +1319,7 @@ export default function HomeScreen({ onNavigate, onLogout }) {
                       width: 64,
                       height: 64,
                       borderRadius: "50%",
-                      background: "#f4f6f8",
+                      background: "#eaf2ff",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
@@ -1329,7 +1329,7 @@ export default function HomeScreen({ onNavigate, onLogout }) {
 
                     <Bell
                       size={27}
-                      color="#a5aab1"
+                      color="#8a8a8a"
                     />
 
                   </div>
@@ -1371,7 +1371,7 @@ export default function HomeScreen({ onNavigate, onLogout }) {
                 <div
                   style={{
                     padding: "10px 20px max(16px, env(safe-area-inset-bottom))",
-                    borderTop: "1px solid #f1f1f1",
+                    borderTop: "1px solid #e5e7eb",
                     background: "#ffffff",
                     flexShrink: 0
                   }}
@@ -1447,7 +1447,7 @@ export default function HomeScreen({ onNavigate, onLogout }) {
                   width: 42,
                   height: 4,
                   borderRadius: 10,
-                  background: "#d9d9d9",
+                  background: "#e5e7eb",
                   margin: "0 auto 20px"
                 }}
               />

@@ -154,7 +154,7 @@ export default function RegisterScreen({ onRegister, onBackToLogin }) {
             </div>
 
             <div className="flex-1 bg-white rounded-t-3xl p-6 shadow-2xl">
-                <h2 className="text-lg font-semibold text-center mb-6 text-gray-800">
+                <h2 className="text-lg font-semibold text-center mb-6 text-foreground">
                     {step === 1 ? "Información Personal" : "Seguridad de la Cuenta"}
                 </h2>
 
@@ -162,56 +162,56 @@ export default function RegisterScreen({ onRegister, onBackToLogin }) {
                     {step === 1 && (
                         <>
                             <div className="space-y-1">
-                                <label className="text-sm font-medium text-gray-700">Nombre Completo</label>
+                                <label className="text-sm font-medium text-foreground">Nombre Completo</label>
                                 <div className="relative">
-                                    <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                                    <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                                     <input
                                         type="text"
                                         placeholder="Tu nombre completo"
                                         value={formData.nombre_completo}
                                         onChange={(e) => updateField("nombre_completo", e.target.value)}
-                                        className="pl-10 h-12 w-full rounded-lg border border-gray-200 bg-gray-50 focus:bg-white transition-all outline-none focus:ring-2 focus:ring-[#0b4dbb]/20"
+                                        className="pl-10 h-12 w-full rounded-lg border border-border bg-background focus:bg-white transition-all outline-none focus:ring-2 focus:ring-[#0b4dbb]/20"
                                         required
                                     />
                                 </div>
                             </div>
 
                             <div className="space-y-1">
-                                <label className="text-sm font-medium text-gray-700">Matrícula</label>
+                                <label className="text-sm font-medium text-foreground">Matrícula</label>
                                 <div className="relative">
-                                    <GraduationCap className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                                    <GraduationCap className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                                     <input
                                         type="text"
                                         placeholder="Ej: 202312345"
                                         value={formData.matricula}
                                         onChange={(e) => updateField("matricula", e.target.value.replace(/\D/g, ""))}
-                                        className="pl-10 h-12 w-full rounded-lg border border-gray-200 bg-gray-50 focus:bg-white outline-none focus:ring-2 focus:ring-[#0b4dbb]/20"
+                                        className="pl-10 h-12 w-full rounded-lg border border-border bg-background focus:bg-white outline-none focus:ring-2 focus:ring-[#0b4dbb]/20"
                                         required
                                     />
                                 </div>
                             </div>
 
                             <div className="space-y-1">
-                                <label className="text-sm font-medium text-gray-700">Correo Institucional</label>
+                                <label className="text-sm font-medium text-foreground">Correo Institucional</label>
                                 <div className="relative">
-                                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                                     <input
                                         type="email"
                                         placeholder="usuario@uteq.edu.mx"
                                         value={formData.email}
                                         onChange={(e) => updateField("email", e.target.value.toLowerCase())}
-                                        className="pl-10 h-12 w-full rounded-lg border border-gray-200 bg-gray-50 focus:bg-white outline-none focus:ring-2 focus:ring-[#0b4dbb]/20"
+                                        className="pl-10 h-12 w-full rounded-lg border border-border bg-background focus:bg-white outline-none focus:ring-2 focus:ring-[#0b4dbb]/20"
                                         required
                                     />
                                 </div>
                             </div>
 
                             <div className="space-y-1">
-                                <label className="text-sm font-medium text-gray-700">División Académica</label>
+                                <label className="text-sm font-medium text-foreground">División Académica</label>
                                 <select
                                     value={formData.carrera}
                                     onChange={(e) => updateField("carrera", e.target.value)}
-                                    className="h-12 w-full rounded-lg border border-gray-200 bg-gray-50 px-3 outline-none focus:ring-2 focus:ring-[#0b4dbb]/20 text-gray-700"
+                                    className="h-12 w-full rounded-lg border border-border bg-background px-3 outline-none focus:ring-2 focus:ring-[#0b4dbb]/20 text-foreground"
                                     required
                                 >
                                     <option value="">Selecciona tu División</option>
@@ -226,21 +226,21 @@ export default function RegisterScreen({ onRegister, onBackToLogin }) {
                     {step === 2 && (
                         <>
                             <div className="space-y-1">
-                                <label className="text-sm font-medium text-gray-700">Contraseña</label>
+                                <label className="text-sm font-medium text-foreground">Contraseña</label>
                                 <div className="relative">
-                                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                                     <input
                                         type={showPassword ? "text" : "password"}
                                         placeholder="Crea una contraseña"
                                         value={formData.password}
                                         onChange={(e) => updateField("password", e.target.value)}
-                                        className="pl-10 pr-10 h-12 w-full rounded-lg border border-gray-200 bg-gray-50 focus:bg-white outline-none focus:ring-2 focus:ring-[#0b4dbb]/20"
+                                        className="pl-10 pr-10 h-12 w-full rounded-lg border border-border bg-background focus:bg-white outline-none focus:ring-2 focus:ring-[#0b4dbb]/20"
                                         required
                                     />
                                     <button
                                         type="button"
                                         onClick={() => setShowPassword(!showPassword)}
-                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
                                     >
                                         {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                                     </button>
@@ -256,11 +256,11 @@ export default function RegisterScreen({ onRegister, onBackToLogin }) {
                                         return (
                                             <li key={index} className="flex items-center gap-2">
                                                 {isMet ? (
-                                                    <CheckCircle2 size={14} className="text-green-500" />
+                                                    <CheckCircle2 size={14} className="text-success" />
                                                 ) : (
-                                                    <div className="w-3.5 h-3.5 rounded-full border-2 border-gray-300" />
+                                                    <div className="w-3.5 h-3.5 rounded-full border-2 border-border" />
                                                 )}
-                                                <span className={`text-xs ${isMet ? "text-green-700 font-medium" : "text-gray-500"}`}>
+                                                <span className={`text-xs ${isMet ? "text-success font-medium" : "text-muted-foreground"}`}>
                                                     {req.label}
                                                 </span>
                                             </li>
@@ -270,21 +270,21 @@ export default function RegisterScreen({ onRegister, onBackToLogin }) {
                             </div>
 
                             <div className="space-y-1">
-                                <label className="text-sm font-medium text-gray-700">Confirmar Contraseña</label>
+                                <label className="text-sm font-medium text-foreground">Confirmar Contraseña</label>
                                 <div className="relative">
-                                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                                     <input
                                         type={showConfirmPassword ? "text" : "password"}
                                         placeholder="Repite tu contraseña"
                                         value={formData.confirmPassword}
                                         onChange={(e) => updateField("confirmPassword", e.target.value)}
-                                        className="pl-10 pr-10 h-12 w-full rounded-lg border border-gray-200 bg-gray-50 focus:bg-white outline-none focus:ring-2 focus:ring-[#0b4dbb]/20"
+                                        className="pl-10 pr-10 h-12 w-full rounded-lg border border-border bg-background focus:bg-white outline-none focus:ring-2 focus:ring-[#0b4dbb]/20"
                                         required
                                     />
                                     <button
                                         type="button"
                                         onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
                                     >
                                         {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                                     </button>
@@ -301,7 +301,7 @@ export default function RegisterScreen({ onRegister, onBackToLogin }) {
                     <button
                         type="submit"
                         disabled={isLoading || (step === 1 ? !isStep1Valid : !isStep2Valid)}
-                        className="w-full h-12 rounded-lg bg-[#0b4dbb] hover:bg-[#083a8d] disabled:bg-gray-300 text-white font-bold mt-6 transition-all shadow-lg active:scale-[0.98] flex items-center justify-center"
+                        className="w-full h-12 rounded-lg bg-[#0b4dbb] hover:bg-[#083a8d] disabled:bg-muted text-white font-bold mt-6 transition-all shadow-lg active:scale-[0.98] flex items-center justify-center"
                     >
                         {isLoading ? (
                             <Loader2 className="animate-spin w-6 h-6" />

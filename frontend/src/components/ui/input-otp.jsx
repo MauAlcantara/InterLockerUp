@@ -57,7 +57,7 @@ function InputOTPSlot({ index, className, ...props }) {
       data-active={isActive}
       className={cn(
         "relative flex items-center justify-center",
-        "h-12 w-12 text-lg font-roboto",
+        "h-12 w-12 text-lg font-sans",
         "border border-border",
         "bg-white",
         "text-foreground",

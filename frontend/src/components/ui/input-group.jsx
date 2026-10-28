@@ -51,7 +51,7 @@ function InputGroupAddon({
     <div
       data-align={align}
       className={cn(
-        "flex items-center text-muted-foreground text-sm font-roboto",
+        "flex items-center text-muted-foreground text-sm font-sans",
         alignmentStyles[align],
         className
       )}
@@ -98,7 +98,7 @@ function InputGroupText({ className, ...props }) {
   return (
     <span
       className={cn(
-        "flex items-center text-sm text-muted-foreground font-roboto",
+        "flex items-center text-sm text-muted-foreground font-sans",
         className
       )}
       {...props}
@@ -117,7 +117,7 @@ function InputGroupInput({ className, ...props }) {
         "flex-1 border-0 bg-transparent",
         "rounded-none shadow-none",
         "focus-visible:ring-0",
-        "h-12 px-3 font-roboto",
+        "h-12 px-3 font-sans",
         className
       )}
       {...props}
@@ -136,7 +136,7 @@ function InputGroupTextarea({ className, ...props }) {
         "flex-1 border-0 bg-transparent",
         "rounded-none shadow-none",
         "focus-visible:ring-0",
-        "py-3 px-3 font-roboto resize-none",
+        "py-3 px-3 font-sans resize-none",
         className
       )}
       {...props}

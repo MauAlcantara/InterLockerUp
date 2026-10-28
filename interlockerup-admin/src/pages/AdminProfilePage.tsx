@@ -1,293 +1,269 @@
 import { useState, useEffect } from "react"
-import { Header } from "@/components/admin/header"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { BASE_URL } from "@/api/apiConfig"
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
-import { User, Mail, Shield, Loader2, Save, X, GraduationCap, Scale } from "lucide-react"
+  User,
+  Mail,
+  Shield,
+  Loader2,
+  Edit3,
+  IdCard,
+  X,
+} from "lucide-react"
+import { BASE_URL } from "@/api/apiConfig"
 import toast from "react-hot-toast"
 
+// Paleta idéntica al perfil del alumno
+const COLORS = {
+  primary: "#0b4dbb",
+  success: "#2fa4a9",
+  error: "#c94a4a",
+  text: "#2e2e2e",
+  textSec: "#8a8a8a",
+}
+
+interface Perfil {
+  nombre_completo: string
+  email: string
+  matricula: string
+}
+
 export default function AdminProfilePage() {
-  const [user, setUser] = useState<any>(null)
-  const [isLoading, setIsLoading] = useState(true)
+  const [user, setUser] = useState<Perfil | null>(null)
+  const [loading, setLoading] = useState(true)
   const [isEditing, setIsEditing] = useState(false)
-  const [isSubmitting, setIsSubmitting] = useState(false)
   const [showPrivacy, setShowPrivacy] = useState(false)
+  const [saving, setSaving] = useState(false)
 
-  const [formData, setFormData] = useState({
-    nombre_completo: "",
-    email: "",
-    matricula: "",
-  })
+  const [editNombre, setEditNombre] = useState("")
+  const [editEmail, setEditEmail] = useState("")
+  const [editMatricula, setEditMatricula] = useState("")
 
-  // --- 1. CARGAR DATOS DEL ADMIN ---
-  const fetchUserData = async () => {
+  const fetchPerfil = async () => {
     try {
-      const token = localStorage.getItem("admin_token") || localStorage.getItem("token")
+      const token = localStorage.getItem("admin_token")
       const res = await fetch(`${BASE_URL}/api/perfil/me`, {
-        headers: { Authorization: `Bearer ${token}` }
+        headers: { Authorization: `Bearer ${token}` },
       })
-      
-      if (res.ok) {
-        const data = await res.json()
-        setUser(data)
-        setFormData({ 
-          nombre_completo: data.nombre_completo || data.name || "", 
-          email: data.email || "", 
-          matricula: data.matricula || "" 
-        })
-      } else {
-        toast.error("Tu sesión ha expirado")
-      }
-    } catch (e) {
-      toast.error("Error al cargar el perfil")
+      if (!res.ok) throw new Error("Error al obtener el perfil")
+      const data = await res.json()
+      setUser({
+        nombre_completo: data.nombre_completo || data.name || "Administrador",
+        email: data.email || "",
+        matricula: data.matricula || "",
+      })
+    } catch (err) {
+      console.error(err)
+      toast.error("No se pudo cargar tu perfil")
     } finally {
-      setIsLoading(false)
+      setLoading(false)
     }
   }
 
   useEffect(() => {
-    fetchUserData()
+    fetchPerfil()
   }, [])
 
-  // --- 2. ACTUALIZAR PERFIL ---
-  const handleUpdateProfile = async () => {
-    if (!formData.nombre_completo.trim() || !formData.email.trim()) {
-      toast.error("El nombre y el correo son obligatorios")
+  const handleToggleEdit = () => {
+    if (!user) return
+    if (!isEditing) {
+      setEditNombre(user.nombre_completo)
+      setEditEmail(user.email)
+      setEditMatricula(user.matricula)
+    }
+    setIsEditing(!isEditing)
+  }
+
+  const handleSave = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!editNombre.trim()) {
+      toast.error("El nombre no puede estar vacío")
       return
     }
-
-    setIsSubmitting(true)
+    setSaving(true)
     try {
-      const token = localStorage.getItem("admin_token") || localStorage.getItem("token")
-      const res = await fetch(`${BASE_URL}/perfil/update`, {
+      const token = localStorage.getItem("admin_token")
+      const res = await fetch(`${BASE_URL}/api/perfil/update`, {
         method: "PUT",
-        headers: { 
-          "Content-Type": "application/json", 
-          Authorization: `Bearer ${token}` 
-        },
-        body: JSON.stringify(formData)
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          nombre_completo: editNombre.trim(),
+          email: editEmail.trim(),
+          matricula: editMatricula.trim(),
+        }),
       })
-
-      if (res.ok) {
-        toast.success("¡Perfil actualizado correctamente!")
-        // Actualizamos el nombre en el localStorage para que el Header lo lea
-        localStorage.setItem("userName", formData.nombre_completo)
-        setIsEditing(false)
-        fetchUserData() // Recargar datos frescos
-      } else {
-        const errorData = await res.json()
-        toast.error(errorData.mensaje || "Error al actualizar perfil")
-      }
+      if (!res.ok) throw new Error("Error al guardar")
+      toast.success("Datos actualizados correctamente")
+      setIsEditing(false)
+      await fetchPerfil()
     } catch (err) {
-      toast.error("Error de conexión con el servidor")
+      console.error(err)
+      toast.error("No se pudieron guardar los cambios")
     } finally {
-      setIsSubmitting(false)
+      setSaving(false)
     }
   }
 
-  if (isLoading) {
+  const handleLogout = async () => {
+    const token = localStorage.getItem("admin_token")
+    // Invalidamos la sesión en el servidor (si falla, seguimos igual)
+    if (token) {
+      try {
+        await fetch(`${BASE_URL}/api/auth/logout`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        })
+      } catch (err) {
+        console.error("Error al cerrar sesión en servidor:", err)
+      }
+    }
+    localStorage.removeItem("admin_token")
+    localStorage.removeItem("userName")
+    window.location.href = "/"
+  }
+
+  if (loading) {
     return (
-      <div className="flex flex-col h-full items-center justify-center bg-slate-50/50">
-        <Loader2 className="w-10 h-10 text-primary animate-spin mb-4" />
-        <p className="text-muted-foreground font-serif">Cargando tu información...</p>
+      <div className="min-h-screen bg-[#f8f9fb] flex items-center justify-center font-serif">
+        <Loader2 className="animate-spin" size={32} color={COLORS.primary} />
       </div>
     )
   }
 
   return (
-    <div className="flex flex-col h-full">
-
-
-      <Header
-        title="Mi Perfil"
-        description="Gestiona tu información personal y preferencias del sistema"
-      />
-
-      <div className="flex-1 p-8 space-y-6 max-w-5xl mx-auto w-full">
-        
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* COLUMNA IZQUIERDA: Tarjeta de Presentación */}
-          <Card className="md:col-span-1 border-0 shadow-sm flex flex-col items-center p-6 text-center h-fit">
-            <div className="w-24 h-24 rounded-full bg-primary/10 flex items-center justify-center mb-4 border-4 border-primary/20">
-              <User className="w-12 h-12 text-primary" />
-            </div>
-            <h2 className="text-xl font-bold text-foreground">
-              {user?.nombre_completo || user?.name || "Administrador"}
-            </h2>
-            <p className="text-sm text-primary font-medium mt-1">Nivel: Administrador Total</p>
-            <p className="text-xs text-muted-foreground mt-2 font-mono bg-muted px-3 py-1 rounded-md">
-              ID: {user?.matricula}
-            </p>
-
-            <div className="w-full h-px bg-border my-6" />
-
-            {/* Enlaces Rápidos */}
-            <div className="w-full space-y-3">
-              <Button 
-                variant="outline" 
-                className="w-full justify-start text-muted-foreground"
-                onClick={() => setShowPrivacy(true)}
-              >
-                <Shield className="w-4 h-4 mr-3" />
-                Aviso de Privacidad
-              </Button>
-            </div>
-          </Card>
-
-          {/* COLUMNA DERECHA: Formulario de Edición */}
-          <Card className="md:col-span-2 border-0 shadow-sm">
-            <CardHeader>
-              <div className="flex justify-between items-center">
-                <div>
-                  <CardTitle>Detalles de la Cuenta</CardTitle>
-                  <CardDescription className="font-serif">
-                    Actualiza tus datos de contacto y credenciales
-                  </CardDescription>
-                </div>
-                {!isEditing && (
-                  <Button variant="outline" onClick={() => setIsEditing(true)}>
-                    Editar Perfil
-                  </Button>
-                )}
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              
-              <div className="space-y-4">
-                {/* Nombre Completo */}
-                <div className="space-y-2">
-                  <Label htmlFor="nombre">Nombre Completo</Label>
-                  <div className="relative">
-                    <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <Input
-                      id="nombre"
-                      disabled={!isEditing}
-                      value={formData.nombre_completo}
-                      onChange={(e) => setFormData({ ...formData, nombre_completo: e.target.value })}
-                      className="pl-10"
-                    />
-                  </div>
-                </div>
-
-                {/* Correo Electrónico */}
-                <div className="space-y-2">
-                  <Label htmlFor="email">Correo Institucional</Label>
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <Input
-                      id="email"
-                      type="email"
-                      disabled={!isEditing}
-                      value={formData.email}
-                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                      className="pl-10"
-                    />
-                  </div>
-                </div>
-
-                {/* Matrícula / ID */}
-                <div className="space-y-2">
-                  <Label htmlFor="matricula">Identificador / Matrícula</Label>
-                  <div className="relative">
-                    <GraduationCap className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <Input
-                      id="matricula"
-                      disabled={!isEditing}
-                      value={formData.matricula}
-                      onChange={(e) => setFormData({ ...formData, matricula: e.target.value })}
-                      className="pl-10 font-mono"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Botones de Acción */}
-              {isEditing && (
-                <div className="flex justify-end gap-3 pt-4 border-t border-border">
-                  <Button 
-                    variant="ghost" 
-                    onClick={() => {
-                      setIsEditing(false)
-                      // Restaurar datos originales si cancela
-                      setFormData({ 
-                        nombre_completo: user?.nombre_completo || user?.name || "", 
-                        email: user?.email || "", 
-                        matricula: user?.matricula || "" 
-                      })
-                    }}
-                    disabled={isSubmitting}
-                  >
-                    <X className="w-4 h-4 mr-2" /> Cancelar
-                  </Button>
-                  <Button onClick={handleUpdateProfile} disabled={isSubmitting}>
-                    {isSubmitting ? (
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    ) : (
-                      <Save className="w-4 h-4 mr-2" />
-                    )}
-                    Guardar Cambios
-                  </Button>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+    <div className="min-h-screen bg-[#f8f9fb] font-serif" style={{ color: COLORS.text }}>
+      {/* ===== Header (igual que el perfil del alumno) ===== */}
+      <div className="bg-[#0b4dbb] text-white text-center px-4 pt-[60px] pb-[40px]">
+        <div className="w-[85px] h-[85px] rounded-full bg-white mx-auto mb-3 flex items-center justify-center border-[3px] border-white/30">
+          <User size={45} color={COLORS.primary} />
         </div>
+        <h1 className="text-[20px] font-bold font-sans">{user?.nombre_completo}</h1>
+        <p className="text-[14px] opacity-90">Matrícula: {user?.matricula || "—"}</p>
       </div>
 
-      {/* --- MODAL DEL AVISO DE PRIVACIDAD --- */}
-      <Dialog open={showPrivacy} onOpenChange={setShowPrivacy}>
-        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-xl text-primary">
-              <Shield className="w-5 h-5" /> Documentación Legal y Privacidad
-            </DialogTitle>
-            <DialogDescription>
-              Términos de uso y responsabilidades como Administrador de InterLockerUp.
-            </DialogDescription>
-          </DialogHeader>
+      {/* ===== Main ===== */}
+      <main className="px-4 -mt-5 flex flex-col gap-4">
+        {/* Card: Datos de Usuario */}
+        <div className="bg-white rounded-2xl shadow-[0_4px_12px_rgba(0,0,0,0.05)] p-5">
+          <div className="flex items-center justify-between mb-4">
+            <span className="text-[14px] font-bold font-sans" style={{ color: COLORS.primary }}>
+              Datos de Usuario
+            </span>
+            <button
+              onClick={handleToggleEdit}
+              className="cursor-pointer"
+              style={{ color: COLORS.primary }}
+              aria-label="Editar datos"
+            >
+              <Edit3 size={18} />
+            </button>
+          </div>
 
-          <div className="space-y-6 mt-4 text-sm text-foreground/80 leading-relaxed text-justify">
-            <section>
-              <h4 className="font-bold text-foreground mb-2 flex items-center gap-2">
-                <Shield className="w-4 h-4 text-primary" /> Aviso de Privacidad
-              </h4>
-              <p className="mb-2"><strong>InterLockerUp</strong>, con domicilio institucional en Avenida Pie de la Cuesta 2600, 76140 Santiago de Querétaro, Qro., es responsable de la recopilación, almacenamiento, uso y protección de los datos personales.</p>
-              <p className="font-semibold mt-3">Finalidades del tratamiento administrativo:</p>
-              <ul className="list-disc pl-5 space-y-1 mt-1">
-                <li>Gestión y auditoría del acceso a casilleros.</li>
-                <li>Atención de incidencias y reportes técnicos.</li>
-                <li>Notificaciones de vencimiento y mantenimiento.</li>
-              </ul>
-            </section>
+          {isEditing ? (
+            <form onSubmit={handleSave} className="flex flex-col gap-3">
+              <input
+                type="text"
+                value={editNombre}
+                onChange={(e) => setEditNombre(e.target.value)}
+                placeholder="Nombre completo"
+                className="p-3 rounded-[10px] border border-[#ddd] text-[14px] bg-white outline-none focus:border-[#0b4dbb]"
+              />
+              <input
+                type="email"
+                value={editEmail}
+                onChange={(e) => setEditEmail(e.target.value)}
+                placeholder="Correo electrónico"
+                className="p-3 rounded-[10px] border border-[#ddd] text-[14px] bg-white outline-none focus:border-[#0b4dbb]"
+              />
+              <input
+                type="text"
+                value={editMatricula}
+                onChange={(e) => setEditMatricula(e.target.value)}
+                placeholder="Matrícula"
+                className="p-3 rounded-[10px] border border-[#ddd] text-[14px] bg-white outline-none focus:border-[#0b4dbb]"
+              />
+              <button
+                type="submit"
+                disabled={saving}
+                className="w-full h-12 rounded-xl bg-[#0b4dbb] text-white text-[14px] font-bold font-sans cursor-pointer disabled:opacity-60 flex items-center justify-center gap-2"
+              >
+                {saving && <Loader2 size={16} className="animate-spin" />}
+                Guardar Cambios
+              </button>
+            </form>
+          ) : (
+            <div className="flex flex-col gap-3">
+              <div className="flex items-center gap-3">
+                <Mail size={18} color={COLORS.primary} />
+                <span className="text-[14px] text-[#444]">{user?.email}</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <IdCard size={18} color={COLORS.primary} />
+                <span className="text-[14px] text-[#444]">ID: {user?.matricula || "—"}</span>
+              </div>
+            </div>
+          )}
+        </div>
 
-            <div className="w-full h-px bg-border" />
+        {/* Botones: Privacidad / Soporte */}
+        <div className="grid grid-cols-2 gap-3">
+          <button
+            onClick={() => setShowPrivacy(true)}
+            className="p-[18px] bg-white rounded-[18px] border-0 shadow-[0_4px_10px_rgba(0,0,0,0.04)] flex flex-col items-center gap-2 cursor-pointer"
+          >
+            <Shield size={24} color={COLORS.primary} />
+            <span className="text-[12px] font-bold font-sans text-[#2e2e2e]">Privacidad</span>
+          </button>
+          <button
+            onClick={() => toast("Soporte: Central UTEQ 442 209 6100")}
+            className="p-[18px] bg-white rounded-[18px] border-0 shadow-[0_4px_10px_rgba(0,0,0,0.04)] flex flex-col items-center gap-2 cursor-pointer"
+          >
+            <Mail size={24} color={COLORS.success} />
+            <span className="text-[12px] font-bold font-sans text-[#2e2e2e]">Soporte</span>
+          </button>
+        </div>
 
-            <section>
-              <h4 className="font-bold text-foreground mb-2 flex items-center gap-2">
-                <Scale className="w-4 h-4 text-primary" /> Responsabilidad Administrativa
-              </h4>
-              <p className="mb-2"><strong>Uso del Panel:</strong> Como administrador, tienes acceso a datos sensibles de los estudiantes. Queda estrictamente prohibido el uso de esta información para fines ajenos a la gestión académica y operativa de la UTEQ.</p>
-              <p><strong>Auditoría:</strong> Todas las acciones realizadas (asignaciones, desalojos, envíos de notificaciones) quedan registradas en el sistema con un sello de tiempo y el ID del administrador en turno para fines de control de calidad.</p>
-            </section>
+        {/* Footer */}
+        <div className="text-center pb-6">
+          <p className="text-[12px] text-[#8a8a8a]">Central UTEQ: 442 209 6100</p>
+          <button
+            onClick={handleLogout}
+            className="w-full text-left bg-none border-0 font-bold p-[10px] text-[14px] font-sans cursor-pointer"
+            style={{ color: COLORS.error }}
+          >
+            Cerrar Sesión
+          </button>
+        </div>
+      </main>
 
-            <div className="bg-muted p-4 rounded-lg mt-6">
-              <p className="text-xs text-muted-foreground m-0">
-                <strong>Última actualización:</strong> 13 de febrero de 2026<br/>
-                <strong>Marco Legal:</strong> LFPDPPP (Reforma Nov 2025) y Políticas Internas UTEQ.
+      {/* ===== Modal Privacidad (bottom sheet, igual que el alumno) ===== */}
+      {showPrivacy && (
+        <div className="fixed inset-0 bg-black/80 z-50 flex items-end" onClick={() => setShowPrivacy(false)}>
+          <div
+            className="w-full h-[90%] bg-white rounded-t-[25px] flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="bg-white flex items-center justify-between p-5 sticky top-0 z-10">
+              <h2 className="text-[16px] font-bold font-sans text-[#2e2e2e]">Privacidad</h2>
+              <button onClick={() => setShowPrivacy(false)} className="cursor-pointer text-[#8a8a8a]" aria-label="Cerrar">
+                <X size={24} />
+              </button>
+            </div>
+            <div className="flex-1 overflow-auto px-5 pb-8 flex flex-col gap-5 text-[14px] text-[#444] font-serif">
+              <p>
+                En InterLockerUp, tu información personal (nombre, matrícula y correo) se utiliza únicamente para
+                gestionar tus casilleros y solicitudes. No compartimos datos con terceros ni los usamos con fines
+                comerciales.
               </p>
+              <p>
+                Para solicitar la eliminación de tus datos o ejercer tu derecho de acceso, escríbenos a través de la
+                Central UTEQ (442 209 6100) o contacta a soporte.
+              </p>
+              <div className="bg-[#f0f4f8] rounded-xl p-4 text-[13px] text-[#666]">
+                Última actualización: 2025. Al usar la plataforma aceptas esta política de privacidad.
+              </div>
             </div>
           </div>
-        </DialogContent>
-      </Dialog>
+        </div>
+      )}
     </div>
   )
 }

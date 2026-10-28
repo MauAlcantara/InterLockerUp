@@ -366,7 +366,7 @@ export default function LockersPage() {
                   <p className="text-sm">No hay solicitudes pendientes por revisar.</p>
                 </div>
               ) : (
-                <div className="rounded-md border">
+                <div className="rounded-xl border">
                   <Table>
                     <TableHeader className="bg-slate-50">
                       <TableRow>

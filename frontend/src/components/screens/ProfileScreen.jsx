@@ -304,7 +304,7 @@ export function ProfileScreen({ onLogout }) {
                 <p><strong>Limitación de Responsabilidad:</strong> La plataforma no se hace responsable por daños, pérdidas de pertenencias físicas o afectaciones derivadas del uso indebido, negligencia al dejar el locker abierto o compartir códigos QR.</p>
               </section>
 
-              <div style={{ background: "#f0f4f8", padding: "15px", borderRadius: "12px", marginTop: "20px" }}>
+              <div style={{ background: "#eaf2ff", padding: "15px", borderRadius: "12px", marginTop: "20px" }}>
                 <p style={{ fontSize: "11px", margin: 0 }}>
                   <strong>Última actualización:</strong> 13 de febrero de 2026<br/>
                   <strong>Marco Legal:</strong> LFPDPPP (Reforma Nov 2025) y Código Penal Federal.

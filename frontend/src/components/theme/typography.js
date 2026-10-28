@@ -1,5 +1,6 @@
 const typography = {
 
+  // Montserrat como fuente base (idéntico a interlockerup-admin)
   title: {
     fontFamily: "Montserrat",
     fontSize: "32px",
@@ -19,13 +20,13 @@ const typography = {
   },
 
   body: {
-    fontFamily: "Roboto",
+    fontFamily: "Montserrat",
     fontSize: "16px",
     fontWeight: "400"
   },
 
   note: {
-    fontFamily: "Roboto",
+    fontFamily: "Montserrat",
     fontSize: "13px",
     fontWeight: "400"
   }

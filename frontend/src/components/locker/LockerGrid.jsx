@@ -5,7 +5,7 @@ export default function LockerGrid({ lockers = [], selectedLocker, setSelectedLo
     
     if (lockers.length === 0) {
         return (
-            <div className="p-8 text-center text-slate-400 font-montserrat italic border-2 border-dashed border-slate-100 rounded-2xl">
+            <div className="p-8 text-center text-muted-foreground font-montserrat italic border-2 border-dashed border-border rounded-2xl">
                 No hay casilleros registrados para tu carrera.
             </div>
         );
@@ -27,7 +27,7 @@ export default function LockerGrid({ lockers = [], selectedLocker, setSelectedLo
                         stateStyles = "text-white shadow-md scale-105 border-transparent";
                         customStyle = { backgroundColor: colors.success };
                     } else if (estado === "disponible") {
-                        stateStyles = "bg-white border-slate-200 text-slate-600 hover:border-slate-400";
+                        stateStyles = "bg-white border-border text-muted-foreground hover:border-primary";
                     } else if (estado === "proceso") {
                         stateStyles = "text-white border-transparent cursor-not-allowed opacity-70";
                         customStyle = { backgroundColor: colors.warning };
@@ -55,9 +55,9 @@ export default function LockerGrid({ lockers = [], selectedLocker, setSelectedLo
             </div>
 
             {/* Leyenda de estados actualizada */}
-            <div className="flex flex-wrap justify-center gap-x-6 gap-y-2 text-[9px] font-montserrat font-black text-slate-400 uppercase tracking-widest">
+            <div className="flex flex-wrap justify-center gap-x-6 gap-y-2 text-[9px] font-montserrat font-black text-muted-foreground uppercase tracking-widest">
                 <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-sm border-2 border-slate-200 bg-white" /> 
+                    <div className="w-3 h-3 rounded-sm border-2 border-border bg-white" /> 
                     <span>Libre</span>
                 </div>
                 <div className="flex items-center gap-2">

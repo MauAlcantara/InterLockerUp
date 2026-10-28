@@ -7,7 +7,6 @@ import {
   AlertTriangle,
   FileText,
   LogOut,
-  Lock,
   ChevronLeft,
   ChevronRight,
 } from "lucide-react"
@@ -56,8 +55,8 @@ export function Sidebar() {
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-sidebar-border">
         <Link to="/dashboard" className="flex items-center gap-3">
-          <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-sidebar-accent">
-            <Lock className="w-5 h-5" />
+          <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-white overflow-hidden shadow-sm">
+            <img src="/logo.png" alt="logo" className="w-full h-full object-contain p-1" />
           </div>
           {!collapsed && (
             <div>
@@ -87,7 +86,7 @@ export function Sidebar() {
               className={cn(
                 "flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-all duration-200",
                 isActive
-                  ? "bg-sidebar-accent text-sidebar-foreground"
+                  ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-sm"
                   : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground"
               )}
             >
