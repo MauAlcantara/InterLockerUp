@@ -24,5 +24,16 @@ export const fastFetch = async (endpoint: string, options: RequestInit = {}) => 
     }
 
     console.log(`Llamando a: ${url}`); // Esto te ayudará a ver la URL real en la consola
-    return fetch(url, { ...options, headers });
+    const response = await fetch(url, { ...options, headers });
+
+    // Sesión invalidada (login en otro dispositivo) o expirada:
+    // limpiamos el token local y mandamos al login si no estamos ahí.
+    if (response.status === 401 && token) {
+        localStorage.removeItem("admin_token");
+        if (!window.location.pathname.startsWith("/login") && window.location.pathname !== "/") {
+            window.location.href = "/";
+        }
+    }
+
+    return response;
 };
