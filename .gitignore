@@ -1,11 +1,41 @@
+# Dependencias
 node_modules/
-.aider*
+
+# Entornos
 .env
-backend/.scannerwork/
-interlockerup-admin/@/
-SEGURIDAD_IMPLEMENTADA.txt
-backend/ZAP_2_16_1_unix.sh
-zap-reports/
-backend/src/uploads/
-backend/src/uploads/
 frontend/.env.production
+
+# Herramientas / editor
+.aider*
+.aider.tags.cache.v4/
+InterLockerUp.geany
+
+# Scanner / auditoría local
+backend/.scannerwork/
+zap-reports/
+backend/ZAP_2_16_1_unix.sh
+
+# Uploads
+backend/src/uploads/
+
+# Archivos de notas locales
+SEGURIDAD_IMPLEMENTADA.txt
+
+# Archivos vacíos / basura
+login
+conexionBackend.txt
+backend/conexionBackend.txt
+
+# Archivos comprimidos
+backend/src/_tests_.zip
+
+# Scripts de prueba / scratch
+test-resend.js
+test_script.sh
+test_seguridad_DE.sh
+backend/test-db.js
+backend/generar-token.js
+
+# Media pesada
+docs/Video de funcionalidad alumnos.mp4
+docs/ILU-SEG.pod
