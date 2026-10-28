@@ -13,6 +13,7 @@ import {
 } from "lucide-react"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
+import { BASE_URL } from "@/api/apiConfig"
 
 const menuItems = [
   { title: "Hub Principal", href: "/dashboard", icon: LayoutDashboard },
@@ -28,9 +29,21 @@ export function Sidebar() {
   const [collapsed, setCollapsed] = useState(false)
 
   // <-- FUNCIÓN DE LOGOUT -->
-  const handleLogout = () => {
-    localStorage.removeItem("admin_token"); // 1. Destruimos el token
-    navigate("/"); // 2. Redirigimos al Login
+  const handleLogout = async () => {
+    const token = localStorage.getItem("admin_token");
+    // 1. Invalidamos la sesión en el servidor (si falla, seguimos igual)
+    if (token) {
+      try {
+        await fetch(`${BASE_URL}/api/auth/logout`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        });
+      } catch (err) {
+        console.error("Error al cerrar sesión en servidor:", err);
+      }
+    }
+    localStorage.removeItem("admin_token"); // 2. Destruimos el token local
+    navigate("/"); // 3. Redirigimos al Login
   }
 
   return (

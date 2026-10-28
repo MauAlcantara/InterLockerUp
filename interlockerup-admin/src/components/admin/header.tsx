@@ -66,10 +66,22 @@ export function Header({ title, description }: HeaderProps) {
     return () => clearInterval(interval)
   }, [])
 
-  const handleLogout = () => {
-    localStorage.removeItem("token")
+  const handleLogout = async () => {
+    const token = localStorage.getItem("admin_token")
+    // Invalidamos la sesión en el servidor (si falla, seguimos igual)
+    if (token) {
+      try {
+        await fetch(`${BASE_URL}/api/auth/logout`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        })
+      } catch (err) {
+        console.error("Error al cerrar sesión en servidor:", err)
+      }
+    }
+    localStorage.removeItem("admin_token")
     localStorage.removeItem("userName")
-    window.location.href = "/" // O usa el hook de navegación que tengas configurado
+    window.location.href = "/"
   }
 
   // Contamos cuántas no han sido leídas

@@ -17,6 +17,20 @@ const getPublicKey = (req, res) => {
     res.json({ publicKey });
 }
 
+// Crea (o reemplaza) la sesión activa del usuario y devuelve el jti del token.
+// Al reemplazar, el token anterior queda invalidado: sesión única por usuario.
+const crearSesion = async (user, deviceId) => {
+    const jti = crypto.randomUUID();
+    await db.query(
+        'INSERT INTO user_sessions (user_id, token_jti, device_fingerprint, expires_at) '
+        + 'VALUES ($1, $2, $3, NOW() + INTERVAL \'8 hours\') '
+        + 'ON CONFLICT (user_id) DO UPDATE '
+        + 'SET token_jti = EXCLUDED.token_jti, device_fingerprint = EXCLUDED.device_fingerprint, created_at = NOW(), expires_at = EXCLUDED.expires_at',
+        [user.id, jti, deviceId || null]
+    );
+    return jti;
+};
+
 const login = async (req, res) => {
     const { studentId, email, encryptedPassword, encryptedAesKey, iv, password, otpCode } = req.body;
     const deviceId = req.body.deviceId || null;
@@ -141,9 +155,10 @@ const login = async (req, res) => {
             }
         }
 
-        // Login exitoso
+        // Login exitoso: crear sesión activa (invalida tokens previos del mismo usuario)
+        const jti = await crearSesion(user, deviceId);
         const token = jwt.sign(
-            { id: user.id, rol: user.rol },
+            { id: user.id, rol: user.rol, jti },
             process.env.JWT_SECRET,
             { expiresIn: '8h' }
         );
@@ -210,9 +225,10 @@ const verifyOTP = async (req, res) => {
             );
         }
 
-        // 4. Generamos el token de acceso real
+        // 4. Generamos el token de acceso real (con sesión única por usuario)
+        const jti = await crearSesion(user, deviceId);
         const token = jwt.sign(
-            { id: user.id, rol: user.rol },
+            { id: user.id, rol: user.rol, jti },
             process.env.JWT_SECRET,
             { expiresIn: '8h' }
         );
@@ -233,4 +249,16 @@ const verifyOTP = async (req, res) => {
     }
 };
 
-module.exports = { login, getPublicKey, getCarreras, verifyOTP };
+// Cierra la sesión activa del usuario (invalida su token en el servidor)
+const logout = async (req, res) => {
+    try {
+        const { id } = req.user;
+        await db.query('DELETE FROM user_sessions WHERE user_id = $1', [id]);
+        res.json({ mensaje: 'Sesión cerrada correctamente.' });
+    } catch (error) {
+        console.error("Error en logout:", error);
+        res.status(500).json({ mensaje: 'Error al cerrar la sesión.' });
+    }
+};
+
+module.exports = { login, getPublicKey, getCarreras, verifyOTP, logout };
