@@ -8,6 +8,7 @@ import colors from "../theme/colors"
 import fonts from "../theme/typography"
 import forge from "node-forge"
 import toast from "react-hot-toast"
+import { getDeviceId } from "../../lib/device"
 
 const api = import.meta.env.VITE_API_URL
 
@@ -75,7 +76,8 @@ export default function LoginScreen({ onLogin, onGoToRegister, onOtpRequired }) 
                     studentId,
                     encryptedPassword: encrypted.encryptedPassword,
                     encryptedAesKey: encrypted.encryptedAesKey,
-                    iv: encrypted.iv
+                    iv: encrypted.iv,
+                    deviceId: getDeviceId()
                 })
             })
 

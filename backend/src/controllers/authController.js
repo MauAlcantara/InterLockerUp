@@ -18,7 +18,8 @@ const getPublicKey = (req, res) => {
 }
 
 const login = async (req, res) => {
-    const { studentId, email, encryptedPassword, encryptedAesKey, iv, password, deviceId, otpCode } = req.body;
+    const { studentId, email, encryptedPassword, encryptedAesKey, iv, password, otpCode } = req.body;
+    const deviceId = req.body.deviceId || null;
 
     try {
         let decryptedPassword = password; 
@@ -131,11 +132,13 @@ const login = async (req, res) => {
                 return res.status(401).json({ mensaje: 'Código de verificación inválido o expirado.' });
             }
 
-            // Registrar dispositivo
-            await db.query(
-                'INSERT INTO user_devices (user_id, device_fingerprint) VALUES ($1, $2) ON CONFLICT DO NOTHING',
-                [user.id, deviceId]
-            );
+            // Registrar dispositivo (solo si el cliente envió huella válida)
+            if (deviceId) {
+                await db.query(
+                    'INSERT INTO user_devices (user_id, device_fingerprint) VALUES ($1, $2) ON CONFLICT DO NOTHING',
+                    [user.id, deviceId]
+                );
+            }
         }
 
         // Login exitoso
@@ -171,7 +174,7 @@ const getCarreras = async (req, res) => {
 };
 
 const verifyOTP = async (req, res) => {
-    const { studentId, otp } = req.body;
+    const { studentId, otp, deviceId } = req.body;
 
     try {
         // 1. Buscamos al usuario por su matrícula
@@ -198,6 +201,14 @@ const verifyOTP = async (req, res) => {
             'UPDATE users SET temp_otp = NULL, otp_expires = NULL WHERE id = $1',
             [user.id]
         );
+
+        // 3.5. Registrar el dispositivo verificado para no pedir OTP en futuras sesiones
+        if (deviceId) {
+            await db.query(
+                'INSERT INTO user_devices (user_id, device_fingerprint) VALUES ($1, $2) ON CONFLICT DO NOTHING',
+                [user.id, deviceId]
+            );
+        }
 
         // 4. Generamos el token de acceso real
         const token = jwt.sign(

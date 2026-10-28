@@ -6,6 +6,7 @@ import { Card, CardContent } from "../ui/card"
 import colors from "../theme/colors"
 import fonts from "../theme/typography"
 import toast from "react-hot-toast"
+import { getDeviceId } from "../../lib/device"
 
 const api = import.meta.env.VITE_API_URL
 
@@ -22,7 +23,7 @@ export default function OtpScreen({ studentId, onVerified, onBack }) {
             const response = await fetch(`${api}/api/auth/verify-otp`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ studentId, otp })
+                body: JSON.stringify({ studentId, otp, deviceId: getDeviceId() })
             })
 
             const data = await response.json()
