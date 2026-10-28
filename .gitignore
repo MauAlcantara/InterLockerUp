@@ -6,3 +6,6 @@ interlockerup-admin/@/
 SEGURIDAD_IMPLEMENTADA.txt
 backend/ZAP_2_16_1_unix.sh
 zap-reports/
+backend/src/uploads/
+backend/src/uploads/
+frontend/.env.production
