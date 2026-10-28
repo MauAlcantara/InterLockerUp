@@ -16,7 +16,7 @@ const verificarToken = async (req, res, next) => {
         // (solo aplica a administradores para no afectar la experiencia de estudiantes)
         if (verified.rol === 'admin' && verified.jti) {
             const session = await db.query(
-                'SELECT token_jti FROM user_sessions WHERE user_id = $1',
+                'SELECT token_jti FROM user_sessions WHERE user_id = $1 AND expires_at > NOW()',
                 [verified.id]
             );
 

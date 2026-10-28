@@ -17,16 +17,30 @@ const getPublicKey = (req, res) => {
     res.json({ publicKey });
 }
 
-// Crea (o reemplaza) la sesión activa del usuario y devuelve el jti del token.
-// Al reemplazar, el token anterior queda invalidado: sesión única por usuario.
+// Verifica si el usuario ya tiene una sesión activa (no expirada).
+const haySesionActiva = async (user) => {
+    const result = await db.query(
+        'SELECT 1 FROM user_sessions WHERE user_id = $1 AND expires_at > NOW()',
+        [user.id]
+    );
+    return result.rows.length > 0;
+};
+
+// Crea la sesión activa del usuario y devuelve el jti del token.
+// Solo se puede crear si no hay otra sesión activa (sesión única por usuario).
 const crearSesion = async (user, deviceId) => {
     const jti = crypto.randomUUID();
+    // Los admins tienen sesión corta (por defecto 1 h, configurable por env);
+    // los estudiantes conservan 8 h para no interrumpir su uso normal.
+    const horas = user.rol === 'admin'
+        ? Math.max(1, Number(process.env.ADMIN_SESSION_HOURS) || 1)
+        : 8;
     await db.query(
         'INSERT INTO user_sessions (user_id, token_jti, device_fingerprint, expires_at) '
-        + 'VALUES ($1, $2, $3, NOW() + INTERVAL \'8 hours\') '
+        + 'VALUES ($1, $2, $3, NOW() + ($4 * INTERVAL \'1 hour\')) '
         + 'ON CONFLICT (user_id) DO UPDATE '
         + 'SET token_jti = EXCLUDED.token_jti, device_fingerprint = EXCLUDED.device_fingerprint, created_at = NOW(), expires_at = EXCLUDED.expires_at',
-        [user.id, jti, deviceId || null]
+        [user.id, jti, deviceId || null, horas]
     );
     return jti;
 };
@@ -155,7 +169,14 @@ const login = async (req, res) => {
             }
         }
 
-        // Login exitoso: crear sesión activa (invalida tokens previos del mismo usuario)
+        // Login exitoso
+        // Sesión única para administradores: si ya hay una sesión activa,
+        // se rechaza el nuevo login hasta que se cierre o expire.
+        if (user.rol === 'admin' && await haySesionActiva(user)) {
+            return res.status(409).json({
+                mensaje: 'Esta cuenta ya tiene una sesión activa. Ciérrala primero o espera a que expire.'
+            });
+        }
         const jti = await crearSesion(user, deviceId);
         const token = jwt.sign(
             { id: user.id, rol: user.rol, jti },
@@ -225,7 +246,15 @@ const verifyOTP = async (req, res) => {
             );
         }
 
-        // 4. Generamos el token de acceso real (con sesión única por usuario)
+        // 4. Sesión única para administradores: si ya hay una sesión activa,
+        // se rechaza el nuevo login hasta que se cierre o expire.
+        if (user.rol === 'admin' && await haySesionActiva(user)) {
+            return res.status(409).json({
+                mensaje: 'Esta cuenta ya tiene una sesión activa. Ciérrala primero o espera a que expire.'
+            });
+        }
+
+        // 5. Generamos el token de acceso real
         const jti = await crearSesion(user, deviceId);
         const token = jwt.sign(
             { id: user.id, rol: user.rol, jti },
