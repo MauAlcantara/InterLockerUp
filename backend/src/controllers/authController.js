@@ -17,6 +17,9 @@ const getPublicKey = (req, res) => {
     res.json({ publicKey });
 }
 
+// Toggle para testeo: ADMIN_SINGLE_SESSION=false desactiva el bloqueo 409.
+const SINGLE_SESSION_ENABLED = (process.env.ADMIN_SINGLE_SESSION ?? 'true').toString().toLowerCase() !== 'false';
+
 // Verifica si el usuario ya tiene una sesión activa (no expirada).
 const haySesionActiva = async (user) => {
     const result = await db.query(
@@ -172,7 +175,7 @@ const login = async (req, res) => {
         // Login exitoso
         // Sesión única para administradores: si ya hay una sesión activa,
         // se rechaza el nuevo login hasta que se cierre o expire.
-        if (user.rol === 'admin' && await haySesionActiva(user)) {
+        if (user.rol === 'admin' && SINGLE_SESSION_ENABLED && await haySesionActiva(user)) {
             return res.status(409).json({
                 mensaje: 'Esta cuenta ya tiene una sesión activa. Ciérrala primero o espera a que expire.'
             });
@@ -248,7 +251,7 @@ const verifyOTP = async (req, res) => {
 
         // 4. Sesión única para administradores: si ya hay una sesión activa,
         // se rechaza el nuevo login hasta que se cierre o expire.
-        if (user.rol === 'admin' && await haySesionActiva(user)) {
+        if (user.rol === 'admin' && SINGLE_SESSION_ENABLED && await haySesionActiva(user)) {
             return res.status(409).json({
                 mensaje: 'Esta cuenta ya tiene una sesión activa. Ciérrala primero o espera a que expire.'
             });
