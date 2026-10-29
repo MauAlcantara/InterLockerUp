@@ -6,6 +6,7 @@ import {
   Box,
   AlertTriangle,
   FileText,
+  DatabaseBackup,
   LogOut,
   ChevronLeft,
   ChevronRight,
@@ -20,6 +21,7 @@ const menuItems = [
   { title: "Lockers", href: "/dashboard/lockers", icon: Box },
   { title: "Incidencias", href: "/dashboard/incidencias", icon: AlertTriangle },
   { title: "Auditorias", href: "/dashboard/auditorias", icon: FileText },
+  { title: "Respaldos", href: "/dashboard/respaldos", icon: DatabaseBackup },
 ]
 
 export function Sidebar() {

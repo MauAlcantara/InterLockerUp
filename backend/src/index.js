@@ -45,6 +45,7 @@ const lockerRequestRoutes = require('./routes/lockerRequestRoutes');
 const historyRoutes = require('./routes/historyRoutes');
 const registerUserRoutes = require('./routes/registerUserRoutes');
 const carrerasRoutes = require('./routes/carrerasRoutes');
+const backupsRoutes = require('./routes/backupsRoutes');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
@@ -61,6 +62,7 @@ app.use('/api/qr', qrRoutes);
 app.use('/api/locker-requests', lockerRequestRoutes);
 app.use('/api/history', historyRoutes);
 app.use('/api/carreras', carrerasRoutes);
+app.use('/api/backups', backupsRoutes);
 app.use('/api', registerUserRoutes);
 
 app.use('/uploads', express.static('uploads'));
@@ -100,6 +102,13 @@ Proyecto: InterLockerUp
 
 fs.writeFileSync(path.join(__dirname, '..', '..', 'SEGURIDAD_IMPLEMENTADA.txt'), securityDoc);
 console.log(securityDoc);
+
+// 📦 Programador de respaldos automaticos (lee gestion.backup_schedules)
+const backupScheduler = require('./services/backupScheduler');
+backupScheduler.cargarSchedules().catch((err) => {
+    console.error('⚠️  No se pudo iniciar el programador de respaldos:', err.message);
+    console.error('   Verifica que el script scripts/003_backups.sql haya sido ejecutado.');
+});
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {

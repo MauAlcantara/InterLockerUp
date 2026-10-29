@@ -18,6 +18,9 @@ backend/ZAP_2_16_1_unix.sh
 # Uploads
 backend/src/uploads/
 
+# Respaldos locales
+backend/backups/
+
 # Archivos de notas locales
 SEGURIDAD_IMPLEMENTADA.txt
 

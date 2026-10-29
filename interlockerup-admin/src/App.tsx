@@ -7,6 +7,7 @@ import UsuariosPage from "./pages/UsuariosPage"
 import LockersPage from "./pages/LockersPage"
 import IncidenciasPage from "./pages/IncidenciasPage"
 import AuditoriasPage from "./pages/AuditoriasPage"
+import BackupsPage from "./pages/BackupsPage"
 import AdminProfilePage from "./pages/AdminProfilePage"
 
 const ProtectedRoute = () => {
@@ -48,6 +49,7 @@ export default function App() {
             <Route path="lockers" element={<LockersPage />} />
             <Route path="incidencias" element={<IncidenciasPage />} />
             <Route path="auditorias" element={<AuditoriasPage />} />
+          <Route path="respaldos" element={<BackupsPage />} />
             <Route path="perfil" element={<AdminProfilePage/>}/>
           </Route>
         </Route>
