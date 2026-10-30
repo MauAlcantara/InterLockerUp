@@ -31,14 +31,24 @@ const getNotifications = async (req, res) => {
 ====================================== */
 const markAsRead = async (req, res) => {
     const { id } = req.params;
+    const userId = req.user.id;
     try {
-        await db.query(
+        /* Solo se puede marcar como leída una notificación
+           propia o global (visibles para el usuario). */
+        const result = await db.query(
             `update notifications
             set leida = true
             where id = $1
+            and (user_id = $2 or es_global = true)
             `,
-            [id]
+            [id, userId]
         );
+
+        if (result.rowCount === 0) {
+            return res.status(404).json({
+                mensaje: "notificacion no encontrada o no autorizada"
+            });
+        }
         res.json({
             mensaje: "notificacion marcada como leida"
         });

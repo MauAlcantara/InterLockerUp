@@ -256,13 +256,14 @@ export default function HomeScreen({ onNavigate, onLogout }) {
    * 3. Se actualiza el estado de la campana.
    * 4. Se abre el detalle.
    */
-  const handleNotificationClick = (notification) => {
+  const handleNotificationClick = async (notification) => {
 
     const notificationUpdated = {
       ...notification,
       leida: true
     };
 
+    /* Actualiza el estado local de inmediato (optimistic update) */
     setNotifications(prev =>
       prev.map(n =>
         n.id === notification.id
@@ -272,6 +273,29 @@ export default function HomeScreen({ onNavigate, onLogout }) {
     );
 
     setSelectedNotification(notificationUpdated);
+
+    /* Persiste el estado "leída" en el backend para que
+       sobreviva al cerrar sesión y volver a iniciar. */
+    try {
+      const token = localStorage.getItem("token");
+
+      await fetch(`${api}/api/notifications/${notification.id}/read`, {
+        method: "PUT",
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+    } catch (err) {
+      console.error("Error marcando notificación como leída:", err);
+
+      /* Si falla, revierte el estado local para reflejar la realidad */
+      setNotifications(prev =>
+        prev.map(n =>
+          n.id === notification.id
+            ? { ...n, leida: false }
+            : n
+        )
+      );
+    }
 
   };
 
