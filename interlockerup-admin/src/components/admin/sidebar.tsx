@@ -14,6 +14,7 @@ import {
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { BASE_URL } from "@/api/apiConfig"
+import logo from "@/assets/logo.png"
 
 const menuItems = [
   { title: "Hub Principal", href: "/dashboard", icon: LayoutDashboard },
@@ -58,7 +59,7 @@ export function Sidebar() {
       <div className="flex items-center justify-between p-4 border-b border-sidebar-border">
         <Link to="/dashboard" className="flex items-center gap-3">
           <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-white overflow-hidden shadow-sm">
-            <img src="/logo.png" alt="logo" className="w-full h-full object-contain p-1" />
+            <img src={logo} alt="logo" className="w-full h-full object-contain p-1" />
           </div>
           {!collapsed && (
             <div>

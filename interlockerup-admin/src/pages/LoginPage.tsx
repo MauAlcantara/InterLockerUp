@@ -8,6 +8,7 @@ import { Lock, User, Eye, EyeOff, Mail, Loader2 } from "lucide-react"
 import forge from "node-forge"
 import toast from "react-hot-toast"
 import { BASE_URL } from "@/api/apiConfig"
+import logo from "@/assets/logo.png"
 
 // Función para obtener/generar huella del dispositivo
 const getDeviceId = () => {
@@ -121,7 +122,7 @@ export default function LoginPage() {
       {/* Header */}
       <div className="flex-1 flex flex-col items-center justify-center px-6 pt-12 pb-8">
         <div className="w-20 h-20 bg-white rounded-2xl flex items-center justify-center shadow-xl mb-4 overflow-hidden">
-          <img src="/logo.png" alt="logo" className="w-full h-full object-contain p-2" />
+          <img src={logo} alt="logo" className="w-full h-full object-contain p-2" />
         </div>
         <h1 className="text-3xl font-bold text-white text-center font-sans">
           InterLockerUp
