@@ -404,7 +404,7 @@ export default function BackupsPage() {
                           </TableCell>
                           <TableCell>
                             <Badge variant={b.almacen === 's3' ? 'secondary' : 'outline'}>
-                              {b.almacen === 's3' ? 'S3 (Spaces)' : 'Local'}
+                              {b.almacen === 's3' ? 'Remoto' : 'Local'}
                             </Badge>
                           </TableCell>
                           <TableCell className="text-sm">{formatearBytes(b.size_bytes)}</TableCell>
