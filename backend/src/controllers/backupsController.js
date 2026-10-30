@@ -11,7 +11,7 @@ const scheduler = require('../services/backupScheduler');
 const getBackups = async (req, res) => {
     try {
         const { rows } = await db.query(`
-            SELECT id, filename, tipo, origen, size_bytes, checksum_sha256, estado, notas,
+            SELECT id, filename, tipo, origen, size_bytes, checksum_sha256, estado, notas, almacen,
                    TO_CHAR(creado_el, 'YYYY-MM-DD HH24:MI:SS') AS creado_el
             FROM gestion.backup_jobs
             ORDER BY creado_el DESC
@@ -27,7 +27,7 @@ const getBackups = async (req, res) => {
 const getBackup = async (req, res) => {
     try {
         const { rows } = await db.query(`
-            SELECT id, filename, tipo, origen, size_bytes, checksum_sha256, estado, notas,
+            SELECT id, filename, tipo, origen, size_bytes, checksum_sha256, estado, notas, almacen,
                    TO_CHAR(creado_el, 'YYYY-MM-DD HH24:MI:SS') AS creado_el
             FROM gestion.backup_jobs
             WHERE id = $1
@@ -53,21 +53,40 @@ const createBackup = async (req, res) => {
     }
 };
 
-// Descargar el archivo del respaldo
+// Descargar el archivo del respaldo (desde disco local o desde S3/Spaces)
 const downloadBackup = async (req, res) => {
     try {
-        const { rows } = await db.query('SELECT filename FROM gestion.backup_jobs WHERE id = $1', [req.params.id]);
+        const { rows } = await db.query(
+            'SELECT filename, almacen, s3_key FROM gestion.backup_jobs WHERE id = $1',
+            [req.params.id]
+        );
         if (rows.length === 0) {
             return res.status(404).json({ mensaje: 'Respaldo no encontrado' });
         }
-        const file = path.join(service.getBackupDir(), rows[0].filename);
+        const job = rows[0];
+
+        if (job.almacen === 's3') {
+            if (!job.s3_key) {
+                return res.status(404).json({ mensaje: 'El respaldo no tiene clave S3 registrada' });
+            }
+            const obj = await service.streamS3(job);
+            res.setHeader('Content-Type', 'application/octet-stream');
+            res.setHeader('Content-Disposition', `attachment; filename="${job.filename}"`);
+            if (obj.ContentLength) res.setHeader('Content-Length', obj.ContentLength);
+            obj.Body.pipe(res);
+            return;
+        }
+
+        const file = path.join(service.getBackupDir(), job.filename);
         if (!fs.existsSync(file)) {
             return res.status(404).json({ mensaje: 'El archivo del respaldo no existe en disco' });
         }
-        res.download(file, rows[0].filename);
+        res.download(file, job.filename);
     } catch (error) {
         console.error('Error descargando el respaldo:', error);
-        res.status(500).json({ mensaje: 'Error al descargar el respaldo' });
+        if (!res.headersSent) {
+            res.status(500).json({ mensaje: 'Error al descargar el respaldo' });
+        }
     }
 };
 

@@ -65,6 +65,7 @@ interface Backup {
   checksum_sha256: string | null
   estado: string
   notas: string | null
+  almacen: string
   creado_el: string
 }
 
@@ -148,7 +149,7 @@ export default function BackupsPage() {
     frecuencia: 'diaria',
     hora: '03:00',
     dia_semana: null,
-    dias_retencion: 14,
+    dias_retencion: 90,
     activo: true,
   })
   const [saving, setSaving] = useState(false)
@@ -238,7 +239,7 @@ export default function BackupsPage() {
 
   const abrirDialogNuevo = () => {
     setEditingSchedule(null)
-    setForm({ frecuencia: 'diaria', hora: '03:00', dia_semana: null, dias_retencion: 14, activo: true })
+    setForm({ frecuencia: 'diaria', hora: '03:00', dia_semana: null, dias_retencion: 90, activo: true })
     setDialogOpen(true)
   }
 
@@ -372,6 +373,7 @@ export default function BackupsPage() {
                       <TableHead>#</TableHead>
                       <TableHead>Fecha</TableHead>
                       <TableHead>Origen</TableHead>
+                      <TableHead>Almacén</TableHead>
                       <TableHead>Tamaño</TableHead>
                       <TableHead>Estado</TableHead>
                       <TableHead className="text-right">Acciones</TableHead>
@@ -380,13 +382,13 @@ export default function BackupsPage() {
                   <TableBody>
                     {loading ? (
                       <TableRow>
-                        <TableCell colSpan={6} className="text-center py-8">
+                        <TableCell colSpan={7} className="text-center py-8">
                           <Loader2 className="w-5 h-5 animate-spin mx-auto" />
                         </TableCell>
                       </TableRow>
                     ) : backups.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                        <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                           No hay respaldos registrados. Crea el primero con «Crear respaldo ahora».
                         </TableCell>
                       </TableRow>
@@ -398,6 +400,11 @@ export default function BackupsPage() {
                           <TableCell>
                             <Badge variant="outline" className="capitalize">
                               {b.origen.replace('_', ' ')}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant={b.almacen === 's3' ? 'secondary' : 'outline'}>
+                              {b.almacen === 's3' ? 'S3 (Spaces)' : 'Local'}
                             </Badge>
                           </TableCell>
                           <TableCell className="text-sm">{formatearBytes(b.size_bytes)}</TableCell>
