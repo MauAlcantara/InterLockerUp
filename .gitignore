@@ -42,3 +42,16 @@ backend/generar-token.js
 # Media pesada
 docs/Video de funcionalidad alumnos.mp4
 docs/ILU-SEG.pod
+
+# Documentación / entregables sueltos (no necesarios para el servidor)
+1. Backend: Controlador de Carreras
+2. Backend: Rutas de Carreras
+COMPLEMENTO_DE.md
+\[Done\]
+PrimerEntregableSA.txt
+SegundoEntregableDE_SeguridadImplementada.txt
+REVERSION_TEST.md
+evidencia_DE.txt
+
+# Dump duplicado de BD (el oficial está en scripts/estructura.sql)
+estructura.sql
