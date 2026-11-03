@@ -137,7 +137,7 @@ export default function SensorMonitoringPage() {
     {}
   )
 
-  const lockers = Object.entries(porLocker).filter(([id, g]) =>
+  const lockers = Object.entries(porLocker).filter(([, g]) =>
     g.identificador.toLowerCase().includes(searchTerm.toLowerCase())
   )
 
