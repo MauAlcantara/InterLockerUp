@@ -1,4 +1,4 @@
-import { Link, useLocation, useNavigate } from "react-router-dom" // <-- Agregamos useNavigate
+import { Link, useLocation, useNavigate } from "react-router-dom"
 import { cn } from "@/lib/utils"
 import {
   LayoutDashboard,
@@ -21,42 +21,71 @@ import { Button } from "@/components/ui/button"
 import { BASE_URL } from "@/api/apiConfig"
 import logo from "@/assets/logo.png"
 
-const menuItems = [
-  { title: "Hub Principal", href: "/dashboard", icon: LayoutDashboard },
-  { title: "Monitoreo IoT", href: "/dashboard/monitoring", icon: Radar },
-  { title: "Usuarios", href: "/dashboard/usuarios", icon: Users },
-  { title: "Lockers", href: "/dashboard/lockers", icon: Box },
-  { title: "Incidencias", href: "/dashboard/incidencias", icon: AlertTriangle },
-  { title: "Estado IoT", href: "/dashboard/iot", icon: Wifi },
-  { title: "Estado de Lockers", href: "/dashboard/lockers-estado", icon: Boxes },
-  { title: "Monitoreo de Sensores", href: "/dashboard/sensores", icon: Activity },
-  { title: "Alertas IoT", href: "/dashboard/alertas", icon: AlertTriangle },
-  { title: "Auditorias", href: "/dashboard/auditorias", icon: FileText },
-  { title: "Respaldos", href: "/dashboard/respaldos", icon: DatabaseBackup },
-  { title: "Rotación", href: "/dashboard/rotacion", icon: RefreshCcw },
+interface MenuItem {
+  title: string
+  href: string
+  icon: typeof Users
+}
+
+interface MenuSection {
+  title: string
+  items: MenuItem[]
+}
+
+const menuSections: MenuSection[] = [
+  {
+    title: "Principal",
+    items: [
+      { title: "Hub Principal", href: "/dashboard", icon: LayoutDashboard },
+    ],
+  },
+  {
+    title: "Gestión",
+    items: [
+      { title: "Usuarios", href: "/dashboard/usuarios", icon: Users },
+      { title: "Lockers", href: "/dashboard/lockers", icon: Box },
+      { title: "Incidencias", href: "/dashboard/incidencias", icon: AlertTriangle },
+      { title: "Rotación", href: "/dashboard/rotacion", icon: RefreshCcw },
+    ],
+  },
+  {
+    title: "IoT",
+    items: [
+      { title: "Monitoreo", href: "/dashboard/monitoring", icon: Radar },
+      { title: "Conectividad", href: "/dashboard/iot", icon: Wifi },
+      { title: "Estado de Lockers", href: "/dashboard/lockers-estado", icon: Boxes },
+      { title: "Sensores", href: "/dashboard/sensores", icon: Activity },
+      { title: "Alertas", href: "/dashboard/alertas", icon: AlertTriangle },
+    ],
+  },
+  {
+    title: "Sistema",
+    items: [
+      { title: "Auditorías", href: "/dashboard/auditorias", icon: FileText },
+      { title: "Respaldos", href: "/dashboard/respaldos", icon: DatabaseBackup },
+    ],
+  },
 ]
 
 export function Sidebar() {
   const { pathname } = useLocation()
-  const navigate = useNavigate() // <-- Inicializamos el hook de navegación
+  const navigate = useNavigate()
   const [collapsed, setCollapsed] = useState(false)
 
-  // <-- FUNCIÓN DE LOGOUT -->
   const handleLogout = async () => {
-    const token = localStorage.getItem("admin_token");
-    // 1. Invalidamos la sesión en el servidor (si falla, seguimos igual)
+    const token = localStorage.getItem("admin_token")
     if (token) {
       try {
         await fetch(`${BASE_URL}/api/auth/logout`, {
           method: "POST",
           headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        });
+        })
       } catch (err) {
-        console.error("Error al cerrar sesión en servidor:", err);
+        console.error("Error al cerrar sesión en servidor:", err)
       }
     }
-    localStorage.removeItem("admin_token"); // 2. Destruimos el token local
-    navigate("/"); // 3. Redirigimos al Login
+    localStorage.removeItem("admin_token")
+    navigate("/")
   }
 
   return (
@@ -89,29 +118,42 @@ export function Sidebar() {
         </Button>
       </div>
 
-      {/* Navigation */}
-      <nav className="flex-1 p-4 space-y-2">
-        {menuItems.map((item) => {
-          const isActive = pathname === item.href
-          return (
-            <Link
-              key={item.href}
-              to={item.href}
-              className={cn(
-                "flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-all duration-200",
-                isActive
-                  ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-sm"
-                  : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground"
-              )}
-            >
-              <item.icon className="w-5 h-5 flex-shrink-0" />
-              {!collapsed && <span>{item.title}</span>}
-            </Link>
-          )
-        })}
+      {/* Navigation agrupada por sección */}
+      <nav className="flex-1 p-4 space-y-4 overflow-y-auto">
+        {menuSections.map((section) => (
+          <div key={section.title}>
+            {collapsed ? (
+              <div className="h-px bg-sidebar-border/60 mx-2 mb-2" />
+            ) : (
+              <p className="px-4 pb-1.5 text-[10px] uppercase tracking-widest text-sidebar-foreground/50 font-semibold">
+                {section.title}
+              </p>
+            )}
+            <div className="space-y-1">
+              {section.items.map((item) => {
+                const isActive = pathname === item.href
+                return (
+                  <Link
+                    key={item.href}
+                    to={item.href}
+                    className={cn(
+                      "flex items-center gap-3 px-4 py-2.5 rounded-lg font-medium transition-all duration-200",
+                      isActive
+                        ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-sm"
+                        : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground"
+                    )}
+                  >
+                    <item.icon className="w-5 h-5 flex-shrink-0" />
+                    {!collapsed && <span>{item.title}</span>}
+                  </Link>
+                )
+              })}
+            </div>
+          </div>
+        ))}
       </nav>
 
-      {/* Footer (AQUÍ ESTÁ EL CAMBIO PRINCIPAL) */}
+      {/* Footer */}
       <div className="p-4 border-t border-sidebar-border">
         <button
           onClick={handleLogout}
@@ -120,7 +162,7 @@ export function Sidebar() {
           )}
         >
           <LogOut className="w-5 h-5 flex-shrink-0" />
-          {!collapsed && <span>Cerrar sesion</span>}
+          {!collapsed && <span>Cerrar sesión</span>}
         </button>
       </div>
     </aside>
