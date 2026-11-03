@@ -251,12 +251,84 @@ async function estadoConectividad(req, res) {
     }
 }
 
+// ── Monitoreo de sensores y actuadores (solo admin) ──────────────────────
+
+// Lectura más reciente de cada sensor de cada locker.
+const sensoresMasRecientes = async (req, res) => {
+    try {
+        const result = await db.query(`
+            SELECT DISTINCT ON (s.locker_id, s.sensor)
+                   s.locker_id,
+                   l.identificador,
+                   s.sensor,
+                   s.valor,
+                   s.unidad,
+                   s.created_at
+            FROM iot.sensor_readings s
+            LEFT JOIN gestion.lockers l ON l.id = s.locker_id
+            ORDER BY s.locker_id, s.sensor, s.created_at DESC
+        `);
+        res.json({ lecturas: result.rows });
+    } catch (err) {
+        console.error('Error consultando sensores recientes:', err.message);
+        res.status(500).json({ error: 'No se pudo consultar las lecturas de sensores' });
+    }
+};
+
+// Historial de lecturas de un locker (más recientes primero).
+const historialSensores = async (req, res) => {
+    try {
+        const { locker_id } = req.params;
+        const limit = Math.min(Math.max(parseInt(req.query.limit) || 100, 1), 500);
+        const result = await db.query(
+            `SELECT sensor, valor, unidad, created_at
+             FROM iot.sensor_readings
+             WHERE locker_id = $1
+             ORDER BY created_at DESC, id DESC
+             LIMIT $2`,
+            [locker_id, limit]
+        );
+        res.json({ locker_id: Number(locker_id), lecturas: result.rows });
+    } catch (err) {
+        console.error('Error consultando historial de sensores:', err.message);
+        res.status(500).json({ error: 'No se pudo consultar el historial de sensores' });
+    }
+};
+
+// Comandos de actuadores (desbloqueo/bloqueo) de un locker con resumen.
+const comandosActuadores = async (req, res) => {
+    try {
+        const { locker_id } = req.params;
+        const result = await db.query(
+            `SELECT id, accion, ejecutado, creado_en
+             FROM iot.iot_commands
+             WHERE locker_id = $1
+             ORDER BY creado_en DESC, id DESC
+             LIMIT 50`,
+            [locker_id]
+        );
+        const pendientes = result.rows.filter(c => !c.ejecutado).length;
+        const ejecutados = result.rows.length - pendientes;
+        res.json({
+            locker_id: Number(locker_id),
+            resumen: { pendientes, ejecutados },
+            comandos: result.rows
+        });
+    } catch (err) {
+        console.error('Error consultando comandos de actuadores:', err.message);
+        res.status(500).json({ error: 'No se pudo consultar los comandos de actuadores' });
+    }
+};
+
 module.exports = {
     registrarTelemetria,
     confirmarAccion,
     evaluarOffline,
     resolverAlertasFueraLinea,
     estadoConectividad,
+    sensoresMasRecientes,
+    historialSensores,
+    comandosActuadores,
     SENSORES_VALIDOS,
     OFFLINE_MINUTES
 };
