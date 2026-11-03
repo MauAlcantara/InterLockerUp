@@ -1,4 +1,5 @@
 const db = require('../config/db');
+const rotationService = require('../services/rotationService');
 
 
 const createLockerRequest = async (req, res) => {
@@ -225,11 +226,13 @@ const acceptLockerRequest = async (req, res) => {
         }
         const request = rows[0];
 
-        // 2. Crear el assignment
+        // 2. Crear el assignment (vigencia: fin del cuatrimestre si no se indicó)
+        const vigencia = rotationService.vigenciaPara(new Date());
+        const periodo = rotationService.cuatrimestreActual();
         const assignResult = await db.query(
-            `INSERT INTO assignments (locker_id, fecha_vencimiento, es_compartido)
-             VALUES ($1, $2, $3) RETURNING id`,
-            [request.locker_id, fecha_vencimiento || '2025-12-31', request.shared]
+            `INSERT INTO assignments (locker_id, fecha_vencimiento, es_compartido, cuatrimestre, anio_cuatrimestre)
+             VALUES ($1, $2, $3, $4, $5) RETURNING id`,
+            [request.locker_id, fecha_vencimiento || vigencia, request.shared, periodo.n, periodo.anio]
         );
         const assignmentId = assignResult.rows[0].id;
 

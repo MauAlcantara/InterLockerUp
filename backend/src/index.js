@@ -110,6 +110,39 @@ backupScheduler.cargarSchedules().catch((err) => {
     console.error('   Verifica que el script scripts/003_backups.sql haya sido ejecutado.');
 });
 
+// 🔄 Rotación por cuatrimestre (limpieza diaria 02:00)
+const rotationScheduler = require('./services/rotationScheduler');
+rotationScheduler.programar();
+
+// 🧹 Recuperación de jobs de respaldo huérfanos (quedaron en_proceso tras un reinicio)
+(async () => {
+    try {
+        const { rows } = await db.query(
+            "SELECT id, filename FROM gestion.backup_jobs WHERE estado = 'en_proceso'"
+        );
+        if (rows.length === 0) return;
+        const { verificarIntegridad, getBackupDir } = require('./services/backupService');
+        for (const job of rows) {
+            const archivo = path.join(getBackupDir(), job.filename);
+            if (fs.existsSync(archivo) && (await verificarIntegridad(archivo))) {
+                await db.query(
+                    "UPDATE gestion.backup_jobs SET estado = 'ok' WHERE id = $1",
+                    [job.id]
+                );
+                console.log(`✅ Job de respaldo #${job.id} recuperado como 'ok' (archivo íntegro).`);
+            } else {
+                await db.query(
+                    "UPDATE gestion.backup_jobs SET estado = 'fallo', notas = 'Interrumpido: proceso reiniciado antes de completar' WHERE id = $1",
+                    [job.id]
+                );
+                console.log(`⚠️  Job de respaldo #${job.id} marcado como 'fallo' (sin archivo íntegro).`);
+            }
+        }
+    } catch (err) {
+        console.error('⚠️  No se pudo recuperar jobs de respaldo huérfanos:', err.message);
+    }
+})();
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log('==============================================');

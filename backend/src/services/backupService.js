@@ -157,9 +157,12 @@ async function streamS3(job) {
 // Retencion: borra los respaldos mas antiguos que excedan los dias indicados
 // ------------------------------------------------------------
 async function aplicarRetencion(dias) {
+    // 'ok' antiguos + 'fallo' antiguos + 'en_proceso' huérfanos (más de 1 día, ya no pueden completarse)
     const { rows } = await db.query(
         `SELECT id, filename, almacen, s3_key FROM gestion.backup_jobs
-         WHERE estado = 'ok' AND creado_el < NOW() - ($1 || ' days')::interval
+         WHERE (estado = 'ok' AND creado_el < NOW() - ($1 || ' days')::interval)
+            OR (estado = 'fallo' AND creado_el < NOW() - ($1 || ' days')::interval)
+            OR (estado = 'en_proceso' AND creado_el < NOW() - interval '1 day')
          ORDER BY creado_el ASC`,
         [dias]
     );
@@ -175,9 +178,14 @@ async function aplicarRetencion(dias) {
                 fs.unlinkSync(path.join(getBackupDir(), r.filename));
             }
         } catch (e) {
-            // Si no se pudo borrar el archivo, conservar el registro para reintentar
-            console.error(`⚠️  No se pudo borrar el respaldo #${r.id} (${r.filename}):`, e.message);
-            continue;
+            if (e.code === 'ENOENT' || e.name === 'NoSuchKey') {
+                // El archivo ya no existe (huérfano, ya borrado o no en S3):
+                // se puede eliminar el registro con seguridad.
+            } else {
+                // Si no se pudo borrar el archivo, conservar el registro para reintentar
+                console.error(`⚠️  No se pudo borrar el respaldo #${r.id} (${r.filename}):`, e.message);
+                continue;
+            }
         }
         await db.query('DELETE FROM gestion.backup_jobs WHERE id = $1', [r.id]);
     }
@@ -326,6 +334,22 @@ async function restaurarRespaldo(id) {
     }
 }
 
+// ------------------------------------------------------------
+// Verificar que un archivo en disco es un dump PostgreSQL valido (magic PGDMP)
+// ------------------------------------------------------------
+async function verificarIntegridad(file) {
+    try {
+        if (!fs.existsSync(file) || fs.statSync(file).size < 100) return false;
+        const fd = fs.openSync(file, 'r');
+        const buffer = Buffer.alloc(5);
+        fs.readSync(fd, buffer, 0, 5, 0);
+        fs.closeSync(fd);
+        return buffer.toString('ascii') === 'PGDMP';
+    } catch (e) {
+        return false;
+    }
+}
+
 module.exports = {
     getBackupDir,
     cronExpr,
@@ -336,6 +360,7 @@ module.exports = {
     ejecutarRespaldo,
     verificarRespaldo,
     restaurarRespaldo,
+    verificarIntegridad,
     aplicarRetencion,
     DEFAULT_RETENTION_DAYS,
 };

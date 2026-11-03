@@ -1,4 +1,5 @@
 const db = require('../config/db');
+const rotationService = require('../services/rotationService');
 
 const getAvailableLockers = async (req, res) => {
     try {
@@ -34,10 +35,12 @@ const assignLocker = async (req, res) => {
             throw new Error('El casillero ya no está disponible.');
         }
 
-        // 2. Crear la cabecera de la asignación
+        // 2. Crear la cabecera de la asignación (vigencia: fin del cuatrimestre)
+        const vigencia = rotationService.vigenciaPara(new Date());
+        const periodo = rotationService.cuatrimestreActual();
         const assignmentResult = await client.query(
-            'INSERT INTO assignments (locker_id, fecha_vencimiento, es_compartido) VALUES ($1, $2, $3) RETURNING id',
-            [locker_id, fecha_vencimiento, es_compartido]
+            'INSERT INTO assignments (locker_id, fecha_vencimiento, es_compartido, cuatrimestre, anio_cuatrimestre) VALUES ($1, $2, $3, $4, $5) RETURNING id',
+            [locker_id, fecha_vencimiento || vigencia, es_compartido, periodo.n, periodo.anio]
         );
         const assignmentId = assignmentResult.rows[0].id;
 
@@ -119,13 +122,13 @@ const assignLockerAdmin = async (req, res) => {
             throw new Error('El casillero ya no está disponible.');
         }
 
-        // 3. Crear asignación (Por defecto, le damos 6 meses de vigencia)
-        const fecha_vencimiento = new Date();
-        fecha_vencimiento.setMonth(fecha_vencimiento.getMonth() + 6);
+        // 3. Crear asignación (vigencia hasta fin del cuatrimestre)
+        const fecha_vencimiento = rotationService.vigenciaPara(new Date());
+        const periodo = rotationService.cuatrimestreActual();
 
         const assignmentResult = await client.query(
-            "INSERT INTO assignments (locker_id, fecha_vencimiento, es_compartido, status) VALUES ($1, $2, false, 'activa') RETURNING id",
-            [locker_id, fecha_vencimiento]
+            "INSERT INTO assignments (locker_id, fecha_vencimiento, es_compartido, status, cuatrimestre, anio_cuatrimestre) VALUES ($1, $2, false, 'activa', $3, $4) RETURNING id",
+            [locker_id, fecha_vencimiento, periodo.n, periodo.anio]
         );
         const assignmentId = assignmentResult.rows[0].id;
 
@@ -209,13 +212,13 @@ const approveLockerRequestAdmin = async (req, res) => {
         }
         const solicitud = requestQuery.rows[0];
 
-        // 2. Creamos la asignación oficial (Vigencia de 6 meses)
-        const fecha_vencimiento = new Date();
-        fecha_vencimiento.setMonth(fecha_vencimiento.getMonth() + 6);
+        // 2. Creamos la asignación oficial (vigencia hasta fin del cuatrimestre)
+        const fecha_vencimiento = rotationService.vigenciaPara(new Date());
+        const periodo = rotationService.cuatrimestreActual();
 
         const assignmentResult = await client.query(
-            "INSERT INTO assignments (locker_id, fecha_vencimiento, es_compartido, status) VALUES ($1, $2, $3, 'activa') RETURNING id",
-            [solicitud.locker_id, fecha_vencimiento, solicitud.shared]
+            "INSERT INTO assignments (locker_id, fecha_vencimiento, es_compartido, status, cuatrimestre, anio_cuatrimestre) VALUES ($1, $2, $3, 'activa', $4, $5) RETURNING id",
+            [solicitud.locker_id, fecha_vencimiento, solicitud.shared, periodo.n, periodo.anio]
         );
         const assignmentId = assignmentResult.rows[0].id;
 
