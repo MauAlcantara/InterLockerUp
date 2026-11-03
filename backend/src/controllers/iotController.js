@@ -206,11 +206,57 @@ async function resolverAlertasFueraLinea(client, locker_id) {
     );
 }
 
+// ── GET /api/iot/status ───────────────────────────────────────────────────
+// Estado de conectividad de los dispositivos IoT por locker (solo admin).
+// Un dispositivo se considera "online" si está marcado online y su última
+// señal es reciente (menor a OFFLINE_MINUTES).
+async function estadoConectividad(req, res) {
+    try {
+        const r = await db.query(
+            `SELECT l.id AS locker_id,
+                    l.identificador,
+                    d.device_id,
+                    d.estado,
+                    d.last_seen,
+                    d.battery,
+                    d.firmware
+             FROM gestion.lockers l
+             LEFT JOIN iot.iot_devices d ON d.locker_id = l.id
+             ORDER BY l.identificador`
+        );
+
+        const ahora = Date.now();
+        const dispositivos = r.rows.map(d => {
+            const sinSenalReciente = d.last_seen
+                ? ahora - new Date(d.last_seen).getTime() > OFFLINE_MINUTES * 60000
+                : false;
+            return {
+                ...d,
+                online: d.estado === 'online' && !sinSenalReciente
+            };
+        });
+
+        const resumen = {
+            total_lockers: dispositivos.length,
+            con_dispositivo: dispositivos.filter(d => d.device_id).length,
+            online: dispositivos.filter(d => d.online).length,
+            offline: dispositivos.filter(d => d.device_id && !d.online).length,
+            sin_dispositivo: dispositivos.filter(d => !d.device_id).length
+        };
+
+        res.json({ resumen, dispositivos });
+    } catch (err) {
+        console.error('Error consultando estado IoT:', err.message);
+        res.status(500).json({ error: 'No se pudo consultar el estado IoT' });
+    }
+}
+
 module.exports = {
     registrarTelemetria,
     confirmarAccion,
     evaluarOffline,
     resolverAlertasFueraLinea,
+    estadoConectividad,
     SENSORES_VALIDOS,
     OFFLINE_MINUTES
 };

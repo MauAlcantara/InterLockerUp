@@ -1,9 +1,12 @@
 const express = require('express');
 const { body, param, validationResult } = require('express-validator');
 const { iotAntiReplay } = require('../middlewares/iotAntiReplay');
+const verificarToken = require('../middlewares/authMiddleware');
+const requireAdmin = require('../middlewares/requireAdmin');
 const {
     registrarTelemetria,
     confirmarAccion,
+    estadoConectividad,
     SENSORES_VALIDOS
 } = require('../controllers/iotController');
 
@@ -41,5 +44,9 @@ router.post('/commands/:locker_id/:accion/confirm',
     }
     next();
 }, confirmarAccion);
+
+// ── GET /api/iot/status ───────────────────────────────────────────────────
+// Estado de conectividad de los dispositivos IoT por locker (solo admin).
+router.get('/status', verificarToken, requireAdmin, estadoConectividad);
 
 module.exports = router;
