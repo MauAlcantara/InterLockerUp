@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { MapPin, History, LifeBuoy, Home, Loader2, Lock, LogIn } from "lucide-react";
+import { MapPin, History, LifeBuoy, Home, Loader2, Lock, LogIn, CalendarClock } from "lucide-react";
 import Button from "../ui/button";
 import { cn } from "../../lib/utils";
 import colors from "../theme/colors";
@@ -28,6 +28,7 @@ export function RequestScreen() {
     const [searchValue, setSearchValue] = useState("");
     const [loading, setLoading] = useState(true); 
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [rotation, setRotation] = useState(null);
 
     // Función unificada para sincronizar datos con el servidor
     const initData = async () => {
@@ -38,6 +39,14 @@ export function RequestScreen() {
                 headers: { Authorization: `Bearer ${token}` }
             });
             const activeLocker = await activeLockerRes.json();
+
+            // 1.5. Estado de la rotación cuatrimestral (para el banner informativo)
+            try {
+                const rotRes = await fetch(`${import.meta.env.VITE_API_URL}/api/rotation/status`, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                if (rotRes.ok) setRotation(await rotRes.json());
+            } catch (e) { /* el banner es opcional; si falla, no se muestra */ }
 
             // 2. Traemos el historial de solicitudes
             const response = await getUserRequests();
@@ -236,6 +245,28 @@ export function RequestScreen() {
             </header>
 
             <main className="px-4 -mt-5 space-y-5 flex-1 pb-24">
+                {rotation && (
+                    <div
+                        className="bg-white rounded-2xl p-4 flex items-start gap-3"
+                        style={{ boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}
+                    >
+                        <div
+                            className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+                            style={{ backgroundColor: `${colors.primary}15` }}
+                        >
+                            <CalendarClock size={20} color={colors.primary} />
+                        </div>
+                        <div>
+                            <p className="text-[14px] font-semibold text-foreground m-0">Rotación de casilleros</p>
+                            <p className="text-[12px] text-muted-foreground m-0 mt-1">
+                                Tu periodo actual (C{rotation.periodo.cuatrimestre} {rotation.periodo.anio}) termina el{" "}
+                                {new Date(Date.now() + rotation.diasRestantes * 86400000).toLocaleDateString("es-MX", { day: "2-digit", month: "long", year: "numeric" })}.{" "}
+                                Al inicio del nuevo cuatrimestre tu acceso se renovará automáticamente.
+                            </p>
+                        </div>
+                    </div>
+                )}
+
                 <SharedLocker 
                     isShared={isShared} 
                     setIsShared={setIsShared} 

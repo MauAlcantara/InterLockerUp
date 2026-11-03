@@ -7,6 +7,7 @@ import {
   AlertTriangle,
   FileText,
   DatabaseBackup,
+  RefreshCcw,
   LogOut,
   ChevronLeft,
   ChevronRight,
@@ -23,6 +24,7 @@ const menuItems = [
   { title: "Incidencias", href: "/dashboard/incidencias", icon: AlertTriangle },
   { title: "Auditorias", href: "/dashboard/auditorias", icon: FileText },
   { title: "Respaldos", href: "/dashboard/respaldos", icon: DatabaseBackup },
+  { title: "Rotación", href: "/dashboard/rotacion", icon: RefreshCcw },
 ]
 
 export function Sidebar() {

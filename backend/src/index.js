@@ -46,6 +46,7 @@ const historyRoutes = require('./routes/historyRoutes');
 const registerUserRoutes = require('./routes/registerUserRoutes');
 const carrerasRoutes = require('./routes/carrerasRoutes');
 const backupsRoutes = require('./routes/backupsRoutes');
+const rotationRoutes = require('./routes/rotationRoutes');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
@@ -63,6 +64,7 @@ app.use('/api/locker-requests', lockerRequestRoutes);
 app.use('/api/history', historyRoutes);
 app.use('/api/carreras', carrerasRoutes);
 app.use('/api/backups', backupsRoutes);
+app.use('/api/rotation', rotationRoutes);
 app.use('/api', registerUserRoutes);
 
 app.use('/uploads', express.static('uploads'));
