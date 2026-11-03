@@ -114,13 +114,13 @@ async function jsonFetch(endpoint: string, options: RequestInit = {}): Promise<a
   return data
 }
 
-// Descarga autenticada (fastFetch solo maneja JSON)
+// Descarga autenticada (fastFetch maneja BASE_URL + token)
 async function descargarRespaldo(id: number, filename: string) {
-  const token = localStorage.getItem('admin_token')
-  const res = await fetch(`/api/backups/${id}/download`, {
-    headers: { Authorization: `Bearer ${token}` },
-  })
-  if (!res.ok) throw new Error('No se pudo descargar el respaldo')
+  const res = await fastFetch(`/backups/${id}/download`)
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}))
+    throw new Error(data.mensaje || 'No se pudo descargar el respaldo')
+  }
   const blob = await res.blob()
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
