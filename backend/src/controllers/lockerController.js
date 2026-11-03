@@ -317,4 +317,42 @@ const rejectLockerRequestAdmin = async (req, res) => {
     }
 };
 
-module.exports = { getAvailableLockers, assignLocker, getAllLockersAdmin, changeLockerStatusAdmin, releaseLockerAdmin, assignLockerAdmin, approveLockerRequestAdmin, getPendingRequestsAdmin, rejectLockerRequestAdmin};
+// Estado actual de todos los lockers con usuario asignado y resumen por estado
+const getEstadoLockers = async (req, res) => {
+    try {
+        const result = await db.query(`
+            SELECT l.id,
+                   l.identificador,
+                   l.estado::text AS estado,
+                   l.ubicacion_detallada,
+                   l.floor,
+                   b.name AS edificio,
+                   l.updated_at,
+                   u.nombre_completo AS usuario,
+                   a.fecha_vencimiento
+            FROM lockers l
+            LEFT JOIN buildings b ON l.building_id = b.id
+            LEFT JOIN (
+                SELECT DISTINCT ON (locker_id) locker_id, id, fecha_vencimiento
+                FROM assignments
+                WHERE status = 'activa'
+                ORDER BY locker_id, created_at DESC
+            ) a ON a.locker_id = l.id
+            LEFT JOIN assignment_users au ON au.assignment_id = a.id
+            LEFT JOIN users u ON u.id = au.user_id
+            ORDER BY l.identificador ASC
+        `);
+
+        const resumen = result.rows.reduce((acc, l) => {
+            acc[l.estado] = (acc[l.estado] || 0) + 1;
+            return acc;
+        }, {});
+
+        res.json({ resumen, lockers: result.rows });
+    } catch (error) {
+        console.error('Error al obtener el estado de los lockers:', error);
+        res.status(500).json({ mensaje: 'Error interno al cargar el estado de los lockers.' });
+    }
+};
+
+module.exports = { getAvailableLockers, assignLocker, getAllLockersAdmin, changeLockerStatusAdmin, releaseLockerAdmin, assignLockerAdmin, approveLockerRequestAdmin, getPendingRequestsAdmin, rejectLockerRequestAdmin, getEstadoLockers };

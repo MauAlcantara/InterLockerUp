@@ -7,6 +7,7 @@ import UsuariosPage from "./pages/UsuariosPage"
 import LockersPage from "./pages/LockersPage"
 import IncidenciasPage from "./pages/IncidenciasPage"
 import IotStatusPage from "./pages/IotStatusPage"
+import LockerStatusPage from "./pages/LockerStatusPage"
 import AuditoriasPage from "./pages/AuditoriasPage"
 import BackupsPage from "./pages/BackupsPage"
 import RotacionPage from "./pages/RotacionPage"
@@ -51,6 +52,7 @@ export default function App() {
             <Route path="lockers" element={<LockersPage />} />
             <Route path="incidencias" element={<IncidenciasPage />} />
             <Route path="iot" element={<IotStatusPage />} />
+            <Route path="lockers-estado" element={<LockerStatusPage />} />
             <Route path="auditorias" element={<AuditoriasPage />} />
           <Route path="respaldos" element={<BackupsPage />} />
           <Route path="rotacion" element={<RotacionPage />} />
