@@ -11,7 +11,7 @@ import {
   Wifi,
   Boxes,
   Activity,
-  AlertTriangle,
+  Radar,
   LogOut,
   ChevronLeft,
   ChevronRight,
@@ -23,6 +23,7 @@ import logo from "@/assets/logo.png"
 
 const menuItems = [
   { title: "Hub Principal", href: "/dashboard", icon: LayoutDashboard },
+  { title: "Monitoreo IoT", href: "/dashboard/monitoring", icon: Radar },
   { title: "Usuarios", href: "/dashboard/usuarios", icon: Users },
   { title: "Lockers", href: "/dashboard/lockers", icon: Box },
   { title: "Incidencias", href: "/dashboard/incidencias", icon: AlertTriangle },

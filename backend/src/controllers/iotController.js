@@ -320,6 +320,89 @@ const comandosActuadores = async (req, res) => {
     }
 };
 
+// ── Panel de monitoreo unificado (solo admin) ────────────────────────────
+
+// Combina conectividad, estado del locker, lecturas recientes de sensores y
+// alertas pendientes en una sola vista por locker.
+const panelMonitoreo = async (req, res) => {
+    try {
+        const lockers = await db.query(`
+            SELECT l.id, l.identificador, l.estado::text AS estado, l.ubicacion_detallada, l.floor,
+                   b.name AS edificio,
+                   d.device_id, d.estado AS dispositivo_estado, d.last_seen, d.battery
+            FROM gestion.lockers l
+            LEFT JOIN gestion.buildings b ON l.building_id = b.id
+            LEFT JOIN iot.iot_devices d ON d.locker_id = l.id
+            ORDER BY l.identificador ASC
+        `);
+
+        const sensores = await db.query(`
+            SELECT DISTINCT ON (s.locker_id, s.sensor)
+                   s.locker_id, s.sensor, s.valor, s.unidad, s.created_at
+            FROM iot.sensor_readings s
+            ORDER BY s.locker_id, s.sensor, s.created_at DESC
+        `);
+
+        const alertas = await db.query(`
+            SELECT locker_id,
+                   COUNT(*) FILTER (WHERE resuelta = FALSE) AS pendientes,
+                   COUNT(*) FILTER (WHERE resuelta = FALSE AND severidad = 'critical') AS criticas
+            FROM iot.iot_alerts
+            GROUP BY locker_id
+        `);
+
+        const sensoresPorLocker = {};
+        for (const s of sensores.rows) {
+            (sensoresPorLocker[s.locker_id] ??= {})[s.sensor] = s;
+        }
+        const alertasPorLocker = {};
+        for (const a of alertas.rows) {
+            alertasPorLocker[a.locker_id] = { pendientes: Number(a.pendientes), criticas: Number(a.criticas) };
+        }
+
+        const ahora = Date.now();
+        const limiteOffline = OFFLINE_MINUTES * 60 * 1000;
+
+        const filas = lockers.rows.map(l => {
+            const online = l.dispositivo_estado === 'online' &&
+                l.last_seen !== null && (ahora - new Date(l.last_seen).getTime()) <= limiteOffline;
+            return {
+                id: l.id,
+                identificador: l.identificador,
+                estado: l.estado,
+                edificio: l.edificio,
+                piso: l.floor,
+                ubicacion: l.ubicacion_detallada,
+                device_id: l.device_id,
+                online,
+                last_seen: l.last_seen,
+                battery: l.battery,
+                sensores: sensoresPorLocker[l.id] ?? {},
+                alertas: alertasPorLocker[l.id] ?? { pendientes: 0, criticas: 0 }
+            };
+        });
+
+        const online = filas.filter(f => f.online).length;
+        const sinDispositivo = filas.filter(f => !f.device_id).length;
+        const offline = filas.length - online - sinDispositivo;
+
+        res.json({
+            resumen: {
+                total_lockers: filas.length,
+                online,
+                offline,
+                sin_dispositivo: sinDispositivo,
+                alertas_pendientes: filas.reduce((acc, f) => acc + f.alertas.pendientes, 0),
+                alertas_criticas: filas.reduce((acc, f) => acc + f.alertas.criticas, 0)
+            },
+            lockers: filas
+        });
+    } catch (err) {
+        console.error('Error consultando panel de monitoreo:', err.message);
+        res.status(500).json({ error: 'No se pudo consultar el panel de monitoreo' });
+    }
+};
+
 // ── Alertas IoT (solo admin) ──────────────────────────────────────────────
 
 // Lista de alertas con filtro por estado de resolución y resumen.
@@ -388,6 +471,7 @@ module.exports = {
     comandosActuadores,
     alertasIoT,
     resolverAlerta,
+    panelMonitoreo,
     SENSORES_VALIDOS,
     OFFLINE_MINUTES
 };

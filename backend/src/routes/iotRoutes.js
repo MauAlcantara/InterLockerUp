@@ -12,6 +12,7 @@ const {
     comandosActuadores,
     alertasIoT,
     resolverAlerta,
+    panelMonitoreo,
     SENSORES_VALIDOS
 } = require('../controllers/iotController');
 
@@ -53,6 +54,10 @@ router.post('/commands/:locker_id/:accion/confirm',
 // ── GET /api/iot/status ───────────────────────────────────────────────────
 // Estado de conectividad de los dispositivos IoT por locker (solo admin).
 router.get('/status', verificarToken, requireAdmin, estadoConectividad);
+
+// ── GET /api/iot/monitoring ───────────────────────────────────────────────
+// Panel unificado: conectividad, estado del locker, sensores y alertas (solo admin).
+router.get('/monitoring', verificarToken, requireAdmin, panelMonitoreo);
 
 // ── GET /api/iot/sensors/latest ───────────────────────────────────────────
 // Lectura más reciente de cada sensor de cada locker (solo admin).
