@@ -21,6 +21,9 @@ backend/src/uploads/
 # Respaldos locales
 backend/backups/
 
+# Dumps de respaldo (pg_dump) descargados a docs/
+docs/*.dump
+
 # Archivos de notas locales
 SEGURIDAD_IMPLEMENTADA.txt
 
