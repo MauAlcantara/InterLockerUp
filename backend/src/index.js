@@ -47,6 +47,7 @@ const registerUserRoutes = require('./routes/registerUserRoutes');
 const carrerasRoutes = require('./routes/carrerasRoutes');
 const backupsRoutes = require('./routes/backupsRoutes');
 const rotationRoutes = require('./routes/rotationRoutes');
+const iotRoutes = require('./routes/iotRoutes');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
@@ -65,7 +66,15 @@ app.use('/api/history', historyRoutes);
 app.use('/api/carreras', carrerasRoutes);
 app.use('/api/backups', backupsRoutes);
 app.use('/api/rotation', rotationRoutes);
+app.use('/api/iot', iotRoutes);
 app.use('/api', registerUserRoutes);
+
+// ⏱️ Detección periódica de dispositivos IoT fuera de línea (cada 5 min)
+const cron = require('node-cron');
+const { evaluarOffline } = require('./controllers/iotController');
+cron.schedule('*/5 * * * *', () => {
+    evaluarOffline().catch(err => console.error('❌ Cron IoT offline:', err.message));
+});
 
 app.use('/uploads', express.static('uploads'));
 
