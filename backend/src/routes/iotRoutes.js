@@ -10,6 +10,8 @@ const {
     sensoresMasRecientes,
     historialSensores,
     comandosActuadores,
+    alertasIoT,
+    resolverAlerta,
     SENSORES_VALIDOS
 } = require('../controllers/iotController');
 
@@ -83,5 +85,24 @@ router.get('/commands/:locker_id',
     }
     next();
 }, comandosActuadores);
+
+// ── GET /api/iot/alerts ────────────────────────────────────────────────────
+// Alertas generadas por umbrales de sensores o pérdida de conexión (solo admin).
+// Filtro opcional: ?resueltas=false (pendientes, por defecto) | true | all
+router.get('/alerts', verificarToken, requireAdmin, alertasIoT);
+
+// ── POST /api/iot/alerts/:id/resolve ───────────────────────────────────────
+// Marca una alerta como resuelta (solo admin).
+router.post('/alerts/:id/resolve',
+    verificarToken,
+    requireAdmin,
+    param('id').isInt({ min: 1 }),
+    (req, res, next) => {
+    const errores = validationResult(req);
+    if (!errores.isEmpty()) {
+        return res.status(400).json({ error: errores.array().map(e => e.msg).join('; ') });
+    }
+    next();
+}, resolverAlerta);
 
 module.exports = router;

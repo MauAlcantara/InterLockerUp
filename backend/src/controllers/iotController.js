@@ -320,6 +320,63 @@ const comandosActuadores = async (req, res) => {
     }
 };
 
+// ── Alertas IoT (solo admin) ──────────────────────────────────────────────
+
+// Lista de alertas con filtro por estado de resolución y resumen.
+const alertasIoT = async (req, res) => {
+    try {
+        // resueltas: 'false' (pendientes, por defecto), 'true' o 'all'
+        const filtro = req.query.resueltas;
+        const soloPendientes = filtro === 'false';
+        const soloResueltas = filtro === 'true';
+
+        const result = await db.query(
+            `SELECT a.id, a.locker_id, l.identificador, a.tipo, a.severidad,
+                    a.mensaje, a.resuelta, a.created_at
+             FROM iot.iot_alerts a
+             LEFT JOIN gestion.lockers l ON l.id = a.locker_id
+             WHERE ($1::boolean IS NULL OR a.resuelta = $1::boolean)
+             ORDER BY a.created_at DESC, a.id DESC
+             LIMIT 200`,
+            [soloPendientes ? false : soloResueltas ? true : null]
+        );
+
+        const resueltas = result.rows.filter(a => a.resuelta).length;
+        const criticas = result.rows.filter(a => a.severidad === 'critical').length;
+        res.json({
+            resumen: {
+                total: result.rows.length,
+                resueltas,
+                pendientes: result.rows.length - resueltas,
+                criticas
+            },
+            alertas: result.rows
+        });
+    } catch (err) {
+        console.error('Error consultando alertas IoT:', err.message);
+        res.status(500).json({ error: 'No se pudo consultar las alertas IoT' });
+    }
+};
+
+// Marca una alerta como resuelta.
+const resolverAlerta = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const result = await db.query(
+            `UPDATE iot.iot_alerts SET resuelta = TRUE
+             WHERE id = $1 AND resuelta = FALSE`,
+            [id]
+        );
+        if (result.rowCount === 0) {
+            return res.status(404).json({ error: 'Alerta no encontrada o ya resuelta' });
+        }
+        res.json({ id: Number(id), resuelta: true });
+    } catch (err) {
+        console.error('Error resolviendo alerta:', err.message);
+        res.status(500).json({ error: 'No se pudo resolver la alerta' });
+    }
+};
+
 module.exports = {
     registrarTelemetria,
     confirmarAccion,
@@ -329,6 +386,8 @@ module.exports = {
     sensoresMasRecientes,
     historialSensores,
     comandosActuadores,
+    alertasIoT,
+    resolverAlerta,
     SENSORES_VALIDOS,
     OFFLINE_MINUTES
 };
