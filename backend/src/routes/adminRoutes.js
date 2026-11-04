@@ -31,6 +31,17 @@ router.get('/rotation/dashboard', verificarToken, async (req, res) => {
     }
 });
 
+// Historial de limpiezas/rotaciones para el panel de administrador
+router.get('/rotation/runs', verificarToken, async (req, res) => {
+    try {
+        const runs = await rotationService.getHistorialRotacion();
+        res.json(runs);
+    } catch (error) {
+        console.error('Error al obtener historial de rotación:', error.message);
+        res.status(500).json({ mensaje: 'Error interno al obtener el historial de rotación.' });
+    }
+});
+
 // Disparo manual de la notificación anticipada (idempotente por periodo)
 router.post('/rotation/notify', verificarToken, async (req, res) => {
     try {
@@ -44,8 +55,17 @@ router.post('/rotation/notify', verificarToken, async (req, res) => {
 
 router.post('/rotation/close-period', verificarToken, async (req, res) => {
     try {
-        const resultado = await rotationService.cerrarPeriodo();
-        res.json({ success: true, ...resultado });
+        const estado = await rotationService.getEstadoRotacion();
+        if (!estado) {
+            res.status(400).json({ mensaje: 'No hay periodo registrado para cerrar.' });
+            return;
+        }
+        const resultado = await rotationService.cerrarPeriodo({ n: estado.cuatrimestre, anio: estado.anio });
+        res.json({
+            success: true,
+            mensaje: `Periodo ${estado.anio}-${estado.cuatrimestre} cerrado.`,
+            ...resultado,
+        });
     } catch (error) {
         console.error('Error al cerrar el periodo:', error.message);
         res.status(500).json({ mensaje: 'Error interno al cerrar el periodo.' });

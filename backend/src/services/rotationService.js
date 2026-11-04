@@ -362,14 +362,24 @@ async function notificarRotacion() {
     const diasRestantes = Math.floor((new Date(fin) - Date.now()) / 86400000);
 
     if (diasRestantes > RETENTION.noticeDays) {
-        return { enviada: false, motivo: 'fuera de la ventana de anticipación', diasRestantes };
+        return {
+            enviada: false,
+            motivo: 'fuera_de_ventana',
+            diasRestantes,
+            mensaje: `No se envió: faltan ${diasRestantes} días para el cierre (ventana: ${RETENTION.noticeDays} días).`,
+        };
     }
 
     const estado = await getEstadoRotacion();
     if (estado && estado.notificado_el
         && estado.notificado_cuatrimestre === actual.n
         && estado.notificado_anio === actual.anio) {
-        return { enviada: false, motivo: 'ya notificada en este periodo', diasRestantes };
+        return {
+            enviada: false,
+            motivo: 'ya_notificada',
+            diasRestantes,
+            mensaje: 'La notificación ya fue enviada en este periodo.',
+        };
     }
 
     // Usuarios con casillero activo en el periodo vigente
@@ -438,6 +448,7 @@ async function notificarRotacion() {
         afectados: afectados.length,
         emailsEnviados: enviados,
         emailsFallidos: errores,
+        mensaje: `Notificación enviada a ${afectados.length} estudiante(s) (${enviados} emails, ${errores} fallidos).`,
     };
 }
 
@@ -449,45 +460,88 @@ async function notificarRotacion() {
 async function getDashboardRotacion() {
     const actual = cuatrimestreActual();
     const fin = finDeCuatrimestre(actual.n, actual.anio);
+    const inicio = `${actual.anio}-${actual.n === 1 ? '01' : '05'}-01 00:00:00`;
     const diasRestantes = Math.max(0, Math.floor((new Date(fin) - Date.now()) / 86400000));
+    const diasTotalPeriodo = Math.max(1, Math.floor((new Date(fin) - new Date(inicio)) / 86400000));
+    const proximoPeriodo = actual.n === 1
+        ? { cuatrimestre: 2, anio: actual.anio }
+        : { cuatrimestre: 1, anio: actual.anio + 1 };
 
-    const [estado, asig, casilleros, solPendientes, solResueltas, usuarios, ultimaRun, ultimoCierre] = await Promise.all([
+    const [estado, casilleros, solPendientes, solResueltas, ultimaRun, ultimoCierre] = await Promise.all([
         getEstadoRotacion(),
-        db.query(`SELECT COUNT(*) AS total FROM gestion.assignments WHERE status IN ${ACTIVOS}`),
         db.query(`SELECT estado, COUNT(*) AS total FROM gestion.lockers GROUP BY estado`),
         db.query(`SELECT COUNT(*) AS total FROM gestion.locker_requests WHERE status = 'pending'`),
         db.query(`SELECT COUNT(*) AS total FROM gestion.locker_requests WHERE status IN ('rejected', 'cancelled', 'accepted')`),
-        db.query(`SELECT COUNT(DISTINCT au.user_id) AS total
-                  FROM gestion.assignments a
-                  JOIN gestion.assignment_users au ON au.assignment_id = a.id
-                  WHERE a.status IN ${ACTIVOS}`),
         db.query(`SELECT * FROM gestion.rotation_runs ORDER BY id DESC LIMIT 1`),
         db.query(`SELECT * FROM gestion.rotation_runs WHERE periodo_cerrado IS NOT NULL ORDER BY id DESC LIMIT 1`),
     ]);
 
-    return {
-        periodoVigente: {
-            cuatrimestre: actual.n,
-            anio: actual.anio,
-            cierra_el: fin,
-            diasRestantes,
-        },
-        asignacionesActivas: asig.rows[0].total,
-        usuariosConCasillero: usuarios.rows[0].total,
-        casilleros: Object.fromEntries(casilleros.rows.map(r => [r.estado, r.total])),
-        solicitudesPendientes: solPendientes.rows[0].total,
-        solicitudesResueltas: solResueltas.rows[0].total,
-        notificacionAnticipada: estado && estado.notificado_el
-            ? {
-                enviada: true,
-                enviada_el: estado.notificado_el,
-                periodo: `${estado.notificado_anio}-${estado.notificado_cuatrimestre}`,
-            }
-            : { enviada: false },
-        ultimaLimpieza: ultimaRun.rows[0] || null,
-        ultimoPeriodoCerrado: ultimoCierre.rows[0] || null,
-        estadoRotacion: estado,
+    const totalLockers = casilleros.rows.reduce((s, r) => s + Number(r.total), 0);
+    const disponibles = Number(casilleros.rows.find(r => r.estado === 'disponible')?.total ?? 0);
+
+    const r = ultimaRun.rows[0];
+    const ultimaLimpieza = r ? {
+        ejecutadoEl: r.ejecutado_el,
+        asignacionesFinalizadas: r.asignaciones_finalizadas,
+        solicitudesRechazadas: r.solicitudes_rechazadas,
+        tokensEliminados: r.tokens_eliminados,
+        sesionesEliminados: r.sesiones_eliminadas,
+        iotComandosEliminados: r.iot_comandos_eliminados,
+        notificacionesEliminados: r.notificaciones_eliminadas,
+        logsEliminados: r.logs_eliminados,
+        solicitudesObsoletasEliminados: r.solicitudes_obsoletas_eliminadas,
+        securityLogsEliminados: r.security_logs_eliminados,
+        incidentesEliminados: r.incidentes_eliminados,
+        dispositivosEliminados: r.dispositivos_eliminados,
+    } : {
+        ejecutadoEl: null,
+        asignacionesFinalizadas: 0,
+        solicitudesRechazadas: 0,
+        tokensEliminados: 0,
+        sesionesEliminados: 0,
+        iotComandosEliminados: 0,
+        notificacionesEliminados: 0,
+        logsEliminados: 0,
+        solicitudesObsoletasEliminados: 0,
+        securityLogsEliminados: 0,
+        incidentesEliminados: 0,
+        dispositivosEliminados: 0,
     };
+
+    let ultimoPeriodoCerrado = null;
+    if (ultimoCierre.rows[0] && ultimoCierre.rows[0].periodo_cerrado) {
+        const [anio, n] = String(ultimoCierre.rows[0].periodo_cerrado).split('-').map(Number);
+        ultimoPeriodoCerrado = {
+            cuatrimestre: n,
+            anio,
+            cerradoEl: ultimoCierre.rows[0].ejecutado_el,
+        };
+    }
+
+    return {
+        periodoVigente: { cuatrimestre: actual.n, anio: actual.anio, cierra_el: fin },
+        diasRestantes,
+        diasTotalPeriodo,
+        proximoPeriodo,
+        lockers: { activos: totalLockers - disponibles, disponibles, total: totalLockers },
+        solicitudes: { pendientes: solPendientes.rows[0].total, resueltas: solResueltas.rows[0].total },
+        notificacion: estado && estado.notificado_el
+            ? { enviada: true, enviadaEl: estado.notificado_el }
+            : { enviada: false, enviadaEl: null },
+        ultimaLimpieza,
+        ultimoPeriodoCerrado,
+    };
+}
+
+/**
+ * Historial de limpiezas/cierres para el panel de administrador
+ */
+async function getHistorialRotacion(limit = 50) {
+    const { rows } = await db.query(
+        `SELECT * FROM gestion.rotation_runs ORDER BY id DESC LIMIT $1`,
+        [limit]
+    );
+    return rows;
 }
 
 /**
@@ -522,5 +576,6 @@ module.exports = {
     limpiezaDiaria,
     notificarRotacion,
     getDashboardRotacion,
+    getHistorialRotacion,
     RETENTION,
 };
