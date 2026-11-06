@@ -65,7 +65,7 @@ export function HistoryScreen() {
   }, [])
 
   useEffect(() => {
-    cargarHistorial()
+    void cargarHistorial()
   }, [cargarHistorial])
 
   const filteredHistory = filter === "all" ? history : history.filter(item => item.type === filter)

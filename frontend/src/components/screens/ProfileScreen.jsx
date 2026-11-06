@@ -25,7 +25,7 @@ export function ProfileScreen({ onLogout }) {
   };
 
   useEffect(() => {
-    fetchUserData();
+    void fetchUserData();
   }, []);
 
   const fetchUserData = async () => {
@@ -134,7 +134,7 @@ export function ProfileScreen({ onLogout }) {
                       body: JSON.stringify(formData)
                     });
                     setIsEditing(false);
-                    fetchUserData();
+                    await fetchUserData();
                     toast.success("Perfil actualizado");
                   }} 
                   style={{ background: colors.primary, color: "white", height: "48px", borderRadius: "12px", fontWeight: 700, fontFamily: "'Montserrat', sans-serif" }}

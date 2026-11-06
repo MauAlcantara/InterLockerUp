@@ -71,13 +71,13 @@ export default function AccessScreen({ onNavigate }) {
     }
   }, [])
 
-  useEffect(() => { fetchNewToken() }, [fetchNewToken])
+  useEffect(() => { void fetchNewToken() }, [fetchNewToken])
 
   useEffect(() => {
     if (!hasAssignment || error || isRefreshing) return;
     const timer = setInterval(() => {
       setCountdown((prev) => {
-        if (prev <= 1) { fetchNewToken(); return 60 }
+        if (prev <= 1) { void fetchNewToken(); return 60 }
         return prev - 1
       })
     }, 1000)

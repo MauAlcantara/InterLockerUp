@@ -94,8 +94,8 @@ export default function IotMonitoringPage() {
   }, [])
 
   useEffect(() => {
-    fetchMonitoreo()
-    const interval = setInterval(fetchMonitoreo, 30000)
+    void fetchMonitoreo()
+    const interval = setInterval(() => { void fetchMonitoreo() }, 30000)
     return () => clearInterval(interval)
   }, [fetchMonitoreo])
 

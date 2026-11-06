@@ -80,9 +80,9 @@ export default function IotStatusPage() {
   }, [])
 
   useEffect(() => {
-    fetchStatus()
+    void fetchStatus()
     // Refresco automático cada 30 segundos
-    const interval = setInterval(fetchStatus, 30000)
+    const interval = setInterval(() => { void fetchStatus() }, 30000)
     return () => clearInterval(interval)
   }, [fetchStatus])
 

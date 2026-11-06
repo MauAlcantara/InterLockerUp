@@ -85,7 +85,7 @@ export function Sidebar() {
       }
     }
     localStorage.removeItem("admin_token")
-    navigate("/")
+    void navigate("/")
   }
 
   return (

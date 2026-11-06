@@ -57,7 +57,7 @@ export function Header({ title, description }: HeaderProps) {
     }
 
     // Ejecutar al inicio
-    fetchNotificaciones()
+    void fetchNotificaciones()
 
     // 3. Patrón de Polling: Preguntar al backend cada 30 segundos (30000 ms)
     const interval = setInterval(fetchNotificaciones, 30000)

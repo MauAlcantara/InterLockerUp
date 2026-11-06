@@ -82,8 +82,8 @@ export default function AlertasPage() {
   }, [filtro])
 
   useEffect(() => {
-    fetchAlertas()
-    const interval = setInterval(fetchAlertas, 30000)
+    void fetchAlertas()
+    const interval = setInterval(() => { void fetchAlertas() }, 30000)
     return () => clearInterval(interval)
   }, [fetchAlertas])
 

@@ -118,7 +118,7 @@ export default function RotacionPage() {
   }, [])
 
   useEffect(() => {
-    cargarDatos()
+    void cargarDatos()
   }, [cargarDatos])
 
   const enviarNotificacion = async () => {

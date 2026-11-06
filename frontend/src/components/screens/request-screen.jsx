@@ -89,7 +89,7 @@ export function RequestScreen() {
     };
 
     useEffect(() => {
-        initData();
+        void initData();
     }, []);
 
     const handleRequest = async () => {

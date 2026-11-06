@@ -8,7 +8,7 @@ const db = require('../config/db');
 // Directorio donde se guardan los dumps locales (configurable por variable de entorno)
 const BACKUP_DIR = process.env.BACKUP_DIR || path.join(__dirname, '..', '..', 'backups');
 // Retencion por defecto si ningun programa la especifica (3 meses)
-const DEFAULT_RETENTION_DAYS = parseInt(process.env.BACKUP_RETENTION_DAYS || '90', 10);
+const DEFAULT_RETENTION_DAYS = Number.parseInt(process.env.BACKUP_RETENTION_DAYS || '90', 10);
 
 let isRunning = false;
 

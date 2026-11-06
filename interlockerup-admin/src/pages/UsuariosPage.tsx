@@ -108,7 +108,7 @@ export default function UsuariosPage() {
   }
 
   useEffect(() => {
-    fetchUsers();
+    void fetchUsers();
   }, [])
 
   const handleCreateUser = async () => {

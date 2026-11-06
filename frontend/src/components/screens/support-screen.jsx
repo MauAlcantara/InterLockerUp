@@ -32,7 +32,7 @@ const categories = [
 ]
 
 export default function SupportScreen() {
-  const [selectedCategory, setSelectedCategory] = useState(null)
+  const [selectedCategory, setSelectedCategory] = useState("")
   const [lockerNumber, setLockerNumber] = useState("")
   const [lockerId, setLockerId] = useState(null)
   const [description, setDescription] = useState("")
@@ -71,7 +71,7 @@ export default function SupportScreen() {
     }
   }, []);
 
-  useEffect(() => { cargarLockerActual(); }, [cargarLockerActual]);
+  useEffect(() => { void cargarLockerActual(); }, [cargarLockerActual]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();

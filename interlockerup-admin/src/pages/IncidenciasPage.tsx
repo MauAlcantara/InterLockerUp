@@ -125,7 +125,7 @@ export default function IncidenciasPage() {
   }
 
   useEffect(() => {
-    fetchIncidents();
+    void fetchIncidents();
   }, [])
 
   // --- 2. CAMBIAR ESTADO DESDE EL MENÚ RÁPIDO ---
@@ -137,7 +137,7 @@ export default function IncidenciasPage() {
         body: JSON.stringify({ estado: status })
       });
       if(res.ok) {
-        fetchIncidents(); // Recargamos la tabla
+        void fetchIncidents(); // Recargamos la tabla
       }
     } catch (e) { console.error(e) }
   }

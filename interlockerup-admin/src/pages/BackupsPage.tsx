@@ -173,7 +173,7 @@ export default function BackupsPage() {
   }, [])
 
   useEffect(() => {
-    cargarDatos()
+    void cargarDatos()
   }, [cargarDatos])
 
   // ------------------------------------------------------------

@@ -30,10 +30,10 @@ import { cn } from "@/lib/utils"
 
 // Acciones estáticas del sistema que no tienen tabla en BD
 const systemLogsStatic = [
-  { id: 1, action: "usuario_creado", description: "Nuevo usuario registrado: Juan Garcia", performedBy: "Admin UTEQ", date: "2026-02-03 10:00:00", ip: "192.168.1.100" },
-  { id: 2, action: "usuario_desactivado", description: "Usuario desactivado: Pedro Sanchez", performedBy: "Admin UTEQ", date: "2026-02-02 15:30:00", ip: "192.168.1.100" },
-  { id: 3, action: "locker_bloqueado", description: "Locker B-202 bloqueado por mantenimiento", performedBy: "Admin UTEQ", date: "2026-02-01 11:00:00", ip: "192.168.1.100" },
-  { id: 4, action: "config_modificada", description: "Configuracion del sistema actualizada", performedBy: "Admin UTEQ", date: "2026-01-30 10:00:00", ip: "192.168.1.100" },
+  { id: 1, action: "usuario_creado", description: "Nuevo usuario registrado: Juan Garcia", performedBy: "Admin UTEQ", date: "2026-02-03 10:00:00", ip: "localhost" },
+  { id: 2, action: "usuario_desactivado", description: "Usuario desactivado: Pedro Sanchez", performedBy: "Admin UTEQ", date: "2026-02-02 15:30:00", ip: "localhost" },
+  { id: 3, action: "locker_bloqueado", description: "Locker B-202 bloqueado por mantenimiento", performedBy: "Admin UTEQ", date: "2026-02-01 11:00:00", ip: "localhost" },
+  { id: 4, action: "config_modificada", description: "Configuracion del sistema actualizada", performedBy: "Admin UTEQ", date: "2026-01-30 10:00:00", ip: "localhost" },
 ]
 
 const actionIcons = {
@@ -98,7 +98,7 @@ export default function AuditoriasPage() {
         setIsLoading(false);
       }
     };
-    fetchAudits();
+    void fetchAudits();
   }, []);
 
   const totalAccesos = accessLogs.length

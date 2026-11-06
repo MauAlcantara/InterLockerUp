@@ -1,0 +1,44 @@
+name: SonarQube Analysis
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  sonarqube:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # necesario para el análisis incremental
+
+      # Sube los análisis previos para comparar (new code)
+      - name: Cache previous analysis
+        uses: actions/cache@v4
+        with:
+          path: .sonar
+          key: sonar-${{ github.ref }}
+          restore-keys: |
+            sonar-${{ github.ref }}
+            sonar-main
+
+      - name: SonarQube Scan
+        uses: sonarsource/sonarqube-scan-action@v3
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+
+      # Descarga el informe de bugs
+      - name: Download bugs report
+        uses: sonarsource/sonarqube-dbtm@v3
+        if: always()
+        with:
+          path: sonar-bugs.json
+
+      - name: Upload bugs report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: sonar-bugs
+          path: sonar-bugs.json

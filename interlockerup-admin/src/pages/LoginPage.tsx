@@ -99,7 +99,7 @@ export default function LoginPage() {
         toast.success("¡Bienvenido al sistema!")
 
         setTimeout(() => {
-          navigate("/dashboard");
+          void navigate("/dashboard");
           setIsLoading(false);
         }, 1000);
 

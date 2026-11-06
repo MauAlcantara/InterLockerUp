@@ -14,7 +14,7 @@ function ahoraMexico() {
         }).formatToParts(new Date()).map(x => [x.type, x.value])
     )
     return {
-        hora: parseInt(p.hour, 10),
+        hora: Number.parseInt(p.hour, 10),
         diaSemana: DIAS[p.weekday],
         fechaISO: `${p.year}-${p.month}-${p.day}`,
     }
@@ -30,7 +30,7 @@ async function neuralSecurity(req, res, next) {
              WHERE user_id = $1 AND created_at >= NOW() - INTERVAL '60 seconds'`,
             [userId]
         )
-        const peticionesRecientes = parseInt(rows[0]?.total ?? 0, 10)
+        const peticionesRecientes = Number.parseInt(rows[0]?.total ?? 0, 10)
 
         const { hora, diaSemana, fechaISO } = ahoraMexico()
 

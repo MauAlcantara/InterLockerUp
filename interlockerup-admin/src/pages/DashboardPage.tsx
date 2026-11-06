@@ -46,7 +46,7 @@ export default function DashboardPage() {
         setIsLoading(false)
       }
     }
-    fetchStats()
+    void fetchStats()
   }, [])
 
   // ── Formateo de datos de stats ───────────────────────────────────────────────

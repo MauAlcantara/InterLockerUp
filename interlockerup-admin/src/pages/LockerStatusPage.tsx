@@ -80,8 +80,8 @@ export default function LockerStatusPage() {
   }, [])
 
   useEffect(() => {
-    fetchEstado()
-    const interval = setInterval(fetchEstado, 30000)
+    void fetchEstado()
+    const interval = setInterval(() => { void fetchEstado() }, 30000)
     return () => clearInterval(interval)
   }, [fetchEstado])
 

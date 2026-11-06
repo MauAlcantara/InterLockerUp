@@ -1,10 +1,10 @@
 const db = require('../config/db');
 
 // ── Umbrales configurables vía .env (con valores por defecto) ──────────────
-const TEMP_MIN = parseFloat(process.env.IOT_TEMP_MIN || '10');      // °C
-const TEMP_MAX = parseFloat(process.env.IOT_TEMP_MAX || '40');      // °C
-const VIBRACION_MAX = parseFloat(process.env.IOT_VIBRACION_MAX || '500'); // mg/s²
-const OFFLINE_MINUTES = parseInt(process.env.IOT_OFFLINE_MINUTES || '10');
+const TEMP_MIN = Number.parseFloat(process.env.IOT_TEMP_MIN || '10');      // °C
+const TEMP_MAX = Number.parseFloat(process.env.IOT_TEMP_MAX || '40');      // °C
+const VIBRACION_MAX = Number.parseFloat(process.env.IOT_VIBRACION_MAX || '500'); // mg/s²
+const OFFLINE_MINUTES = Number.parseInt(process.env.IOT_OFFLINE_MINUTES || '10');
 
 const SENSORES_VALIDOS = ['temperatura', 'vibracion', 'puerta_abierta', 'humedad', 'iluminacion'];
 
@@ -279,7 +279,7 @@ const sensoresMasRecientes = async (req, res) => {
 const historialSensores = async (req, res) => {
     try {
         const { locker_id } = req.params;
-        const limit = Math.min(Math.max(parseInt(req.query.limit) || 100, 1), 500);
+        const limit = Math.min(Math.max(Number.parseInt(req.query.limit) || 100, 1), 500);
         const result = await db.query(
             `SELECT sensor, valor, unidad, created_at
              FROM iot.sensor_readings

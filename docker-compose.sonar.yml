@@ -1,0 +1,28 @@
+# Servidor SonarQube Community Edition (solo para pruebas locales)
+# Uso:
+#   docker compose -f docker-compose.sonar.yml up -d
+#   # Espera ~1-2 min hasta que el servidor esté listo
+#   # UI: http://localhost:9000  (admin / admin)
+#   bash sonar-scan.sh
+#   docker compose -f docker-compose.sonar.yml down
+
+services:
+  sonarqube:
+    image: sonarqube:community
+    container_name: sonarqube-local
+    ports:
+      - "9000:9000"
+    environment:
+      - SONAR_ESCALADER_ENABLED=false
+    volumes:
+      - sonar-data:/opt/sonarqube/data
+      - sonar-extensions:/opt/sonarqube/extensions
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:9000/api/system/health | grep -q '\"status\" : \"UP\"'"]
+      interval: 15s
+      timeout: 5s
+      retries: 20
+
+volumes:
+  sonar-data:
+  sonar-extensions:

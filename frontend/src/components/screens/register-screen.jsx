@@ -43,7 +43,7 @@ export default function RegisterScreen({ onRegister, onBackToLogin }) {
                 toast.error("No se pudieron cargar las divisiones académicas")
             }
         }
-        fetchCarreras()
+        void fetchCarreras()
     }, [api])
 
     const updateField = (field, value) => {
@@ -162,10 +162,11 @@ export default function RegisterScreen({ onRegister, onBackToLogin }) {
                     {step === 1 && (
                         <>
                             <div className="space-y-1">
-                                <label className="text-sm font-medium text-foreground">Nombre Completo</label>
+                                <label htmlFor="reg-nombre" className="text-sm font-medium text-foreground">Nombre Completo</label>
                                 <div className="relative">
                                     <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                                     <input
+                                        id="reg-nombre"
                                         type="text"
                                         placeholder="Tu nombre completo"
                                         value={formData.nombre_completo}
@@ -177,10 +178,11 @@ export default function RegisterScreen({ onRegister, onBackToLogin }) {
                             </div>
 
                             <div className="space-y-1">
-                                <label className="text-sm font-medium text-foreground">Matrícula</label>
+                                <label htmlFor="reg-matricula" className="text-sm font-medium text-foreground">Matrícula</label>
                                 <div className="relative">
                                     <GraduationCap className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                                     <input
+                                        id="reg-matricula"
                                         type="text"
                                         placeholder="Ej: 202312345"
                                         value={formData.matricula}
@@ -192,10 +194,11 @@ export default function RegisterScreen({ onRegister, onBackToLogin }) {
                             </div>
 
                             <div className="space-y-1">
-                                <label className="text-sm font-medium text-foreground">Correo Institucional</label>
+                                <label htmlFor="reg-correo" className="text-sm font-medium text-foreground">Correo Institucional</label>
                                 <div className="relative">
                                     <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                                     <input
+                                        id="reg-correo"
                                         type="email"
                                         placeholder="usuario@uteq.edu.mx"
                                         value={formData.email}
@@ -207,8 +210,9 @@ export default function RegisterScreen({ onRegister, onBackToLogin }) {
                             </div>
 
                             <div className="space-y-1">
-                                <label className="text-sm font-medium text-foreground">División Académica</label>
+                                <label htmlFor="reg-carrera" className="text-sm font-medium text-foreground">División Académica</label>
                                 <select
+                                    id="reg-carrera"
                                     value={formData.carrera}
                                     onChange={(e) => updateField("carrera", e.target.value)}
                                     className="h-12 w-full rounded-lg border border-border bg-background px-3 outline-none focus:ring-2 focus:ring-[#0b4dbb]/20 text-foreground"
@@ -226,10 +230,11 @@ export default function RegisterScreen({ onRegister, onBackToLogin }) {
                     {step === 2 && (
                         <>
                             <div className="space-y-1">
-                                <label className="text-sm font-medium text-foreground">Contraseña</label>
+                                <label htmlFor="reg-contrasena" className="text-sm font-medium text-foreground">Contraseña</label>
                                 <div className="relative">
                                     <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                                     <input
+                                        id="reg-contrasena"
                                         type={showPassword ? "text" : "password"}
                                         placeholder="Crea una contraseña"
                                         value={formData.password}
@@ -270,10 +275,11 @@ export default function RegisterScreen({ onRegister, onBackToLogin }) {
                             </div>
 
                             <div className="space-y-1">
-                                <label className="text-sm font-medium text-foreground">Confirmar Contraseña</label>
+                                <label htmlFor="reg-confirmar" className="text-sm font-medium text-foreground">Confirmar Contraseña</label>
                                 <div className="relative">
                                     <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                                     <input
+                                        id="reg-confirmar"
                                         type={showConfirmPassword ? "text" : "password"}
                                         placeholder="Repite tu contraseña"
                                         value={formData.confirmPassword}

@@ -60,8 +60,9 @@ export default function OtpScreen({ studentId, onVerified, onBack }) {
                 <CardContent className="p-6 pt-10">
                     <form onSubmit={handleVerify} className="space-y-6">
                         <div className="space-y-2 text-center">
-                            <label className="text-sm font-medium text-muted-foreground">Código de 6 dígitos</label>
+                            <label htmlFor="otp-input" className="text-sm font-medium text-muted-foreground">Código de 6 dígitos</label>
                             <Input
+                                id="otp-input"
                                 type="text"
                                 maxLength={6}
                                 placeholder="000000"

@@ -12,15 +12,15 @@ const { sendEmail } = require('../config/mailer');
 
 // Retenciones configurables (días)
 const RETENTION = {
-    accessLogs: parseInt(process.env.ACCESS_LOG_RETENTION_DAYS || '365', 10),   // 12 meses
-    notifications: parseInt(process.env.NOTIF_RETENTION_DAYS || '180', 10),      // 6 meses
-    iotCommands: parseInt(process.env.IOT_CMD_RETENTION_DAYS || '1', 10),       // 1 día
-    requestGrace: parseInt(process.env.REQUEST_GRACE_DAYS || '30', 10),         // 30 días
-    requestsDone: parseInt(process.env.REQUESTS_DONE_RETENTION_DAYS || '180', 10),  // 6 meses
-    securityLogs: parseInt(process.env.SECURITY_LOG_RETENTION_DAYS || '365', 10), // 12 meses
-    incidentsDone: parseInt(process.env.INCIDENTS_DONE_RETENTION_DAYS || '720', 10), // 2 años
-    userDevicesIdle: parseInt(process.env.USER_DEVICES_IDLE_DAYS || '365', 10),   // 1 año
-    noticeDays: parseInt(process.env.ROTATION_NOTICE_DAYS || '30', 10),           // 30 días de anticipación
+    accessLogs: Number.parseInt(process.env.ACCESS_LOG_RETENTION_DAYS || '365', 10),   // 12 meses
+    notifications: Number.parseInt(process.env.NOTIF_RETENTION_DAYS || '180', 10),      // 6 meses
+    iotCommands: Number.parseInt(process.env.IOT_CMD_RETENTION_DAYS || '1', 10),       // 1 día
+    requestGrace: Number.parseInt(process.env.REQUEST_GRACE_DAYS || '30', 10),         // 30 días
+    requestsDone: Number.parseInt(process.env.REQUESTS_DONE_RETENTION_DAYS || '180', 10),  // 6 meses
+    securityLogs: Number.parseInt(process.env.SECURITY_LOG_RETENTION_DAYS || '365', 10), // 12 meses
+    incidentsDone: Number.parseInt(process.env.INCIDENTS_DONE_RETENTION_DAYS || '720', 10), // 2 años
+    userDevicesIdle: Number.parseInt(process.env.USER_DEVICES_IDLE_DAYS || '365', 10),   // 1 año
+    noticeDays: Number.parseInt(process.env.ROTATION_NOTICE_DAYS || '30', 10),           // 30 días de anticipación
 };
 
 // Los valores históricos de status en producción son 'activa' y 'finalizado';

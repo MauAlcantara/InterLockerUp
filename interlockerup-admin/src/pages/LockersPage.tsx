@@ -161,9 +161,9 @@ export default function LockersPage() {
   }
 
   useEffect(() => {
-    fetchLockers();
-    fetchUsers();
-    fetchRequests();
+    void fetchLockers();
+    void fetchUsers();
+    void fetchRequests();
   }, [])
 
   // --- 2. ACCIONES DEL ADMINISTRADOR ---

@@ -58,3 +58,24 @@ evidencia_DE.txt
 
 # Dump duplicado de BD (el oficial está en scripts/estructura.sql)
 estructura.sql
+
+# SonarQube local
+.sonar-scanner/
+.sonar/
+sonar-bugs.json
+
+# Token SonarQube local (no subir a git)
+.sonar-token
+
+# Reportes y evidencia SonarQube / cambios (solo locales, no se suben al repo)
+reporte_cambios_octubre.html
+reporte_cambios_octubre.odt
+reporte_sonarqube.html
+reporte_sonarqube.docx
+reporte_sonarqube.odt
+sonar-evidencia/
+sonar-evidencia*.png
+docs/Captura de pantalla_*.png
+
+# Cobertura de pruebas (artefacto local)
+backend/coverage/

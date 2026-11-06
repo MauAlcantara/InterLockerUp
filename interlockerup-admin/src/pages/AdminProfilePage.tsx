@@ -59,7 +59,7 @@ export default function AdminProfilePage() {
   }
 
   useEffect(() => {
-    fetchPerfil()
+    void fetchPerfil()
   }, [])
 
   const handleToggleEdit = () => {
@@ -236,9 +236,12 @@ export default function AdminProfilePage() {
 
       {/* ===== Modal Privacidad (bottom sheet, igual que el alumno) ===== */}
       {showPrivacy && (
-        <div className="fixed inset-0 bg-black/80 z-50 flex items-end" onClick={() => setShowPrivacy(false)}>
+        <div className="fixed inset-0 bg-black/80 z-50 flex items-end" onClick={() => setShowPrivacy(false)} role="button" aria-label="Cerrar modal de privacidad" tabIndex={0}>
           <div
             className="w-full h-[90%] bg-white rounded-t-[25px] flex flex-col"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Política de privacidad"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="bg-white flex items-center justify-between p-5 sticky top-0 z-10">

@@ -35,6 +35,6 @@ pool.on('error', (err) => {
         console.error('❌ Error al conectar con la base de datos:', err.message);
         console.error('   Verifica las credenciales en .env y que el servidor PostgreSQL esté corriendo.');
     }
-})();
+}).catch((err) => console.error('❌ Error inesperado en verificación de conexión:', err));
 
 module.exports = pool;

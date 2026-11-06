@@ -193,8 +193,8 @@ export default function HomeScreen({ onNavigate, onLogout }) {
       })
       .catch(err => console.error("No se encontró locker activo", err));
 
-    cargarHistorialReciente();
-    cargarNotificaciones();
+    void cargarHistorialReciente();
+    void cargarNotificaciones();
 
   }, [cargarHistorialReciente, cargarNotificaciones]);
 
@@ -1000,6 +1000,9 @@ export default function HomeScreen({ onNavigate, onLogout }) {
             animation: "fadeIn 0.2s ease"
           }}
           onClick={() => setShowNotis(false)}
+          role="button"
+          aria-label="Cerrar notificaciones"
+          tabIndex={0}
         >
 
           <div
@@ -1444,6 +1447,9 @@ export default function HomeScreen({ onNavigate, onLogout }) {
               animation: "fadeIn 0.2s ease"
             }}
             onClick={() => setSelectedNotification(null)}
+            role="button"
+            aria-label="Cerrar detalle de notificación"
+            tabIndex={0}
           >
 
             <div

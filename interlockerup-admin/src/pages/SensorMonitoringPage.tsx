@@ -95,8 +95,8 @@ export default function SensorMonitoringPage() {
   }, [])
 
   useEffect(() => {
-    fetchLecturas()
-    const interval = setInterval(fetchLecturas, 30000)
+    void fetchLecturas()
+    const interval = setInterval(() => { void fetchLecturas() }, 30000)
     return () => clearInterval(interval)
   }, [fetchLecturas])
 
