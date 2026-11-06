@@ -152,7 +152,7 @@ rotationScheduler.programar();
     } catch (err) {
         console.error('⚠️  No se pudo recuperar jobs de respaldo huérfanos:', err.message);
     }
-}).catch((err) => {
+})().catch((err) => {
     console.error('⚠️  Error inesperado en recuperación de jobs de respaldo:', err.message);
 });
 
