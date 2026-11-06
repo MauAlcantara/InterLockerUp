@@ -28,13 +28,20 @@ jobs:
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+          SONAR_PROJECT_KEY: ${{ secrets.SONAR_PROJECT_KEY }}
 
-      # Descarga el informe de bugs
+      # Descarga el informe de bugs vía API de SonarQube
       - name: Download bugs report
-        uses: sonarsource/sonarqube-dbtm@v3
         if: always()
-        with:
-          path: sonar-bugs.json
+        run: |
+          curl -s -H "Authorization: Bearer $SONAR_TOKEN" \
+            -H "Accept: application/json" \
+            "$SONAR_HOST_URL/api/issues/search?componentKeys=$SONAR_PROJECT_KEY&resolved=false&severities=BLOCKER,CRITICAL,MAJOR&ps=500&format=json" \
+            -o sonar-bugs.json
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+          SONAR_PROJECT_KEY: ${{ secrets.SONAR_PROJECT_KEY }}
 
       - name: Upload bugs report
         uses: actions/upload-artifact@v4
