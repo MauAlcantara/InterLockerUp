@@ -17,12 +17,10 @@ import {
   Wifi,
   WifiOff,
   Cpu,
-  Battery,
   Clock,
   Loader2,
 } from "lucide-react"
 import { StatsCard } from "@/components/admin/stats-card"
-import { cn } from "@/lib/utils"
 import { fastFetch } from "@/api/apiConfig"
 
 interface Dispositivo {
@@ -31,7 +29,6 @@ interface Dispositivo {
   device_id: string | null
   estado: string | null
   last_seen: string | null
-  battery: number | null
   firmware: string | null
   online: boolean
 }
@@ -157,7 +154,7 @@ export default function IotStatusPage() {
               <div>
                 <CardTitle>Dispositivos por locker</CardTitle>
                 <CardDescription className="font-serif">
-                  Conectividad, batería y última señal de cada ESP32
+                  Conectividad y última señal de cada ESP32
                 </CardDescription>
               </div>
               <div className="flex items-center gap-2">
@@ -207,7 +204,6 @@ export default function IotStatusPage() {
                     <TableHead className="font-semibold">Dispositivo</TableHead>
                     <TableHead className="font-semibold">Estado</TableHead>
                     <TableHead className="font-semibold">Última señal</TableHead>
-                    <TableHead className="font-semibold">Batería</TableHead>
                     <TableHead className="font-semibold">Firmware</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -248,16 +244,6 @@ export default function IotStatusPage() {
                       </TableCell>
                       <TableCell className="text-muted-foreground font-serif text-sm">
                         {formatoFecha(d.last_seen)}
-                      </TableCell>
-                      <TableCell>
-                        {d.battery !== null ? (
-                          <div className="flex items-center gap-1">
-                            <Battery className={cn("w-4 h-4", d.battery < 20 ? "text-warning" : "text-muted-foreground")} />
-                            <span className="text-sm">{Number(d.battery).toFixed(1)}%</span>
-                          </div>
-                        ) : (
-                          <span className="text-muted-foreground text-sm">—</span>
-                        )}
                       </TableCell>
                       <TableCell className="font-mono text-xs text-muted-foreground">
                         {d.firmware ?? "—"}
