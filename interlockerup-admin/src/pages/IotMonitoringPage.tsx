@@ -18,7 +18,6 @@ import {
   Wifi,
   WifiOff,
   AlertTriangle,
-  Lock,
   Clock,
   Loader2,
   Lock,
