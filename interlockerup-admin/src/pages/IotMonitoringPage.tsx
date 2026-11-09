@@ -18,9 +18,7 @@ import {
   Wifi,
   WifiOff,
   AlertTriangle,
-  Thermometer,
-  Activity,
-  BatteryMedium,
+  Lock,
   Clock,
   Loader2,
   Lock,
@@ -28,12 +26,6 @@ import {
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { fastFetch } from "@/api/apiConfig"
-
-interface SensorLectura {
-  valor: number
-  unidad: string | null
-  created_at: string | null
-}
 
 interface LockerMonitoreo {
   id: number
@@ -45,9 +37,11 @@ interface LockerMonitoreo {
   device_id: string | null
   online: boolean
   last_seen: string | null
-  battery: number | null
-  sensores: Record<string, SensorLectura>
   alertas: { pendientes: number; criticas: number }
+  actuador: {
+    pendientes: number
+    ultimo: { accion: string; ejecutado: boolean; creado_en: string | null } | null
+  }
 }
 
 interface RespuestaMonitoreo {
@@ -58,6 +52,7 @@ interface RespuestaMonitoreo {
     sin_dispositivo: number
     alertas_pendientes: number
     alertas_criticas: number
+    actuadores_pendientes: number
   }
   lockers: LockerMonitoreo[]
 }
@@ -117,7 +112,7 @@ export default function IotMonitoringPage() {
     <div className="flex flex-col h-full">
       <Header
         title="Monitoreo IoT"
-        description="Vista unificada de conectividad, estado de lockers, sensores y alertas en tiempo real"
+        description="Vista unificada de conectividad, estado de lockers, actuadores y alertas en tiempo real"
       />
 
       <div className="flex-1 p-8 space-y-6">
@@ -129,7 +124,7 @@ export default function IotMonitoringPage() {
 
         {/* Resumen */}
         {data && (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-4">
             <div className="rounded-xl border border-border bg-card p-4">
               <div className="flex items-center justify-between mb-1">
                 <span className="text-xs text-muted-foreground font-serif">Lockers</span>
@@ -171,6 +166,13 @@ export default function IotMonitoringPage() {
                 <AlertTriangle className="w-4 h-4 text-muted-foreground" />
               </div>
               <p className={cn("text-2xl font-bold", data.resumen.alertas_criticas > 0 && "text-error")}>{data.resumen.alertas_criticas}</p>
+            </div>
+            <div className="rounded-xl border border-border bg-card p-4">
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-xs text-muted-foreground font-serif">Actuadores pendientes</span>
+                <Lock className="w-4 h-4 text-muted-foreground" />
+              </div>
+              <p className={cn("text-2xl font-bold", data.resumen.actuadores_pendientes > 0 && "text-warning")}>{data.resumen.actuadores_pendientes}</p>
             </div>
           </div>
         )}
@@ -216,9 +218,7 @@ export default function IotMonitoringPage() {
                     <TableHead className="font-semibold">Locker</TableHead>
                     <TableHead className="font-semibold">Conectividad</TableHead>
                     <TableHead className="font-semibold">Estado</TableHead>
-                    <TableHead className="font-semibold">Temperatura</TableHead>
-                    <TableHead className="font-semibold">Vibración</TableHead>
-                    <TableHead className="font-semibold">Batería</TableHead>
+                    <TableHead className="font-semibold">Actuador</TableHead>
                     <TableHead className="font-semibold">Alertas</TableHead>
                     <TableHead className="font-semibold">Última señal</TableHead>
                   </TableRow>
@@ -246,30 +246,14 @@ export default function IotMonitoringPage() {
                       </TableCell>
                       <TableCell className="text-sm capitalize">{l.estado}</TableCell>
                       <TableCell>
-                        {l.sensores.temperatura ? (
+                        {l.actuador.pendientes > 0 ? (
+                          <Badge variant="outline" className="bg-warning/10 text-warning border-warning/20">
+                            Pendiente: {l.actuador.pendientes} abrir
+                          </Badge>
+                        ) : l.actuador.ultimo ? (
                           <span className="flex items-center gap-1 text-sm">
-                            <Thermometer className="w-3.5 h-3.5 text-muted-foreground" />
-                            {Number(l.sensores.temperatura.valor).toFixed(1)} {l.sensores.temperatura.unidad ?? "°C"}
-                          </span>
-                        ) : (
-                          <span className="text-muted-foreground text-sm">—</span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        {l.sensores.vibracion ? (
-                          <span className="flex items-center gap-1 text-sm">
-                            <Activity className="w-3.5 h-3.5 text-muted-foreground" />
-                            {Math.round(Number(l.sensores.vibracion.valor))} {l.sensores.vibracion.unidad ?? "mg/s²"}
-                          </span>
-                        ) : (
-                          <span className="text-muted-foreground text-sm">—</span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        {l.battery !== null ? (
-                          <span className="flex items-center gap-1 text-sm">
-                            <BatteryMedium className="w-3.5 h-3.5 text-muted-foreground" />
-                            {Math.round(Number(l.battery))}%
+                            <Lock className="w-3.5 h-3.5 text-muted-foreground" />
+                            {l.actuador.ultimo.accion} · {formatoFecha(l.actuador.ultimo.creado_en)}
                           </span>
                         ) : (
                           <span className="text-muted-foreground text-sm">—</span>
@@ -304,9 +288,6 @@ export default function IotMonitoringPage() {
               </Link>
               <Link to="/dashboard/lockers-estado" className="inline-flex items-center gap-1 text-sm text-primary hover:underline">
                 Estado de Lockers <ArrowRight className="w-3.5 h-3.5" />
-              </Link>
-              <Link to="/dashboard/sensores" className="inline-flex items-center gap-1 text-sm text-primary hover:underline">
-                Monitoreo de Sensores <ArrowRight className="w-3.5 h-3.5" />
               </Link>
               <Link to="/dashboard/alertas" className="inline-flex items-center gap-1 text-sm text-primary hover:underline">
                 Alertas IoT <ArrowRight className="w-3.5 h-3.5" />

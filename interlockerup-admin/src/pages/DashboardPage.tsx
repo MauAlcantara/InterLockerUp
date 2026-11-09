@@ -10,7 +10,7 @@ import {
 import {
   AreaChart, Area, XAxis, YAxis, ResponsiveContainer, Tooltip, BarChart, Bar,
 } from "recharts"
-import { BASE_URL } from "@/api/apiConfig"
+import { BASE_URL, fastFetch } from "@/api/apiConfig"
 
 // ─── Datos estáticos para gráficas ───────────────────────────────────────────
 const usageData = [
@@ -32,6 +32,7 @@ export default function DashboardPage() {
 
   // Stats del dashboard
   const [stats, setStats] = useState<any>(null)
+  const [actuadores, setActuadores] = useState<{ total: number; pendientes: number } | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
   // ── Fetch stats ─────────────────────────────────────────────────────────────
@@ -47,6 +48,22 @@ export default function DashboardPage() {
       }
     }
     void fetchStats()
+
+    const fetchActuadores = async () => {
+      try {
+        const res = await fastFetch("/iot/monitoring")
+        if (res.ok) {
+          const json = await res.json()
+          setActuadores({
+            total: json.resumen?.total_lockers ?? 0,
+            pendientes: json.resumen?.actuadores_pendientes ?? 0,
+          })
+        }
+      } catch (e) {
+        console.error("Error cargando actuadores:", e)
+      }
+    }
+    void fetchActuadores()
   }, [])
 
   // ── Formateo de datos de stats ───────────────────────────────────────────────
@@ -88,7 +105,7 @@ export default function DashboardPage() {
         <div className="max-w-7xl mx-auto space-y-6">
 
           {/* ── KPIs ─────────────────────────────────────────────────────────── */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
             <Card className="border-0 shadow-sm">
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
@@ -159,6 +176,32 @@ export default function DashboardPage() {
                 </div>
               </CardContent>
             </Card>
+
+            <Link to="/dashboard/monitoring" className="group">
+              <Card className="border-0 shadow-sm hover:shadow-md transition-all h-full">
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-muted-foreground">Actuadores IoT</p>
+                      <p className="text-2xl font-bold mt-1 text-available">{actuadores && actuadores.pendientes === 0 ? "Todos OK" : "OK"}</p>
+                      <div className="flex items-center gap-1 mt-1">
+                        {actuadores && actuadores.pendientes > 0 ? (
+                          <>
+                            <AlertTriangle className="w-3 h-3 text-[#f2b705]" />
+                            <span className="text-xs text-[#f2b705]">{actuadores.pendientes} pendiente{actuadores.pendientes > 1 ? "s" : ""}</span>
+                          </>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">{actuadores ? `${actuadores.total} lockers` : "Cargando..."}</span>
+                        )}
+                      </div>
+                    </div>
+                    <div className="w-10 h-10 rounded-lg bg-[#2fa4a9]/10 flex items-center justify-center">
+                      <Zap className="w-5 h-5 text-[#2fa4a9]" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </Link>
           </div>
 
           {/* ── GRÁFICAS Y ALERTAS ───────────────────────────────────────────── */}

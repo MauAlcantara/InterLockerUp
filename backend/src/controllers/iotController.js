@@ -351,6 +351,19 @@ const panelMonitoreo = async (req, res) => {
             GROUP BY locker_id
         `);
 
+        // Actuadores: comandos pendientes y último comando por locker.
+        const actuadores = await db.query(`
+            SELECT locker_id,
+                   COUNT(*) FILTER (WHERE ejecutado = FALSE) AS pendientes
+            FROM iot.iot_commands
+            GROUP BY locker_id
+        `);
+        const ultimoComando = await db.query(`
+            SELECT DISTINCT ON (locker_id) locker_id, accion, ejecutado, creado_en
+            FROM iot.iot_commands
+            ORDER BY locker_id, creado_en DESC, id DESC
+        `);
+
         const sensoresPorLocker = {};
         for (const s of sensores.rows) {
             (sensoresPorLocker[s.locker_id] ??= {})[s.sensor] = s;
@@ -358,6 +371,18 @@ const panelMonitoreo = async (req, res) => {
         const alertasPorLocker = {};
         for (const a of alertas.rows) {
             alertasPorLocker[a.locker_id] = { pendientes: Number(a.pendientes), criticas: Number(a.criticas) };
+        }
+        const actuadoresPorLocker = {};
+        for (const c of ultimoComando.rows) {
+            actuadoresPorLocker[c.locker_id] = {
+                accion: c.accion,
+                ejecutado: c.ejecutado,
+                creado_en: c.creado_en
+            };
+        }
+        const pendientesPorLocker = {};
+        for (const c of actuadores.rows) {
+            pendientesPorLocker[c.locker_id] = Number(c.pendientes);
         }
 
         const ahora = Date.now();
@@ -378,7 +403,11 @@ const panelMonitoreo = async (req, res) => {
                 last_seen: l.last_seen,
                 battery: l.battery,
                 sensores: sensoresPorLocker[l.id] ?? {},
-                alertas: alertasPorLocker[l.id] ?? { pendientes: 0, criticas: 0 }
+                alertas: alertasPorLocker[l.id] ?? { pendientes: 0, criticas: 0 },
+                actuador: {
+                    pendientes: pendientesPorLocker[l.id] ?? 0,
+                    ultimo: actuadoresPorLocker[l.id] ?? null
+                }
             };
         });
 
@@ -393,7 +422,8 @@ const panelMonitoreo = async (req, res) => {
                 offline,
                 sin_dispositivo: sinDispositivo,
                 alertas_pendientes: filas.reduce((acc, f) => acc + f.alertas.pendientes, 0),
-                alertas_criticas: filas.reduce((acc, f) => acc + f.alertas.criticas, 0)
+                alertas_criticas: filas.reduce((acc, f) => acc + f.alertas.criticas, 0),
+                actuadores_pendientes: filas.reduce((acc, f) => acc + f.actuador.pendientes, 0)
             },
             lockers: filas
         });
